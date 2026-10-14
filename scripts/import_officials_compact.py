@@ -15,7 +15,7 @@ lookup={str(x["gsis"]):x["game_id"] for x in schedule.select(["gsis","game_id"])
 print(json.dumps({"mapped_games":len(lookup),"sample_mapping":list(lookup.items())[:2]}),flush=True)
 rows={}
 for x in d.to_dicts():
- gid=lookup.get(str(x.get("game_id")))
+ gid=lookup.get(str(x.get("game_key")))
  if gid not in games or not x.get("official_name") or not x.get("position"):continue
  def num(v):
   if v is None:return None
