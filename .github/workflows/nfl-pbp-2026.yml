@@ -1,8 +1,8 @@
-name: NFL Supabase PBP historical import
+name: NFL Supabase PBP 2026 import
 on:
   push:
     paths:
-      - '.github/workflows/nfl-pbp-2024.yml'
+      - '.github/workflows/nfl-pbp-2026.yml'
       - 'scripts/import_pbp_supabase.py'
   workflow_dispatch:
 permissions:
