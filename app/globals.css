@@ -99,3 +99,27 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .nfl-fixture .match-at{display:flex;flex-direction:column;align-items:center;gap:3px;color:#ffd989;font-size:24px;font-weight:950;text-shadow:0 0 15px #e6a34e}
 .nfl-fixture .match-at small{font-size:9px;letter-spacing:2px;color:#a9c6de;text-shadow:none}
 @media(max-width:700px){.nfl-fixture{padding:11px!important;border-radius:12px!important}.nfl-fixture .match-date{font-size:10px;padding-bottom:8px}.nfl-fixture .match-teams{grid-template-columns:minmax(0,1fr) 35px minmax(0,1fr);padding:12px 0 0}.nfl-fixture .match-team{grid-template-columns:1fr;grid-template-rows:60px auto auto;justify-items:center;text-align:center;gap:3px}.nfl-fixture .match-team img{grid-column:1;grid-row:1;width:62px;height:58px}.nfl-fixture .match-team span{grid-column:1;grid-row:2;font-size:12px}.nfl-fixture .match-team b{grid-column:1;grid-row:3;font-size:22px}.nfl-fixture .match-at{font-size:18px}.nfl-fixture .match-at small{font-size:8px}}
+
+
+/* NFL Studio finish pass: polished neon surfaces */
+:root{color-scheme:dark}
+.shell>aside{background:linear-gradient(180deg,#0b1931,#060d18 74%);border-right-color:#276094;box-shadow:8px 0 35px #0005}
+.shell>aside .logo{color:#fff;text-shadow:0 0 23px #1db6e87a}
+.shell>aside nav button{transition:background .2s,transform .2s}
+.shell>aside nav button:hover{background:#143b62!important;box-shadow:inset 3px 0 #54baff,0 0 18px #228cfa28;transform:translateX(2px)}
+.shell>main{background:radial-gradient(ellipse at 82% 2%,#17467525,transparent 36%),radial-gradient(ellipse at 15% 67%,#0d927b11,transparent 43%)}
+.shell>main>header input{border-color:#315779;background:linear-gradient(125deg,#0c233a,#081828)}
+.shell>main>header input:focus{outline:2px solid #47b9f6;outline-offset:1px}
+.shell .panel{background:linear-gradient(145deg,#10243a,#0a1729 75%);border-color:#2e5276;box-shadow:0 11px 29px #0003,inset 0 1px #e5f8ff0d}
+.shell .panel h2{color:#eff7ff;text-shadow:0 0 15px #73d5ff26}
+.shell .hero{background-image:linear-gradient(93deg,#041024ec,#092745c2 52%,#071024cf),url('/stadium-night.svg');background-position:center;background-size:cover;border-color:#2c74ab;box-shadow:inset 0 0 45px #06385c,0 0 24px #0d72b233;min-height:205px}
+.shell .hero h1{color:#fff;letter-spacing:2px;text-shadow:0 3px 2px #050f1a,0 0 24px #40bfff90}
+.shell .hero .eyebrow{color:#85dcff;font-weight:900}
+.shell .weeks button.active{background:linear-gradient(145deg,#54d9ff,#1375d9);border-color:#8ceeff;color:#041428;font-weight:900;box-shadow:0 0 18px #39bfff67}
+.shell .team{background:linear-gradient(128deg,#152f49,#0b1c2c);transition:transform .2s,box-shadow .2s}
+.shell .team:hover,.shell .team:focus-visible{transform:translateY(-3px);box-shadow:0 10px 24px #0008,0 0 18px #328fdf4b}
+.shell .featured{background:radial-gradient(ellipse at 0 40%,#164a7455,transparent 63%),#091b2d;box-shadow:inset 0 0 22px #2c90db22}
+.shell .kpis>div{border:1px solid #285279;background:linear-gradient(145deg,#103353,#091a2d)}
+.shell .empty{background:linear-gradient(130deg,#102e49,#091b2b);border-color:#35618b}
+@media(max-width:700px){.shell>aside{background:#07172a;border-bottom:1px solid #256396}.shell .hero{min-height:170px}.shell .panel{border-radius:16px}.shell .mobile-bottom-nav button[aria-current=page]{background:linear-gradient(140deg,#165c9e,#0d2f62);box-shadow:inset 0 0 0 1px #68c5ff,0 0 18px #2387e98a}}
+@media(prefers-reduced-motion:reduce){.shell .team,.shell>aside nav button{transition:none!important;transform:none!important}}
