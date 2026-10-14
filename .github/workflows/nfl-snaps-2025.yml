@@ -1,0 +1,45 @@
+name: NFL Supabase snap counts 2025
+on:
+  push:
+    paths:
+      - '.github/workflows/nfl-snaps-2025.yml'
+      - 'scripts/import_snap_counts_supabase.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NFL_SNAPS_SEASON: '2025'
+      SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - name: Import snap counts
+        id: import
+        continue-on-error: true
+        run: python scripts/import_snap_counts_supabase.py > /tmp/nfl-snaps-log.txt 2>&1
+      - name: Save diagnostics
+        if: always()
+        run: |
+          python - <<'PY'
+          import pathlib,json,re
+          p=pathlib.Path('/tmp/nfl-snaps-log.txt')
+          log=p.read_text() if p.exists() else 'No log'
+          log=re.sub(r'sb_secret_[A-Za-z0-9_-]+','[REDACTED]',log)
+          log=re.sub(r'eyJ[A-Za-z0-9_.-]{30,}','[REDACTED]',log)
+          pathlib.Path('diagnostics/snaps-import-2025.json').write_text(json.dumps({'log_tail':log[-4000:]}))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/snaps-import-2025.json
+          git diff --cached --quiet || (git commit -m 'Record snap count import diagnostics' && git push)
+      - name: Fail on importer error
+        if: steps.import.outcome == 'failure'
+        run: exit 1
