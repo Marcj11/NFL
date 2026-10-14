@@ -27,8 +27,10 @@ def main():
         for side in ("home","away"):
             abbr=row.get(f"{side}_team")
             if abbr:teams[abbr]={"team_id":abbr,"display_name":abbr}
-    for batch in chunks(list(teams.values()),100):
-        db.table("teams").upsert(batch,on_conflict="team_id").execute()
+    # Team registry is already populated with canonical display names.
+    existing={r["team_id"] for r in db.table("teams").select("team_id").execute().data}
+    missing=set(teams)-existing
+    if missing:raise RuntimeError("Unrecognized team IDs: "+",".join(sorted(missing)))
     accepted=0;rejected=0
     for batch in chunks(rows,50):
         payload=[]
