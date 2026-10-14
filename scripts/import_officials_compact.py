@@ -9,6 +9,7 @@ d=nfl.load_officials([2023,2024,2025,2026])
 print(json.dumps({"source_rows":d.height,"columns":d.columns}),flush=True)
 assert {"game_id","official_name","position"}<=set(d.columns)
 games={x["game_id"] for x in db.table("games").select("game_id").limit(1500).execute().data}
+print(json.dumps({"sample":d.select(["game_id","game_key"]).head(4).to_dicts(),"matched_game_id":sum(x in games for x in d["game_id"].to_list()),"matched_game_key":sum(x in games for x in d["game_key"].to_list())}),flush=True)
 rows={}
 for x in d.to_dicts():
  if x.get("game_id") not in games or not x.get("official_name") or not x.get("position"):continue
