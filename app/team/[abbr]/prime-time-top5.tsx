@@ -8,7 +8,7 @@ const pct=(p:number)=>Math.max(0,Math.min(100,Math.round(p*100)));
 export default function PrimeTimeTop5(p:Props){
  const [expanded,setExpanded]=useState<number|null>(null);
  const cards=[...p.picks].filter(x=>Number.isFinite(x.decimal)&&x.decimal>1).sort((a,b)=>(b.probability??1/b.decimal)-(a.probability??1/a.decimal)).slice(0,5);
- const ml=p.homeProbability!==null?pct(p.homeProbability):null;
+ const awayPct=p.homeProbability!==null?100-pct(p.homeProbability):null;
  const target=(a:Pick)=>a.market==='h2h'?'Victoire · '+a.name:a.market==='spreads'?'Handicap · '+a.name+' '+(a.point??''):'Total du match · '+(a.name.toLowerCase()==='over'?'Plus de ':'Moins de ')+(a.point??'')+' points';
  const person=(a:Pick)=>a.market==='h2h'?a.name:a.market==='spreads'?a.name:'Total des points';
  const image=(a:Pick)=>a.market==='h2h'||a.market==='spreads'?logo(a.name===p.teamNames[p.home]?p.home:p.away):null;
@@ -27,7 +27,7 @@ export default function PrimeTimeTop5(p:Props){
  <div className="pt5-hero"><div className="pt5-overline">★ NFL STUDIO · PRIME TIME ★</div>
  <div className="pt5-match"><div className="pt5-side"><img src={logo(p.away)} alt=""/><b>{p.teamNames[p.away]||p.away}</b></div><span className="pt5-vs">VS</span><div className="pt5-side"><img src={logo(p.home)} alt=""/><b>{p.teamNames[p.home]||p.home}</b></div></div>
  <p className="pt5-date">{date.toLocaleString('fr-CA',{timeZone:'America/Toronto',dateStyle:'full',timeStyle:'short'})} · NFL 2026</p>
- {ml!==null?<><div className="pt5-prob"><strong>{ml}%</strong><div className="pt5-probbar"><div style={{width:ml+'%'}}/></div><strong>{100-ml}%</strong></div><p style={{fontSize:11,textAlign:'center',color:'#a9c8dd'}}>Probabilité issue du modèle de forme historique — non calibrée pour les paris</p></>:<p className="pt5-date">Probabilités d'équipe en cours de vérification</p>}
+ {awayPct!==null?<><div className="pt5-prob"><strong title={p.teamNames[p.away]}>{p.away} {awayPct}%</strong><div className="pt5-probbar"><div style={{width:awayPct+'%'}}/></div><strong title={p.teamNames[p.home]}>{100-awayPct}% {p.home}</strong></div><p style={{fontSize:11,textAlign:'center',color:'#a9c8dd'}}>Probabilité issue du modèle de forme historique — non calibrée pour les paris</p></>:<p className="pt5-date">Probabilités d'équipe en cours de vérification</p>}
  </div><div className="pt5-body"><div className="pt5-header"><span style={{fontSize:27}}>🏆</span><h2>TOP 5 — GAME PICKS</h2><span style={{background:'#133250',borderRadius:20,padding:'5px 10px',fontSize:11,color:'#a6d3fa'}}>PLAYER SPOTLIGHT</span></div>
  <p className="pt5-sub">Cinq angles du match classés par probabilité disponible. Sans modèle calibré, l’ordre reflète uniquement la probabilité implicite des cotes réelles.</p>
  {cards.length?<div className="pt5-cards">{cards.map((pick,i)=>{const l=looks[i],heroImg=image(pick);const prob=pick.probability;return <article className="pt5-card" key={[pick.market,pick.name,pick.point,i].join(':')} style={{'--edge':l.edge,'--soft':l.soft} as React.CSSProperties}>
