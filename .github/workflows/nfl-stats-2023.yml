@@ -1,0 +1,44 @@
+name: NFL Player Stats 2023 Import
+on:
+  push:
+    paths:
+      - '.github/workflows/nfl-stats-2023.yml'
+      - 'scripts/import_player_stats_supabase.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NFL_STATS_SEASON: '2023'
+      SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - name: Import stats
+        id: ingest
+        continue-on-error: true
+        run: python scripts/import_player_stats_supabase.py > /tmp/import_stats.log 2>&1
+      - name: Save sanitized diagnostics
+        if: always()
+        run: |
+          python - <<'PY'
+          import pathlib,re,json
+          p=pathlib.Path('/tmp/import_stats.log')
+          s=p.read_text() if p.exists() else 'No log'
+          s=re.sub(r'sb_secret_[A-Za-z0-9_-]+','[REDACTED]',s)
+          pathlib.Path('diagnostics/stats-import-2023.json').write_text(json.dumps({'log_tail':s[-4000:]}))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/stats-import-2023.json
+          git diff --cached --quiet || (git commit -m 'Record player stats import diagnostics' && git push)
+      - name: Fail on import error
+        if: steps.ingest.outcome == 'failure'
+        run: exit 1
