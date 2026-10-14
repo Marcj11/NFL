@@ -40,11 +40,11 @@ export async function GET(req:Request){
  return {team,qb:qb?{name:qb.display_name,passing:Number(qb.prior_passing_yards),sample:qb.history_games}:null,rb:rb?{name:rb.display_name,rushing:Number(rb.prior_rushing_yards),sample:rb.history_games}:null,receivers:[wr,te].filter(Boolean).map(p=>({name:p.display_name,receiving:Number(p.prior_receiving_yards),targets:Number(p.prior_targets),sample:p.history_games}))};
  });
  const home=stats[target.home_team_id],away=stats[target.away_team_id];
- const ready=home.games>=4&&away.games>=4&&home.points!==null&&away.points!==null;
- const projectedHome=ready?(home.points+away.allowed)/2:null;
- const projectedAway=ready?(away.points+home.allowed)/2:null;
- const projectedTotal=ready?projectedHome+projectedAway:null;
- const projectedDiff=ready?projectedHome-projectedAway:null;
+ const ready=home.games>=4&&away.games>=4&&home.points!==null&&away.points!==null&&home.allowed!==null&&away.allowed!==null;
+ const projectedHome=ready&&home.points!==null&&away.allowed!==null?(home.points+away.allowed)/2:null;
+ const projectedAway=ready&&away.points!==null&&home.allowed!==null?(away.points+home.allowed)/2:null;
+ const projectedTotal=projectedHome!==null&&projectedAway!==null?projectedHome+projectedAway:null;
+ const projectedDiff=projectedHome!==null&&projectedAway!==null?projectedHome-projectedAway:null;
  const candidates=[...offers.values()].map(o=>{
   let baseline:number|null=null,angle='',signal=0;
   if(o.market==='totals'&&projectedTotal!==null&&o.point!==undefined){baseline=projectedTotal;signal=(o.name.toLowerCase()==='over'?projectedTotal-o.point:o.point-projectedTotal);angle='Projection indicative basée sur les points marqués et encaissés lors des cinq derniers matchs de chaque équipe.'}
