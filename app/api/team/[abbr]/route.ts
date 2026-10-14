@@ -15,7 +15,7 @@ export async function GET(_request:Request,context:{params:Promise<{abbr:string}
  }
  try{
   const [schedule,history]=await Promise.all([
-   query('games',{or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'gt.'+new Date().toISOString(),order:'kickoff_utc.asc',limit:'1'}),
+   query('games',{or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'gt.'+new Date().toISOString(),order:'kickoff_utc.asc',limit:'5'}),
    query('games',{or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'lt.'+new Date().toISOString(),order:'kickoff_utc.desc',limit:'5'})
   ]);
   const next=schedule[0]||null;const opponent=next?(next.home_team_id===team?next.away_team_id:next.home_team_id):null;
@@ -34,7 +34,7 @@ export async function GET(_request:Request,context:{params:Promise<{abbr:string}
    const r=results.find((x:{game_id:string})=>x.game_id===g.game_id);
    if(!r||r.home_score===null||r.away_score===null)return null;
    const diff=(g.home_team_id===team?1:-1)*(r.home_score-r.away_score);
-   return {game_id:g.game_id,diff,result:diff>0?'W':diff<0?'L':'T'};
+   return {game_id:g.game_id,kickoff_utc:(g as typeof g & {kickoff_utc:string}).kickoff_utc,home_team_id:g.home_team_id,away_team_id:g.away_team_id,home_score:r.home_score,away_score:r.away_score,diff,result:diff>0?'W':diff<0?'L':'T'};
   }).filter(Boolean);
   const wins=recent.filter((x:{result:string})=>x.result==='W').length;
   const losses=recent.filter((x:{result:string})=>x.result==='L').length;
@@ -44,6 +44,6 @@ export async function GET(_request:Request,context:{params:Promise<{abbr:string}
    ownRisk?'Le dernier effectif recensé signale '+ownRisk.high_usage_missing+' joueur(s) historiquement très utilisés qui ne figurent pas parmi les actifs. Cela exige une validation des blessures et des statuts avant-match.':'Les données disponibles ne permettent pas encore d’évaluer avec précision les changements d’effectif.',
    next?'Le prochain adversaire identifié au calendrier est '+opponent+'. Les probabilités affichées plus bas utilisent un modèle historique préliminaire, sans confirmation du lineup.':'Aucune rencontre future identifiée pour cette équipe.'
   ];
-  return NextResponse.json({team,opponent,next,recent,wins,losses,narrative,probability:probability[0]||null,explanation:explanation[0]||null,rosterRisk:ownRisk,replacements,players:players.filter((x:{team_id:string})=>x.team_id===team||x.team_id===opponent),injuries,injuryStatus:'unverified_not_available',oddsStatus:'not_verified',recommendedBets:[],updatedAt:new Date().toISOString()},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({team,opponent,next,upcoming:schedule,recent,wins,losses,narrative,probability:probability[0]||null,explanation:explanation[0]||null,rosterRisk:ownRisk,replacements,players:players.filter((x:{team_id:string})=>x.team_id===team||x.team_id===opponent),injuries,injuryStatus:'unverified_not_available',oddsStatus:'not_verified',recommendedBets:[],updatedAt:new Date().toISOString()},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({error:'team_data_unavailable'},{status:502})}
 }
