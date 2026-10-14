@@ -1,5 +1,5 @@
 {
-  "created_utc": "2026-10-14T02:48:50.111159+00:00",
+  "created_utc": "2026-10-14T02:50:42.494566+00:00",
   "seasons": [
     2023,
     2024,
@@ -77,14 +77,18 @@
       ]
     },
     "snap_counts_2023": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 26540,
+      "columns": 16,
+      "checks": [],
+      "total_null_cells": 0
     },
     "rosters_weekly_2023": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 45655,
+      "columns": 36,
+      "checks": [],
+      "total_null_cells": 195414
     },
     "pbp_2024": {
       "status": "ok",
@@ -156,14 +160,18 @@
       ]
     },
     "snap_counts_2024": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 26615,
+      "columns": 16,
+      "checks": [],
+      "total_null_cells": 0
     },
     "rosters_weekly_2024": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 46579,
+      "columns": 36,
+      "checks": [],
+      "total_null_cells": 208467
     },
     "pbp_2025": {
       "status": "ok",
@@ -235,14 +243,18 @@
       ]
     },
     "snap_counts_2025": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 26613,
+      "columns": 16,
+      "checks": [],
+      "total_null_cells": 0
     },
     "rosters_weekly_2025": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 46849,
+      "columns": 36,
+      "checks": [],
+      "total_null_cells": 165556
     },
     "pbp_2026": {
       "status": "ok",
@@ -314,14 +326,18 @@
       ]
     },
     "snap_counts_2026": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 7370,
+      "columns": 16,
+      "checks": [],
+      "total_null_cells": 0
     },
     "rosters_weekly_2026": {
-      "status": "error",
-      "error_type": "AttributeError",
-      "error": "'int' object has no attribute 'item'"
+      "status": "ok",
+      "rows": 15293,
+      "columns": 36,
+      "checks": [],
+      "total_null_cells": 59550
     }
   },
   "warnings": [
