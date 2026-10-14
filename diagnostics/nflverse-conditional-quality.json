@@ -1,0 +1,332 @@
+{
+  "created_utc": "2026-10-14T02:48:50.111159+00:00",
+  "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "datasets": {
+    "pbp_2023": {
+      "status": "ok",
+      "rows": 49665,
+      "columns": 372,
+      "checks": [
+        {
+          "rule": "pass_air_yards",
+          "status": "ok",
+          "eligible": 20797,
+          "non_null": 19250,
+          "eligible_non_null_pct": 92.56
+        },
+        {
+          "rule": "pass_location",
+          "status": "ok",
+          "eligible": 20797,
+          "non_null": 19184,
+          "eligible_non_null_pct": 92.24
+        },
+        {
+          "rule": "pass_length",
+          "status": "ok",
+          "eligible": 20797,
+          "non_null": 19184,
+          "eligible_non_null_pct": 92.24
+        },
+        {
+          "rule": "rush_run_location",
+          "status": "ok",
+          "eligible": 15332,
+          "non_null": 14723,
+          "eligible_non_null_pct": 96.03
+        },
+        {
+          "rule": "rush_run_gap",
+          "status": "ok",
+          "eligible": 15332,
+          "non_null": 10816,
+          "eligible_non_null_pct": 70.55
+        },
+        {
+          "rule": "completed_pass_yac",
+          "status": "ok",
+          "eligible": 12427,
+          "non_null": 12427,
+          "eligible_non_null_pct": 100.0
+        }
+      ],
+      "identity_check": {
+        "keys": [
+          "game_id",
+          "play_id"
+        ],
+        "duplicate_groups": 0
+      }
+    },
+    "player_stats_2023": {
+      "status": "ok",
+      "rows": 18643,
+      "columns": 150,
+      "checks": [
+        {
+          "rule": "passing_cpoe_on_pass_attempts",
+          "eligible": 700,
+          "non_null": 696,
+          "eligible_non_null_pct": 99.43
+        }
+      ]
+    },
+    "snap_counts_2023": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    },
+    "rosters_weekly_2023": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    },
+    "pbp_2024": {
+      "status": "ok",
+      "rows": 49492,
+      "columns": 372,
+      "checks": [
+        {
+          "rule": "pass_air_yards",
+          "status": "ok",
+          "eligible": 20082,
+          "non_null": 18580,
+          "eligible_non_null_pct": 92.52
+        },
+        {
+          "rule": "pass_location",
+          "status": "ok",
+          "eligible": 20082,
+          "non_null": 18505,
+          "eligible_non_null_pct": 92.15
+        },
+        {
+          "rule": "pass_length",
+          "status": "ok",
+          "eligible": 20082,
+          "non_null": 18505,
+          "eligible_non_null_pct": 92.15
+        },
+        {
+          "rule": "rush_run_location",
+          "status": "ok",
+          "eligible": 15481,
+          "non_null": 14880,
+          "eligible_non_null_pct": 96.12
+        },
+        {
+          "rule": "rush_run_gap",
+          "status": "ok",
+          "eligible": 15481,
+          "non_null": 11138,
+          "eligible_non_null_pct": 71.95
+        },
+        {
+          "rule": "completed_pass_yac",
+          "status": "ok",
+          "eligible": 12136,
+          "non_null": 12136,
+          "eligible_non_null_pct": 100.0
+        }
+      ],
+      "identity_check": {
+        "keys": [
+          "game_id",
+          "play_id"
+        ],
+        "duplicate_groups": 0
+      }
+    },
+    "player_stats_2024": {
+      "status": "ok",
+      "rows": 18983,
+      "columns": 150,
+      "checks": [
+        {
+          "rule": "passing_cpoe_on_pass_attempts",
+          "eligible": 697,
+          "non_null": 694,
+          "eligible_non_null_pct": 99.57
+        }
+      ]
+    },
+    "snap_counts_2024": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    },
+    "rosters_weekly_2024": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    },
+    "pbp_2025": {
+      "status": "ok",
+      "rows": 48771,
+      "columns": 372,
+      "checks": [
+        {
+          "rule": "pass_air_yards",
+          "status": "ok",
+          "eligible": 19819,
+          "non_null": 18369,
+          "eligible_non_null_pct": 92.68
+        },
+        {
+          "rule": "pass_location",
+          "status": "ok",
+          "eligible": 19819,
+          "non_null": 18288,
+          "eligible_non_null_pct": 92.28
+        },
+        {
+          "rule": "pass_length",
+          "status": "ok",
+          "eligible": 19819,
+          "non_null": 18288,
+          "eligible_non_null_pct": 92.28
+        },
+        {
+          "rule": "rush_run_location",
+          "status": "ok",
+          "eligible": 15347,
+          "non_null": 14767,
+          "eligible_non_null_pct": 96.22
+        },
+        {
+          "rule": "rush_run_gap",
+          "status": "ok",
+          "eligible": 15347,
+          "non_null": 10858,
+          "eligible_non_null_pct": 70.75
+        },
+        {
+          "rule": "completed_pass_yac",
+          "status": "ok",
+          "eligible": 11749,
+          "non_null": 11748,
+          "eligible_non_null_pct": 99.99
+        }
+      ],
+      "identity_check": {
+        "keys": [
+          "game_id",
+          "play_id"
+        ],
+        "duplicate_groups": 0
+      }
+    },
+    "player_stats_2025": {
+      "status": "ok",
+      "rows": 19422,
+      "columns": 150,
+      "checks": [
+        {
+          "rule": "passing_cpoe_on_pass_attempts",
+          "eligible": 684,
+          "non_null": 677,
+          "eligible_non_null_pct": 98.98
+        }
+      ]
+    },
+    "snap_counts_2025": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    },
+    "rosters_weekly_2025": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    },
+    "pbp_2026": {
+      "status": "ok",
+      "rows": 13842,
+      "columns": 372,
+      "checks": [
+        {
+          "rule": "pass_air_yards",
+          "status": "ok",
+          "eligible": 5617,
+          "non_null": 5231,
+          "eligible_non_null_pct": 93.13
+        },
+        {
+          "rule": "pass_location",
+          "status": "ok",
+          "eligible": 5617,
+          "non_null": 5207,
+          "eligible_non_null_pct": 92.7
+        },
+        {
+          "rule": "pass_length",
+          "status": "ok",
+          "eligible": 5617,
+          "non_null": 5207,
+          "eligible_non_null_pct": 92.7
+        },
+        {
+          "rule": "rush_run_location",
+          "status": "ok",
+          "eligible": 4225,
+          "non_null": 4070,
+          "eligible_non_null_pct": 96.33
+        },
+        {
+          "rule": "rush_run_gap",
+          "status": "ok",
+          "eligible": 4225,
+          "non_null": 2917,
+          "eligible_non_null_pct": 69.04
+        },
+        {
+          "rule": "completed_pass_yac",
+          "status": "ok",
+          "eligible": 3365,
+          "non_null": 3365,
+          "eligible_non_null_pct": 100.0
+        }
+      ],
+      "identity_check": {
+        "keys": [
+          "game_id",
+          "play_id"
+        ],
+        "duplicate_groups": 0
+      }
+    },
+    "player_stats_2026": {
+      "status": "ok",
+      "rows": 5506,
+      "columns": 150,
+      "checks": [
+        {
+          "rule": "passing_cpoe_on_pass_attempts",
+          "eligible": 184,
+          "non_null": 182,
+          "eligible_non_null_pct": 98.91
+        }
+      ]
+    },
+    "snap_counts_2026": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    },
+    "rosters_weekly_2026": {
+      "status": "error",
+      "error_type": "AttributeError",
+      "error": "'int' object has no attribute 'item'"
+    }
+  },
+  "warnings": [
+    "Conditional eligibility is approximate until definitions are validated against nflverse dictionary.",
+    "Missing on eligible events is a flag for investigation, not proof of corruption.",
+    "QB and injuries as-of publication cannot be verified from aggregates alone."
+  ]
+}
