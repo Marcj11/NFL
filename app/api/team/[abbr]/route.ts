@@ -19,10 +19,11 @@ export async function GET(_request:Request,context:{params:Promise<{abbr:string}
    query('games',{or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'lt.'+new Date().toISOString(),order:'kickoff_utc.desc',limit:'5'})
   ]);
   const next=schedule[0]||null;const opponent=next?(next.home_team_id===team?next.away_team_id:next.home_team_id):null;
-  const [results,probability,risk]=await Promise.all([
+  const [results,probability,risk,explanation]=await Promise.all([
    history.length?query('game_results',{game_id:'in.('+history.map((x:{game_id:string})=>x.game_id).join(',')+')',limit:'5'}).catch(()=>[]):Promise.resolve([]),
    next?query('nfl_studio_upcoming_moneyline_preview_v1',{game_id:'eq.'+next.game_id,limit:'1'}).catch(()=>[]):Promise.resolve([]),
-   next?query('nfl_studio_roster_disruption_v1',{game_id:'eq.'+next.game_id,limit:'2'}).catch(()=>[]):Promise.resolve([])
+   next?query('nfl_studio_roster_disruption_v1',{game_id:'eq.'+next.game_id,limit:'2'}).catch(()=>[]):Promise.resolve([]),
+   next?query('nfl_studio_moneyline_explanation_v1',{game_id:'eq.'+next.game_id,limit:'1'}).catch(()=>[]):Promise.resolve([])
   ]);
   const injuries:{name:string;status:string;detail:string;returnEstimate:string}[]=[];
   // No unreliable ESPN scraping: the endpoint intentionally returns no verified current injury names
@@ -41,6 +42,6 @@ export async function GET(_request:Request,context:{params:Promise<{abbr:string}
    ownRisk?'Le dernier effectif recensé signale '+ownRisk.high_usage_missing+' joueur(s) historiquement très utilisés qui ne figurent pas parmi les actifs. Cela exige une validation des blessures et des statuts avant-match.':'Les données disponibles ne permettent pas encore d’évaluer avec précision les changements d’effectif.',
    next?'Le prochain adversaire identifié au calendrier est '+opponent+'. Les probabilités affichées plus bas utilisent un modèle historique préliminaire, sans confirmation du lineup.':'Aucune rencontre future identifiée pour cette équipe.'
   ];
-  return NextResponse.json({team,opponent,next,recent,wins,losses,narrative,probability:probability[0]||null,rosterRisk:ownRisk,injuries,injuryStatus:'unverified_not_available',oddsStatus:'not_verified',recommendedBets:[],updatedAt:new Date().toISOString()},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({team,opponent,next,recent,wins,losses,narrative,probability:probability[0]||null,explanation:explanation[0]||null,rosterRisk:ownRisk,injuries,injuryStatus:'unverified_not_available',oddsStatus:'not_verified',recommendedBets:[],updatedAt:new Date().toISOString()},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({error:'team_data_unavailable'},{status:502})}
 }
