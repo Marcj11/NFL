@@ -1,0 +1,34 @@
+name: NFL compact officials
+on:
+  push:
+    paths:
+      - '.github/workflows/compact-officials.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_COMPACT_SUPABASE_URL }}
+      NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - id: load
+        continue-on-error: true
+        run: python scripts/import_officials_compact.py > officials.log 2>&1
+      - if: always()
+        run: |
+          mkdir -p diagnostics
+          cp officials.log diagnostics/compact-officials.log
+          git config user.name github-actions
+          git config user.email github-actions@users.noreply.github.com
+          git add diagnostics/compact-officials.log
+          git diff --cached --quiet || (git commit -m 'Record game officials import' && git pull --rebase && git push)
+      - if: steps.load.outcome == 'failure'
+        run: exit 1
