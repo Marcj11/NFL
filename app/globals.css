@@ -197,3 +197,30 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 @media(max-width:800px){.studio-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-quick-card{min-height:130px}}
 @media(max-width:700px){.studio-quick-access{padding:13px;margin:12px 0;border-radius:15px}.studio-quick-grid{gap:9px}.studio-quick-heading strong{font-size:16px}.studio-quick-card{padding:13px 11px;min-height:133px}.studio-quick-card strong{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.studio-quick-card{transition:none}.studio-quick-card:hover{transform:none}}
+
+
+/* Four approved screens - targeted fidelity pass */
+.studio-hero{border:1px solid #468aca!important;border-radius:19px!important;box-shadow:inset 0 0 55px #0c62a04d,0 12px 38px #0009,0 0 28px #1378cc26!important}
+.studio-hero-inner{padding:34px 20px!important;text-align:center}
+.studio-kicker{letter-spacing:3px!important;font-weight:850!important;color:#a5deff!important;text-shadow:0 0 14px #238afa85}
+.studio-hero-title{font-weight:950!important;letter-spacing:2px!important;text-transform:uppercase!important;color:#fff!important;text-shadow:0 2px 0 #0b1d32,0 0 24px #2c9eff9c,0 0 54px #2370db55!important}
+.studio-hero-inner>p{color:#c6ddf5!important;font-size:14px!important;line-height:1.5!important}
+.market-tabs button{border:1px solid #3a70a2!important;box-shadow:inset 0 1px #ffffff14,0 5px 15px #0005!important;letter-spacing:.3px}
+.market-tabs button[aria-selected=true]{background:linear-gradient(140deg,#137cdd,#123873)!important;border-color:#7cc7ff!important;box-shadow:0 0 20px #248fff73,inset 0 1px #b6e5ff70!important}
+.market-tabs button:last-child[aria-selected=true]{background:linear-gradient(135deg,#a66b2a,#3c271e)!important;border-color:#ffe1a0!important;box-shadow:0 0 25px #ffc05e80!important}
+.studio-pick-card{border-radius:17px!important;overflow:hidden;position:relative}
+.studio-pick-card .pick-art{border-radius:10px;box-shadow:inset 0 -28px 25px #03152890}
+.studio-pick-card .pick-rank{font-weight:950;font-style:italic;letter-spacing:-1px}
+.studio-pick-card h3{color:white;text-shadow:0 2px 11px #000a}
+.studio-pick-card .pick-action{min-height:44px;border-radius:10px!important;transition:filter .18s,transform .18s}
+.studio-pick-card .pick-action:hover{filter:brightness(1.16);transform:translateY(-1px)}
+.heavy-hero{border-color:#e4b468!important;box-shadow:inset 0 0 65px #9f742d44,0 0 30px #bf8b3e44!important}
+.heavy-emblem{filter:drop-shadow(0 0 18px #d3a45465)}
+.studio-bet-kpis>div{border:1px solid #3678a3;background:radial-gradient(circle at top right,#19588b70,transparent 60%),linear-gradient(155deg,#123a58,#0a1c30);box-shadow:inset 0 1px #ffffff1b,0 0 20px #1579c225}
+.season-analytics>div{border-color:#3a83bd!important;box-shadow:0 12px 25px #0005,inset 0 1px #ffffff19!important}
+.season-chart svg{filter:drop-shadow(0 0 7px #44cfa84d)}
+.season-ring{filter:drop-shadow(0 0 17px #17cdb044)}
+.live-bet-row{box-shadow:inset 0 0 33px #167cba2f,0 9px 22px #0007!important;transition:border-color .18s,transform .18s}
+.live-bet-row:hover{transform:translateY(-2px);border-color:#75bcf7}
+@media(max-width:700px){.studio-hero-inner{padding:27px 11px!important}.studio-hero-title{font-size:clamp(26px,8.5vw,39px)!important;letter-spacing:.4px!important}.studio-hero-inner>p{font-size:12px!important}.studio-pick-card{border-radius:13px!important}.studio-pick-card .pick-action{min-height:43px}.studio-bet-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.studio-bet-kpis>div{min-width:0}.studio-bet-kpis strong{font-size:16px!important;overflow-wrap:anywhere}.live-bet-row:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.live-bet-row,.studio-pick-card .pick-action{transition:none!important;transform:none!important}}
