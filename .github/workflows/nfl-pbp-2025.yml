@@ -1,0 +1,44 @@
+name: NFL Supabase PBP historical import
+on:
+  push:
+    paths:
+      - '.github/workflows/nfl-pbp-2024.yml'
+      - 'scripts/import_pbp_supabase.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-pbp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NFL_PBP_SEASON: '2025'
+      SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - name: Import with error capture
+        id: import
+        continue-on-error: true
+        run: python scripts/import_pbp_supabase.py > /tmp/pbp-import.log 2>&1
+      - name: Save sanitized diagnostic
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,pathlib,re
+          raw=pathlib.Path('/tmp/pbp-import.log').read_text() if pathlib.Path('/tmp/pbp-import.log').exists() else 'No output'
+          raw=re.sub(r'sb_secret_[A-Za-z0-9_-]+','[REDACTED]',raw)
+          raw=re.sub(r'eyJ[A-Za-z0-9_.-]{30,}','[REDACTED]',raw)
+          pathlib.Path('diagnostics/pbp-import-2025-log.json').write_text(json.dumps({'log_tail':raw[-3000:]}))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/pbp-import-2025-log.json
+          git diff --cached --quiet || (git commit -m 'Record PBP import diagnostics' && git push)
+      - name: Fail if import failed
+        if: steps.import.outcome == 'failure'
+        run: exit 1
