@@ -4,7 +4,7 @@ Dry-run is default. Never handles bookmaker API quota.
 import os, sys, json, hashlib, datetime
 import nflreadpy as nfl
 from supabase import create_client
-from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 def main():
     season=int(os.getenv("NFL_SEASON","2024"))
@@ -37,12 +37,9 @@ def main():
                 rejected+=1;continue
             dt=f'{row["gameday"]}T{row["gametime"]}'
             try:
-                # schedule local-time conversion must be proven; DO NOT assume gametime timezone!
-                # use validated universal kickoff field only
-                kickoff=row.get("start_time")
-                if kickoff is None or "+" not in str(kickoff) and not str(kickoff).endswith("Z"):
-                    rejected+=1;continue
-                payload.append({"game_id":str(row["game_id"]),"season":season,"week":int(row["week"]),"kickoff_utc":str(kickoff),"home_team_id":row["home_team"],"away_team_id":row["away_team"],"status":"scheduled"})
+                kickoff=datetime.datetime.fromisoformat(dt).replace(tzinfo=ZoneInfo("America/New_York")).astimezone(datetime.timezone.utc).isoformat()
+                completed=row.get("home_score") is not None and row.get("away_score") is not None
+                payload.append({"game_id":str(row["game_id"]),"season":season,"week":int(row["week"]),"kickoff_utc":kickoff,"home_team_id":row["home_team"],"away_team_id":row["away_team"],"status":"completed" if completed else "scheduled"})
             except Exception:rejected+=1
         if payload:
             db.table("games").upsert(payload,on_conflict="game_id").execute();accepted+=len(payload)
