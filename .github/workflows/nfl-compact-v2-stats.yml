@@ -1,5 +1,8 @@
 name: NFL Studio Compact V2 Stats Import
 on:
+  push:
+    paths:
+      - '.github/workflows/nfl-compact-v2-stats.yml'
   workflow_dispatch:
     inputs:
       season:
@@ -18,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      NFL_STATS_SEASON: ${{ inputs.season }}
+      NFL_STATS_SEASON: ${{ inputs.season || '2026' }}
       NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_COMPACT_SUPABASE_URL }}
       NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY }}
     steps:
