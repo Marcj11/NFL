@@ -1,0 +1,30 @@
+name: NFL relational integrity audit
+on:
+  push:
+    paths:
+      - '.github/workflows/nflverse-relational-integrity.yml'
+      - 'scripts/audit_nflverse_relational.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: nflverse-relational
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars
+      - run: python scripts/audit_nflverse_relational.py
+      - name: Commit report
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/nflverse-relational-integrity.json || true
+          git diff --cached --quiet || (git commit -m "Report relational integrity of NFL datasets" && git push)
