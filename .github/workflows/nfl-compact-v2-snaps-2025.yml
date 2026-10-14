@@ -1,0 +1,41 @@
+name: Compact V2 snaps 2025
+on:
+  push:
+    paths:
+      - '.github/workflows/nfl-compact-v2-snaps-2025.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NFL_SEASON: '2025'
+      NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_COMPACT_SUPABASE_URL }}
+      NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - id: import
+        continue-on-error: true
+        run: python scripts/import_compact_v2_snaps.py > /tmp/compact.log 2>&1
+      - name: Save diagnostic
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,pathlib,re
+          p=pathlib.Path('/tmp/compact.log')
+          v=p.read_text() if p.exists() else 'No log'
+          v=re.sub(r'sb_secret_[A-Za-z0-9_-]+','[REDACTED]',v)
+          pathlib.Path('diagnostics/compact-v2-snaps-2025.json').write_text(json.dumps({'log_tail':v[-4000:]}))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/compact-v2-snaps-2025.json
+          git diff --cached --quiet || (git commit -m 'Record snaps 2025 compact import result' && git pull --rebase && git push)
+      - if: steps.import.outcome == 'failure'
+        run: exit 1
