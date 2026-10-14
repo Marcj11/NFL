@@ -52,7 +52,7 @@ for year in YEARS:
      info["checks"].append({"rule":"passing_cpoe_on_pass_attempts","eligible":n,"non_null":valid,"eligible_non_null_pct":round(100*valid/n,2) if n else None})
     else:info["checks"].append({"rule":"passing_cpoe_on_pass_attempts","status":"schema_check_required","columns_present":list(c for c in ("attempts","passing_cpoe") if c in cols)})
    else:
-    info["total_null_cells"]=int(df.null_count().sum_horizontal().sum().item())
+    info["total_null_cells"]=int(df.null_count().sum_horizontal().sum())
    report["datasets"][key]=info
   except Exception as e:
    report["datasets"][key]={"status":"error","error_type":type(e).__name__,"error":str(e)[:450]}
