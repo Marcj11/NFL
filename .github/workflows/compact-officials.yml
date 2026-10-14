@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/compact-officials.yml'
+      - 'scripts/import_officials_compact.py'
   workflow_dispatch:
 permissions:
   contents: write
