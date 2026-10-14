@@ -1,0 +1,33 @@
+name: NFL simulation core tests
+on:
+  push:
+    paths:
+      - 'engine/**'
+      - '.github/workflows/engine-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run deterministic tests
+        run: |
+          mkdir -p diagnostics
+          set +e
+          node --experimental-strip-types engine/matchup.test.mts > diagnostics/engine-test-output.txt 2>&1
+          CODE=$?
+          set -e
+          echo "exit_code=$CODE" >> diagnostics/engine-test-output.txt
+      - name: Commit test report
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/engine-test-output.txt
+          git diff --cached --quiet || (git commit -m "Report NFL engine test results" && git push)
