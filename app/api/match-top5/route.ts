@@ -33,6 +33,27 @@ export async function GET(req:Request){
  const marketGame=payload.find((g:any)=>g.home_team===names[target.home_team_id]&&g.away_team===names[target.away_team_id]&&Math.abs(Date.parse(g.commence_time)-Date.parse(target.kickoff_utc))<86400000);
  const offers=new Map<string,Offer>();
  for(const b of marketGame?.bookmakers||[])for(const m of b.markets||[]){if(!['h2h','spreads','totals'].includes(m.key))continue;for(const o of m.outcomes||[]){const d=decimal(o.price);if(!Number.isFinite(d)||d<=1)continue;const k=[m.key,o.name,o.point??''].join('|');const current=offers.get(k);if(!current||d>current.decimal)offers.set(k,{market:m.key,name:o.name,point:o.point,price:o.price,book:b.title,decimal:d})}}
+ const cacheGameId=marketGame?.id?String(marketGame.id).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,100):null;
+ const propStored=cacheGameId?await query('nfl_studio_live_odds_cache',{id:'eq.props_'+cacheGameId,limit:'1'}).catch(()=>[]):[];
+ const propRows=Array.isArray(propStored[0]?.payload)?propStored[0].payload:[];
+ const namesOfPlayers=[...new Set(propRows.map((x:any)=>String(x.player||'').trim()).filter((x:string)=>x.length>2))].slice(0,36);
+ const escaped=namesOfPlayers.map((x:string)=>'"'+x.replaceAll('\\','\\\\').replaceAll('"','\\"')+'"').join(',');
+ const recent=escaped?await query('nfl_studio_player_recent_prop_results_v1',{team_id:'in.('+teams.join(',')+')',display_name:'in.('+escaped+')',limit:'250'}).catch(()=>[]):[];
+ const recentByName=new Map<string,any[]>();
+ for(const row of recent){const k=String(row.display_name).toLowerCase();recentByName.set(k,[...(recentByName.get(k)||[]),row])}
+ const propCandidates=propRows.flatMap((x:any)=>{
+  const market=String(x.market),field=market==='player_pass_yds'?'passing_yards':market==='player_rush_yds'?'rushing_yards':market==='player_reception_yds'?'receiving_yards':null;
+  const name=String(x.player||''),side=String(x.side||'').toLowerCase(),line=Number(x.point),decimal=Number(x.decimal);
+  if(!field||!Number.isFinite(line)||decimal<=1||!['over','under'].includes(side))return [];
+  const games=recentByName.get(name.toLowerCase())||[];
+  if(games.length<4)return [];
+  const hits=games.filter(g=>side==='over'?Number(g[field])>line:Number(g[field])<line).length;
+  const observed=hits/games.length;
+  const probability=(hits+1)/(games.length+2);
+  return [{market,player:name,name,point:line,decimal,book:String(x.book),signal:observed*100,probability,probability_kind:'five_game_smoothed_frequency',status:'exploratory_not_calibrated',angle:name+' a '+(side==='over'?'dépassé':'terminé sous')+' '+line+' verges lors de '+hits+' de ses '+games.length+' derniers matchs. Fréquence historique lissée : '+Math.round(probability*100)+' %. Échantillon réduit, sans garantie ni confirmation de disponibilité.',side}];
+ });
+ const bestProps=new Map<string,(typeof propCandidates)[number]>();
+ for(const x of propCandidates){const k=x.market+'|'+x.player+'|'+x.side+'|'+x.point;const old=bestProps.get(k);if(!old||x.decimal>old.decimal)bestProps.set(k,x)}
  const playerInsights=teams.map(team=>{
  const list=(playerRows as any[]).filter(p=>p.team_id===team&&Number(p.history_games)>=3);
  const best=(position:string,field:string)=>list.filter(p=>p.position===position&&Number(p[field])>0).sort((a,b)=>Number(b[field])-Number(a[field]))[0];
@@ -57,6 +78,8 @@ export async function GET(req:Request){
  const best=candidates.sort((a,b)=>Math.abs(b.signal)-Math.abs(a.signal));
  const selected:typeof best=[];const used=new Set<string>();
  for(const o of best){const group=o.market+'|'+(o.market==='h2h'?o.name:o.market==='totals'?o.name:o.name);if(used.has(group))continue;used.add(group);selected.push(o);if(selected.length===5)break}
- return NextResponse.json({game_id:id,stats,model:'recent_team_scores_plus_player_context_v1',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,analysis:selected.map(({price,...o})=>({...o,decimal:Number(o.decimal.toFixed(2)),signal:Number(o.signal.toFixed(2)),status:'observation_not_recommendation'}))},{headers:{'Cache-Control':'no-store'}});
+ const teamSelections=selected.map(({price,...o})=>({...o,decimal:Number(o.decimal.toFixed(2)),signal:Number(o.signal.toFixed(2)),status:'observation_not_recommendation'}));
+ const combined=[...bestProps.values(),...teamSelections].sort((a:any,b:any)=>(Number(b.probability)||1/Number(b.decimal))-(Number(a.probability)||1/Number(a.decimal))).slice(0,5);
+ return NextResponse.json({game_id:id,stats,model:'recent_player_prop_frequency_and_team_form_v2',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,analysis:combined},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
