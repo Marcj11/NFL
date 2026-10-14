@@ -1,9 +1,5 @@
 name: NFL Compact Stats 2024 Import
 on:
-  push:
-    paths:
-      - '.github/workflows/nfl-stats-compact-2024.yml'
-      - 'scripts/import_player_stats_compact.py'
   workflow_dispatch:
 permissions:
   contents: write
