@@ -16,15 +16,16 @@ export default function TeamPage(){
  const [pregame,setPregame]=useState<{fetchedAt:string;status:string;officialInactivesVerified:boolean;reports:{team:string;rosterAvailable:boolean;injuryFeedAvailable:boolean;rosterCount:number;injuries:{name:string;status:string;detail:string;photo:string|null;position:string|null}[]}[]}|null>(null);
  const [propsData,setPropsData]=useState<{status:string;fetchedAt?:string;props:{market:string;player:string;side:string;point:number;decimal:number;book:string}[]}|null>(null);
  const [liveLoading,setLiveLoading]=useState(false);
- useEffect(()=>{if(!data?.next||!data.opponent)return;let active=true;setLiveLoading(true);
- const names=teams[data.next.home_team_id]?.[0]||'',away=teams[data.next.away_team_id]?.[0]||'';
- Promise.allSettled([fetch('/api/pregame-status?teams='+data.next.home_team_id+','+data.next.away_team_id,{cache:'no-store'}).then(r=>r.json()),fetch('/api/match-player-props?home='+encodeURIComponent(names)+'&away='+encodeURIComponent(away),{cache:'no-store'}).then(r=>r.json())]).then(([a,b])=>{if(!active)return;setPregame(a.status==='fulfilled'?a.value:null);setPropsData(b.status==='fulfilled'?b.value:null);setLiveLoading(false)});return()=>{active=false}},[data?.next?.game_id,analysisNonce]);
 
  const [analysisRequestedAt,setAnalysisRequestedAt]=useState<string|null>(null);
  const [analysisNonce,setAnalysisNonce]=useState(0);
  const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;point?:number;book:string;decimal:number;signal:number;angle:string;status:string}[]}|null>(null);
  useEffect(()=>{if(!data?.next?.game_id){setAnalysis(null);return}let active=true;setAnalysisRunning(true);fetch('/api/match-top5?game_id='+encodeURIComponent(data.next.game_id)+'&requested_at='+analysisNonce).then(async r=>{const j=await r.json();if(!r.ok)throw Error(j.error||'Erreur serveur '+r.status);return j}).then(j=>{if(active){setAnalysis(j);setAnalysisError('');setAnalysisRequestedAt(new Date().toISOString());setAnalysisRunning(false)}}).catch(e=>{if(active){setAnalysis(null);setAnalysisError(String(e.message));setAnalysisRunning(false)}});return()=>{active=false}},[data?.next?.game_id,analysisNonce]);
  const [error,setError]=useState(''),[loading,setLoading]=useState(true);
+ useEffect(()=>{if(!data?.next||!data.opponent)return;let active=true;setLiveLoading(true);
+ const names=teams[data.next.home_team_id]?.[0]||'',away=teams[data.next.away_team_id]?.[0]||'';
+ Promise.allSettled([fetch('/api/pregame-status?teams='+data.next.home_team_id+','+data.next.away_team_id,{cache:'no-store'}).then(r=>r.json()),fetch('/api/match-player-props?home='+encodeURIComponent(names)+'&away='+encodeURIComponent(away),{cache:'no-store'}).then(r=>r.json())]).then(([a,b])=>{if(!active)return;setPregame(a.status==='fulfilled'?a.value:null);setPropsData(b.status==='fulfilled'?b.value:null);setLiveLoading(false)});return()=>{active=false}},[data?.next?.game_id,analysisNonce]);
+
  useEffect(()=>{let live=true;setLoading(true);fetch('/api/team/'+encodeURIComponent(abbr)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'Erreur');if(live)setData(d)}).catch(e=>{if(live)setError(String(e.message))}).finally(()=>{if(live)setLoading(false)});return()=>{live=false}},[abbr]);
  if(!info)return <main style={{padding:40}}><Link href="/">Retour aux équipes</Link><h1>Équipe inconnue</h1></main>;
  const [name,primary,secondary]=info,opp=data?.opponent?teams[data.opponent]:null;const p=data?.probability&&data.next?(data.next.home_team_id===abbr?Number(data.probability.home_win_probability):Number(data.probability.away_win_probability)):null;
