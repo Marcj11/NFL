@@ -1,0 +1,29 @@
+name: NFL database readiness gates
+on:
+  push:
+    paths:
+      - '.github/workflows/nfl-data-readiness.yml'
+      - 'scripts/check_data_readiness.py'
+      - 'diagnostics/nflverse-*.json'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: nfl-data-readiness
+  cancel-in-progress: false
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/check_data_readiness.py
+      - name: Persist report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/nfl-data-readiness.json
+          git diff --cached --quiet || (git commit -m "Assess full NFL database readiness" && git push)
