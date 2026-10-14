@@ -123,3 +123,47 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .shell .empty{background:linear-gradient(130deg,#102e49,#091b2b);border-color:#35618b}
 @media(max-width:700px){.shell>aside{background:#07172a;border-bottom:1px solid #256396}.shell .hero{min-height:170px}.shell .panel{border-radius:16px}.shell .mobile-bottom-nav button[aria-current=page]{background:linear-gradient(140deg,#165c9e,#0d2f62);box-shadow:inset 0 0 0 1px #68c5ff,0 0 18px #2387e98a}}
 @media(prefers-reduced-motion:reduce){.shell .team,.shell>aside nav button{transition:none!important;transform:none!important}}
+
+
+/* Five-screen visual fidelity pass: shared broadcast finish */
+.shell{--broadcast-blue:#40b7ff;--broadcast-gold:#f4ca78;--broadcast-mint:#55e5b3}
+.shell .studio-hero{border:1px solid #568db7;border-radius:20px;overflow:hidden;box-shadow:inset 0 0 75px #0009,0 18px 45px #0008,0 0 26px #328bea26}
+.shell .studio-hero-inner{text-align:center}
+.shell .studio-kicker{display:inline-block;letter-spacing:.25em;font-size:11px;font-weight:800;color:#a8dcfc}
+.shell .studio-hero-title{font-weight:950;letter-spacing:.035em;text-transform:uppercase;background:linear-gradient(180deg,#fff 12%,#b7dbfa 57%,#63a9df);background-clip:text;-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 4px 1px #031327)}
+.shell .studio-hero-inner>p{color:#c3d8ee;letter-spacing:.03em}
+.shell .heavy-hero{border-color:#ceaa5e;box-shadow:inset 0 0 90px #0009,0 18px 45px #0008,0 0 35px #d09a3c36}
+.shell .heavy-hero .heavy-emblem{filter:drop-shadow(0 3px 0 #241807) drop-shadow(0 0 23px #d69f4f91)}
+.shell .market-tabs{scrollbar-color:#337ab5 #081a2c}
+.shell .studio-picks-grid{gap:18px}
+.shell .studio-pick-card{overflow:hidden;position:relative;border-radius:17px;border-width:1px;box-shadow:0 18px 30px #0008,inset 0 0 20px #ffffff09}
+.shell .studio-pick-card:after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 1px 0 #ffffff65,inset 0 -1px 0 #ffffff20}
+.shell .studio-pick-card .pick-art{border-radius:12px;box-shadow:inset 0 0 27px #010b1b}
+.shell .studio-pick-card .pick-rank{font-weight:950;letter-spacing:-.06em}
+.shell .studio-pick-card .pick-market{letter-spacing:.12em;font-weight:900}
+.shell .studio-pick-card .pick-metrics>div{background:linear-gradient(155deg,#112a45e8,#061424ed);border-color:#56769c70}
+.shell .studio-pick-card .pick-action{min-height:45px;border-radius:10px;transition:filter .2s,transform .2s}
+.shell .studio-pick-card .pick-action:hover{filter:brightness(1.16);transform:translateY(-2px)}
+.shell .studio-bet-kpis{margin-top:18px}
+.shell .studio-bet-kpis>div{background:radial-gradient(ellipse at 100% 0,#155b8b66,transparent 85%),linear-gradient(145deg,#102a42,#081829);border:1px solid #3e709b;box-shadow:inset 0 1px 0 #d9f1ff20,0 8px 21px #0005}
+.shell .studio-bet-kpis>div strong{letter-spacing:-.025em;font-size:clamp(17px,2.1vw,27px)}
+.shell .live-bet-row{background:linear-gradient(110deg,#122f4cf2,#081524ed),url('/stadium-night.svg') center/cover;border-radius:16px}
+.shell .season-analytics>div{box-shadow:inset 0 1px 0 #ffffff20,0 15px 32px #0007}
+.shell .season-chart svg{background:linear-gradient(180deg,#0d35551a,#0615276b);border-radius:11px}
+.shell .season-ring{filter:drop-shadow(0 0 12px #22cb9a4a)}
+.shell .nfl-fixture{transition:border-color .2s,transform .2s,box-shadow .2s}
+@media(hover:hover){.shell .nfl-fixture:hover{transform:translateY(-2px);border-color:#7ebaf3!important;box-shadow:inset 0 0 30px #18599e60,0 15px 30px #0008}}
+@media(max-width:700px){
+ .shell .studio-hero{border-radius:16px}
+ .shell .studio-kicker{font-size:9px;letter-spacing:.15em}
+ .shell .studio-hero-title{font-size:clamp(28px,8.2vw,43px);line-height:1.15}
+ .shell .studio-picks-grid{gap:12px}
+ .shell .studio-pick-card{border-radius:14px}
+ .shell .studio-pick-card .pick-rank{letter-spacing:-.04em}
+ .shell .studio-bet-kpis>div strong{font-size:17px}
+ .shell .live-bet-row{align-items:flex-start}
+ .shell .season-analytics{gap:12px}
+ .shell .season-ring{height:156px;width:156px}
+ .shell .season-ring>div{height:116px;width:116px}
+}
+@media(prefers-reduced-motion:reduce){.shell .studio-pick-card .pick-action,.shell .nfl-fixture{transition:none!important;transform:none!important}}
