@@ -18,7 +18,7 @@ export default function TeamPage(){
  useEffect(()=>{let live=true;setLoading(true);fetch('/api/team/'+encodeURIComponent(abbr)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'Erreur');if(live)setData(d)}).catch(e=>{if(live)setError(String(e.message))}).finally(()=>{if(live)setLoading(false)});return()=>{live=false}},[abbr]);
  if(!info)return <main style={{padding:40}}><Link href="/">Retour aux équipes</Link><h1>Équipe inconnue</h1></main>;
  const [name,primary,secondary]=info,opp=data?.opponent?teams[data.opponent]:null;const p=data?.probability&&data.next?(data.next.home_team_id===abbr?Number(data.probability.home_win_probability):Number(data.probability.away_win_probability)):null;
- return <main style={{maxWidth:1240,margin:'auto',padding:'24px 24px 90px',color:'#eef5fb'}}>
+ return <main style={{maxWidth:1660,margin:'auto',padding:'24px 24px 90px',color:'#eef5fb'}}>
  <Link href="/" style={{display:'inline-block',marginBottom:22,opacity:.8}}>← Retour au tableau de bord</Link>
  <section style={{minHeight:335,borderRadius:24,position:'relative',overflow:'hidden',background:'linear-gradient(125deg,'+primary+' 0%,'+primary+' 64%,'+secondary+' 100%)',padding:'44px 5%',boxShadow:'0 20px 60px #0006'}}>
  <img src={teamLogo(abbr)} alt="" style={{position:'absolute',width:400,height:400,objectFit:'contain',right:-35,top:-30,opacity:.18}}/>
