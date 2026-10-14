@@ -1,3 +1,4 @@
+raise SystemExit("STORAGE_QUOTA_PAUSE: Individual-stat imports paused pending compact schema and size verification. No database writes.")
 import os,json,hashlib,datetime,math
 import nflreadpy as nfl
 from supabase import create_client
