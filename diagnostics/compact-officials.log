@@ -1,0 +1,6 @@
+{"source_rows": 6300, "columns": ["game_id", "game_key", "official_name", "position", "jersey_number", "official_id", "season", "season_type", "week"]}
+Traceback (most recent call last):
+  File "/home/runner/work/NFL/NFL/scripts/import_officials_compact.py", line 22, in <module>
+    if len(data)<5000:raise RuntimeError("Low officials coverage")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Low officials coverage
