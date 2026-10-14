@@ -9,12 +9,13 @@ export async function GET(req:Request){
  const fetchedAt=new Date().toISOString();
  const reports=await Promise.all(names.map(async team=>{
   const base='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+slug(team);
-  const endpoints=await Promise.allSettled(['roster','injuries'].map(async suffix=>{
+  const endpoints=await Promise.allSettled(['roster','injuries','depthchart'].map(async suffix=>{
    const res=await fetch(base+'/'+suffix,{cache:'no-store',signal:AbortSignal.timeout(8000)});
    if(!res.ok)throw Error(suffix+'_'+res.status);return res.json();
   }));
   const roster=endpoints[0].status==='fulfilled'?endpoints[0].value:null;
   const injuries=endpoints[1].status==='fulfilled'?endpoints[1].value:null;
+  const depthchart=endpoints[2].status==='fulfilled'?endpoints[2].value:null;
   const athletes:Athlete[]=[];
   for(const group of roster?.athletes||[]){if(Array.isArray(group.items))athletes.push(...group.items);else athletes.push(group)}
   const photos:Record<string,string>={};
@@ -31,7 +32,16 @@ export async function GET(req:Request){
   if(Array.isArray(raw))for(const a of raw){if(Array.isArray(a.items))a.items.forEach(push);else push(a)}
   for(const a of athletes)for(const i of a.injuries||[])push({...i,athlete:a});
   const filtered=[...new Map(list.map(x=>[x.name.toLowerCase(),x])).values()];
-  return {team,rosterAvailable:Boolean(roster),injuryFeedAvailable:Boolean(injuries),photos,injuries:filtered,rosterCount:athletes.length,source:'ESPN (non équivalent à une liste officielle des inactifs NFL)'};
+  const qbCandidates:{name:string;rank:number;photo:string|null}[]=[];
+  const visit=(node:any,key:string,level:number)=>{
+   if(level>9||!node||typeof node!=='object')return;
+   if(Array.isArray(node)){for(const x of node.slice(0,150))visit(x,key,level+1);return}
+   if(/(^|[^a-z])qb([^a-z]|$)|quarterback/i.test(key)&&Array.isArray(node.athletes))for(const a of node.athletes){const athlete=a.athlete||a;const name=String(athlete.fullName||athlete.displayName||'').trim();if(name)qbCandidates.push({name,rank:Number(a.rank||a.depth||99),photo:athlete.headshot?.href||photos[name.toLowerCase()]||null})}
+   for(const [k,v] of Object.entries(node)){if(['athletes','positions','depthchart','depthcharts','QB','qb','offense','categories','items'].includes(k)||/qb|quarterback/i.test(k))visit(v,k,level+1)}
+  };
+  visit(depthchart,'root',0);qbCandidates.sort((a,b)=>a.rank-b.rank);
+
+  return {team,rosterAvailable:Boolean(roster),injuryFeedAvailable:Boolean(injuries),photos,injuries:filtered,rosterCount:athletes.length,depthchartAvailable:Boolean(depthchart),projectedQB:qbCandidates[0]||null,source:'ESPN (non équivalent à une liste officielle des inactifs NFL)'};
  }));
  return NextResponse.json({fetchedAt,reports,officialInactivesVerified:false,status:reports.some(x=>x.injuryFeedAvailable)?'partial_live':'roster_only',disclaimer:'Données ESPN, à distinguer des rapports officiels NFL et des inactifs annoncés avant la rencontre.'},{headers:{'Cache-Control':'no-store'}});
 }
