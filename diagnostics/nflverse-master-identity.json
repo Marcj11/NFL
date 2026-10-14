@@ -1,0 +1,71 @@
+{
+  "created_utc": "2026-10-14T03:02:58.483080+00:00",
+  "years": {
+    "2023": {
+      "status": "ok",
+      "rows": 26540,
+      "matched_unique": 26526,
+      "unmatched": 14,
+      "no_gsis": 0,
+      "ambiguous": 0,
+      "missing_pfr": 0,
+      "unique_pfr": 2145,
+      "examples_unmatched": [
+        "WillRo08"
+      ]
+    },
+    "2024": {
+      "status": "ok",
+      "rows": 26615,
+      "matched_unique": 26573,
+      "unmatched": 42,
+      "no_gsis": 0,
+      "ambiguous": 0,
+      "missing_pfr": 0,
+      "unique_pfr": 2192,
+      "examples_unmatched": [
+        "ShenJo00",
+        "CoopBu00",
+        "WillRo08",
+        "MurrBi00",
+        "WhitCo05",
+        "AndeAl01"
+      ]
+    },
+    "2025": {
+      "status": "ok",
+      "rows": 26613,
+      "matched_unique": 26559,
+      "unmatched": 54,
+      "no_gsis": 0,
+      "ambiguous": 0,
+      "missing_pfr": 0,
+      "unique_pfr": 2189,
+      "examples_unmatched": [
+        "HallGa01",
+        "WhitCo05",
+        "AndeAl01",
+        "JohnIs03",
+        "CartNa00",
+        "OkoyCJ00"
+      ]
+    },
+    "2026": {
+      "status": "ok",
+      "rows": 7370,
+      "matched_unique": 7356,
+      "unmatched": 14,
+      "no_gsis": 0,
+      "ambiguous": 0,
+      "missing_pfr": 0,
+      "unique_pfr": 1816,
+      "examples_unmatched": [
+        "AndeAl01",
+        "WhitCo05",
+        "OkoyCJ00"
+      ]
+    }
+  },
+  "source": "nflreadpy.load_players and load_snap_counts",
+  "rules": "Exact PFR id only; unique nonnull GSIS accepted; ambiguous quarantined"
+}
