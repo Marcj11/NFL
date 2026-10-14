@@ -50,7 +50,7 @@ export async function GET(req:Request){
   if(o.market==='totals'&&projectedTotal!==null&&o.point!==undefined){baseline=projectedTotal;signal=(o.name.toLowerCase()==='over'?projectedTotal-o.point:o.point-projectedTotal);angle='Projection indicative basée sur les points marqués et encaissés lors des cinq derniers matchs de chaque équipe.'}
   if(o.market==='spreads'&&projectedDiff!==null&&o.point!==undefined){const side=o.name===names[target.home_team_id]?projectedDiff:-projectedDiff;baseline=side;signal=side+o.point;angle='Comparaison entre les marges de points récentes et le handicap proposé.'}
   if(o.market==='h2h'&&projectedDiff!==null){const side=o.name===names[target.home_team_id]?projectedDiff:-projectedDiff;baseline=side;signal=side;angle='Différentiel de points attendu à partir des attaques et défenses récentes, sans estimation calibrée de probabilité.'}
-  const focus=playerInsights.find(p=>p.team_id===undefined)||playerInsights.find(p=>names[p.team]===o.name)||playerInsights[0];
+  const focus=playerInsights.find(p=>names[p.team]===o.name)||playerInsights[0];
   const context=focus?.qb?' Contexte individuel : '+focus.qb.name+' a produit '+focus.qb.passing.toFixed(0)+' verges aériennes par match sur '+focus.qb.sample+' rencontres; '+(focus.rb?focus.rb.name+' a ajouté '+focus.rb.rushing.toFixed(0)+' verges au sol par match.':'le jeu au sol reste à examiner.'):' Statistiques individuelles insuffisantes pour confirmer un avantage.';
   return {...o,baseline,signal,angle:angle+context};
  }).filter(o=>o.baseline!==null&&o.angle&&Math.abs(o.signal)>0.1);
