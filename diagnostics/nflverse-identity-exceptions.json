@@ -1,0 +1,136 @@
+{
+  "generated_at": "2026-10-14T03:04:11.620229+00:00",
+  "status": {
+    "2023": {
+      "unmatched_snap_rows": 14,
+      "unique_exception_records": 14
+    },
+    "2024": {
+      "unmatched_snap_rows": 42,
+      "unique_exception_records": 42
+    },
+    "2025": {
+      "unmatched_snap_rows": 54,
+      "unique_exception_records": 54
+    },
+    "2026": {
+      "unmatched_snap_rows": 14,
+      "unique_exception_records": 14
+    }
+  },
+  "distinct_exception_pfr": 10,
+  "exceptions": [
+    {
+      "pfr": "AndeAl01",
+      "seasons": [
+        2024,
+        2025,
+        2026
+      ],
+      "teams": [
+        "BUF"
+      ],
+      "affected_snap_rows": 44
+    },
+    {
+      "pfr": "WillRo08",
+      "seasons": [
+        2023,
+        2024
+      ],
+      "teams": [
+        "PIT"
+      ],
+      "affected_snap_rows": 20
+    },
+    {
+      "pfr": "WhitCo05",
+      "seasons": [
+        2024,
+        2025,
+        2026
+      ],
+      "teams": [
+        "SEA",
+        "LV"
+      ],
+      "affected_snap_rows": 19
+    },
+    {
+      "pfr": "OkoyCJ00",
+      "seasons": [
+        2025,
+        2026
+      ],
+      "teams": [
+        "BAL",
+        "NYG"
+      ],
+      "affected_snap_rows": 16
+    },
+    {
+      "pfr": "ShenJo00",
+      "seasons": [
+        2024
+      ],
+      "teams": [
+        "LV"
+      ],
+      "affected_snap_rows": 8
+    },
+    {
+      "pfr": "CartNa00",
+      "seasons": [
+        2025
+      ],
+      "teams": [
+        "ATL"
+      ],
+      "affected_snap_rows": 7
+    },
+    {
+      "pfr": "JohnIs03",
+      "seasons": [
+        2025
+      ],
+      "teams": [
+        "MIA"
+      ],
+      "affected_snap_rows": 4
+    },
+    {
+      "pfr": "MurrBi00",
+      "seasons": [
+        2024
+      ],
+      "teams": [
+        "CHI"
+      ],
+      "affected_snap_rows": 3
+    },
+    {
+      "pfr": "HallGa01",
+      "seasons": [
+        2025
+      ],
+      "teams": [
+        "PHI"
+      ],
+      "affected_snap_rows": 2
+    },
+    {
+      "pfr": "CoopBu00",
+      "seasons": [
+        2024
+      ],
+      "teams": [
+        "BAL"
+      ],
+      "affected_snap_rows": 1
+    }
+  ],
+  "notes": [
+    "Grouped records refer to unique weekly entries, not a correction by guessed name.",
+    "No mapping is fabricated; unresolved IDs remain in quarantine."
+  ]
+}
