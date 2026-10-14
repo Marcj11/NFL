@@ -1,0 +1,37 @@
+name: Supabase connection smoke test
+on:
+  push:
+    paths:
+      - '.github/workflows/nfl-supabase-connection-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  connection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Verify secrets without disclosing them
+        shell: python
+        run: |
+          import os, json, urllib.request, urllib.parse
+          url = os.environ.get("SUPABASE_URL", "").rstrip("/")
+          key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+          if not url.startswith("https://") or not key:
+              raise SystemExit("FAILED: one or both secrets are absent")
+          if urllib.parse.urlparse(url).hostname != "vdnanmqhwdmbwdcfuwty.supabase.co":
+              raise SystemExit("FAILED: unexpected Supabase project URL")
+          req = urllib.request.Request(
+              url + "/rest/v1/teams?select=team_id&limit=1",
+              headers={"apikey": key, "Authorization": "Bearer " + key})
+          try:
+              with urllib.request.urlopen(req, timeout=15) as response:
+                  result = json.load(response)
+          except Exception as e:
+              raise SystemExit("FAILED: Supabase read-only connection failed; check credentials and project permissions")
+          if not isinstance(result, list):
+              raise SystemExit("FAILED: unexpected Supabase response")
+          print("PASS: Supabase connected, project verified; read-only query successful.")
