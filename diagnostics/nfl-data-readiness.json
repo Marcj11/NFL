@@ -1,0 +1,89 @@
+{
+  "generated_at_utc": "2026-10-14T03:05:33.996400+00:00",
+  "status": "BLOCKED",
+  "passed": 4,
+  "total": 16,
+  "gates": {
+    "coverage_retrieval_2023_2026": {
+      "pass": true,
+      "evidence": "nflverse-conditional-quality.json",
+      "reason": "16 cross-season datasets retrievable without error"
+    },
+    "game_id_relation": {
+      "pass": true,
+      "evidence": "nflverse-relational-integrity.json",
+      "reason": "PBP game IDs map to schedule and completed scored games have PBP"
+    },
+    "play_id_uniqueness": {
+      "pass": true,
+      "evidence": "nflverse-conditional-quality.json",
+      "reason": "No duplicated non-null game/play ID pairs in observed PBP"
+    },
+    "snap_no_nulls": {
+      "pass": true,
+      "evidence": "nflverse-conditional-quality.json",
+      "reason": "Only NA-free snap rows, not player validity"
+    },
+    "perfect_unique_player_mapping": {
+      "pass": false,
+      "evidence": "nflverse-master-identity.json",
+      "reason": "Every snap needs GSIS mapping without exceptions"
+    },
+    "identity_exception_resolution": {
+      "pass": false,
+      "evidence": "nflverse-identity-exceptions.json",
+      "reason": "No unresolved PFR identities"
+    },
+    "player_week_team_join": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Exact GSIS + team + week agreement between roster, play and snaps — no passing test evidence"
+    },
+    "official_cross_source_agreement": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Validated ESPN/NFL official score, individual stats and snaps concordance — no passing test evidence"
+    },
+    "injury_all_positions_asof": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Pregame injury and inactives with publication timestamp, substitutions across all positions — no passing test evidence"
+    },
+    "coaches_and_matchups": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Coach stints, playcalling, lineup, styles and matching validated — no passing test evidence"
+    },
+    "weather_forecasts_asof": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Forecast snapshots captured before game / bet — no passing test evidence"
+    },
+    "odds_market_asof": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Book, legal market, rules, line and observed historical timestamp — no passing test evidence"
+    },
+    "historical_multi_season": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Long-term full historical audit and missingness by role — no passing test evidence"
+    },
+    "raw_ingestion_persistence": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Immutable authorized durable data storage in Supabase — no passing test evidence"
+    },
+    "dataset_licensing": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Machine-verified right to store and process each source — no passing test evidence"
+    },
+    "model_input_lineage": {
+      "pass": false,
+      "evidence": null,
+      "reason": "Provenance and feature hashes, all injuries invalidate calculations — no passing test evidence"
+    }
+  },
+  "policy": "Do not predict or propose actual bets until ALL gates passed and a separate calibration audit succeeds."
+}
