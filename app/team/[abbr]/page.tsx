@@ -88,13 +88,19 @@ return <div style={{padding:'15px 19px',background:'#122c40',borderRadius:14,mar
 <p style={{fontSize:13,color:'#aac5d4'}}>The Odds API · dernière collecte {odds?.fetched_at?new Date(odds.fetched_at).toLocaleString('fr-CA',{timeZone:'America/Toronto'}):'inconnue'} · Cotes décimales (conversion des marchés américains; pas nécessairement celles de Mise-o-jeu).</p>
 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12}}>{(['h2h','spreads','totals'] as const).map(market=>{const book=match.bookmakers?.find(b=>b.markets?.some(m=>m.key===market));const lines=book?.markets?.find(m=>m.key===market)?.outcomes||[];return <div key={market} style={{padding:18,borderRadius:12,background:'#21313f'}}><b>{market==='h2h'?'Moneyline':market==='spreads'?'Spread':'Total'}</b><p style={{color:'#a9bdca',fontSize:12}}>{book?.title||'Non disponible'}</p>{lines.map((line,i)=><p key={i}>{line.name}{line.point!==undefined?' '+line.point:''} : <b>{(line.price>0?1+line.price/100:line.price<0?1+100/Math.abs(line.price):NaN).toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2})}</b></p>)}</div>})}</div>
 <div style={{marginTop:24,borderTop:'1px solid #516475',paddingTop:18}}>
-<h3 style={{fontSize:21}}>Top 5 · Marchés à surveiller</h3>
-<p style={{color:'#adbfce'}}>Sélection des meilleures cotes décimales observées parmi les bookmakers reçus pour ce match. Ce classement compare les prix, pas la probabilité de réussite : il ne constitue pas une recommandation de mise.</p>
+<h3 style={{fontSize:21}}>5 faits intéressants · Ce match</h3>
+<p style={{color:'#adbfce'}}>Quelques angles amusants à observer : résultat, écart de points et total du match. Les cotes décimales proviennent des bookmakers recensés; ce n'est pas un classement de paris conseillés.</p>
 {(()=>{
 const all=match.bookmakers.flatMap(b=>b.markets.filter(m=>['h2h','spreads','totals'].includes(m.key)).flatMap(m=>m.outcomes.map(o=>({market:m.key,selection:o.name,point:o.point,price:o.price,book:b.title}))));
-const top=new Map<string,typeof all[number]>();
-for(const o of all){const k=o.market+'|'+o.selection+'|'+String(o.point??'');const previous=top.get(k);const decimal=(v:number)=>v>0?1+v/100:v<0?1+100/Math.abs(v):0;if(!previous||decimal(o.price)>decimal(previous.price))top.set(k,o)}
-return [...top.values()].sort((a,b)=>(b.market==='h2h'?1:0)-(a.market==='h2h'?1:0)).slice(0,5).map((o,i)=>{const decimal=o.price>0?1+o.price/100:o.price<0?1+100/Math.abs(o.price):0;return <div key={i} style={{padding:'13px 16px',background:'#213849',borderRadius:12,marginTop:9,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}><div><b>{i+1}. {o.market==='h2h'?'Moneyline':o.market==='spreads'?'Spread':'Total'} — {o.selection} {o.point!==undefined?o.point:''}</b><div style={{color:'#a8c0d0',fontSize:12,marginTop:4}}>{o.book} · Analyse du risque insuffisante : passer</div></div><strong style={{fontSize:22}}>{decimal.toFixed(2)}</strong></div>})})()}
+const dec=(v:number)=>v>0?1+v/100:v<0?1+100/Math.abs(v):0;
+const unique=new Map<string,typeof all[number]>();
+for(const o of all){const k=o.market+'|'+o.selection+'|'+String(o.point??'');const previous=unique.get(k);if(!previous||dec(o.price)>dec(previous.price))unique.set(k,o)}
+const offers=[...unique.values()].filter(o=>dec(o.price)>1);
+const pick=(market:string,predicate:(o:typeof offers[number])=>boolean)=>offers.filter(o=>o.market===market&&predicate(o)).sort((a,b)=>Math.abs(dec(a.price)-1.90)-Math.abs(dec(b.price)-1.90))[0];
+const chosen=[pick('h2h',o=>o.selection===name),pick('h2h',o=>o.selection===opp?.[0]),pick('spreads',o=>o.selection===name),pick('spreads',o=>o.selection===opp?.[0]),pick('totals',o=>o.selection.toLowerCase().includes('over'))];
+const picks=chosen.filter((o):o is typeof offers[number]=>Boolean(o));
+return picks.length?picks.map((o,i)=><div key={i} style={{padding:'13px 16px',background:'#213849',borderRadius:12,marginTop:9,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}><div><b>{i+1}. {o.market==='h2h'?'Victoire de '+o.selection:o.market==='spreads'?'Écart · '+o.selection+' '+(o.point??''):'Points totaux · Plus de '+(o.point??'')}</b><div style={{color:'#a8c0d0',fontSize:12,marginTop:4}}>{o.book} · {o.market==='h2h'?'Quelle équipe sortira gagnante ?':o.market==='spreads'?'L’écart final dépassera-t-il cette ligne ?':'Un match offensif avec beaucoup de points ?'}</div></div><strong style={{fontSize:22}}>{dec(o.price).toFixed(2)}</strong></div>):<p>Les marchés de ce match ne sont pas encore disponibles.</p>
+})()}
 </div>
 <p style={{fontSize:13,color:'#aac5d4'}}>Observation seulement : le modèle actuel n'est pas suffisamment calibré pour recommander une mise. Les cotes peuvent changer.</p>
 </>:<p>Aucune cote vérifiée trouvée pour cette rencontre. État : {odds?.status||'Chargement…'}. Les données sont rafraîchies périodiquement dans un cache partagé.</p>})()}
