@@ -1,0 +1,31 @@
+name: NFL Studio Compact V2 Stats Import
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: 'Season to import'
+        required: true
+        type: choice
+        options:
+          - '2023'
+          - '2024'
+          - '2025'
+          - '2026'
+permissions:
+  contents: read
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NFL_STATS_SEASON: ${{ inputs.season }}
+      NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_COMPACT_SUPABASE_URL }}
+      NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - name: Import compact player-game stats
+        run: python scripts/import_player_stats_compact_v2.py
