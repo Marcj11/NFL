@@ -61,3 +61,13 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .studio-pick-card.pick-3 .pick-art img{filter:drop-shadow(0 0 24px #ac78fa) drop-shadow(0 12px 11px #010b15)}
 .studio-pick-card.pick-4 .pick-art img{filter:drop-shadow(0 0 24px #55e9ad) drop-shadow(0 12px 11px #010b15)}
 @media(max-width:700px){.studio-pick-card .pick-book{grid-column:2;grid-row:4;font-size:9px;margin:2px 0 0}.studio-pick-card .pick-metrics{grid-row:2/5}.studio-pick-card .pick-art{overflow:hidden}.studio-pick-card .pick-spotlights{inset:-15% -65% -30%}}
+
+/* Layered illuminated NFL stadium artwork, CSS rather than placeholder emoji */
+.studio-hero{isolation:isolate;background:radial-gradient(ellipse at 50% 122%,#066947 0%,#0d594244 32%,transparent 57%),radial-gradient(ellipse at 17% -15%,#1b72ce88,transparent 45%),radial-gradient(ellipse at 87% -10%,#b1235380,transparent 47%),linear-gradient(180deg,#0b213c,#030b18 75%,#0b342f)}
+.studio-hero:after{content:'';position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(0deg,transparent 0 17px,#c1f9eb18 18px 19px,transparent 20px 34px);clip-path:polygon(0 80%,100% 80%,100% 100%,0 100%);opacity:.8}
+.studio-stadium-lights{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}.studio-stadium-lights span{position:absolute;top:-18px;width:140px;height:125px;background:conic-gradient(from 145deg at 50% 0%,transparent 0deg,#aee5ff5f 13deg,transparent 30deg);filter:blur(8px);opacity:.8}.studio-stadium-lights span:nth-child(1){left:4%;transform:rotate(-19deg)}.studio-stadium-lights span:nth-child(2){left:25%;transform:rotate(-7deg)}.studio-stadium-lights span:nth-child(3){right:25%;transform:rotate(8deg)}.studio-stadium-lights span:nth-child(4){right:4%;transform:rotate(19deg)}
+.studio-goalposts{position:absolute;left:calc(50% - 115px);bottom:-90px;width:230px;height:143px;border:4px solid #73f3dc37;border-bottom:0;transform:perspective(220px) rotateX(40deg);box-shadow:0 0 27px #15b8a755}.studio-hero-rule{display:flex;align-items:center;justify-content:center;gap:18px;color:#f2c568;text-shadow:0 0 11px #f4c566}.studio-hero-rule:before,.studio-hero-rule:after{content:'';width:95px;height:1px;background:linear-gradient(90deg,transparent,#e8b95d,transparent)}
+.studio-hero-title{text-shadow:0 2px 0 #101e30,0 0 27px #32b5ff9c;line-height:1.13}
+.heavy-stars{color:#f3d68a;letter-spacing:12px;font-size:12px;text-shadow:0 0 12px #ffcd68;margin-top:5px}
+.heavy-hero .studio-goalposts{border-color:#fad78455}
+@media(max-width:700px){.studio-hero-rule:before,.studio-hero-rule:after{width:48px}.studio-stadium-lights span{width:90px;height:90px}.studio-goalposts{width:170px;left:calc(50% - 85px)}}
