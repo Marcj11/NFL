@@ -1,0 +1,278 @@
+{
+  "utc": "2026-10-14T03:08:47.886289+00:00",
+  "seasons": {
+    "2023": {
+      "status": "ok",
+      "unique_snap_player_weeks": 26540,
+      "not_in_same_week_team_roster": 7605,
+      "coverage_pct": 71.345,
+      "examples": [
+        {
+          "season": 2023,
+          "week": 9,
+          "team": "MIN",
+          "pfr": "RoyxJa00"
+        },
+        {
+          "season": 2023,
+          "week": 17,
+          "team": "GB",
+          "pfr": "JohnAn08"
+        },
+        {
+          "season": 2023,
+          "week": 4,
+          "team": "LA",
+          "pfr": "RozeCh00"
+        },
+        {
+          "season": 2023,
+          "week": 20,
+          "team": "TB",
+          "pfr": "HainRo00"
+        },
+        {
+          "season": 2023,
+          "week": 22,
+          "team": "KC",
+          "pfr": "PennMi00"
+        },
+        {
+          "season": 2023,
+          "week": 9,
+          "team": "BAL",
+          "pfr": "PhilDe00"
+        },
+        {
+          "season": 2023,
+          "week": 13,
+          "team": "NYJ",
+          "pfr": "HansJa00"
+        },
+        {
+          "season": 2023,
+          "week": 7,
+          "team": "TB",
+          "pfr": "McLaCh00"
+        },
+        {
+          "season": 2023,
+          "week": 17,
+          "team": "BAL",
+          "pfr": "PierMi00"
+        },
+        {
+          "season": 2023,
+          "week": 6,
+          "team": "ATL",
+          "pfr": "DalmDr00"
+        }
+      ]
+    },
+    "2024": {
+      "status": "ok",
+      "unique_snap_player_weeks": 26615,
+      "not_in_same_week_team_roster": 8216,
+      "coverage_pct": 69.13,
+      "examples": [
+        {
+          "season": 2024,
+          "week": 2,
+          "team": "NO",
+          "pfr": "HaybMa00"
+        },
+        {
+          "season": 2024,
+          "week": 17,
+          "team": "NYG",
+          "pfr": "StinAa00"
+        },
+        {
+          "season": 2024,
+          "week": 18,
+          "team": "CHI",
+          "pfr": "SantCa01"
+        },
+        {
+          "season": 2024,
+          "week": 11,
+          "team": "SEA",
+          "pfr": "StolCh00"
+        },
+        {
+          "season": 2024,
+          "week": 1,
+          "team": "LA",
+          "pfr": "WardAl00"
+        },
+        {
+          "season": 2024,
+          "week": 16,
+          "team": "LV",
+          "pfr": "HarpTh00"
+        },
+        {
+          "season": 2024,
+          "week": 17,
+          "team": "MIN",
+          "pfr": "RobiCa00"
+        },
+        {
+          "season": 2024,
+          "week": 18,
+          "team": "TEN",
+          "pfr": "MartDa01"
+        },
+        {
+          "season": 2024,
+          "week": 13,
+          "team": "DAL",
+          "pfr": "SteeTe01"
+        },
+        {
+          "season": 2024,
+          "week": 20,
+          "team": "WAS",
+          "pfr": "ColeBr02"
+        }
+      ]
+    },
+    "2025": {
+      "status": "ok",
+      "unique_snap_player_weeks": 26613,
+      "not_in_same_week_team_roster": 5029,
+      "coverage_pct": 81.103,
+      "examples": [
+        {
+          "season": 2025,
+          "week": 9,
+          "team": "JAX",
+          "pfr": "LittWa00"
+        },
+        {
+          "season": 2025,
+          "week": 13,
+          "team": "CLE",
+          "pfr": "SunaRe00"
+        },
+        {
+          "season": 2025,
+          "week": 9,
+          "team": "BAL",
+          "pfr": "MartKe03"
+        },
+        {
+          "season": 2025,
+          "week": 11,
+          "team": "LV",
+          "pfr": "PutnWi00"
+        },
+        {
+          "season": 2025,
+          "week": 11,
+          "team": "CIN",
+          "pfr": "BrowOr00"
+        },
+        {
+          "season": 2025,
+          "week": 11,
+          "team": "TB",
+          "pfr": "WirfTr00"
+        },
+        {
+          "season": 2025,
+          "week": 3,
+          "team": "IND",
+          "pfr": "BortTa00"
+        },
+        {
+          "season": 2025,
+          "week": 15,
+          "team": "BUF",
+          "pfr": "McGoCo01"
+        },
+        {
+          "season": 2025,
+          "week": 17,
+          "team": "CIN",
+          "pfr": "WagnWi00"
+        },
+        {
+          "season": 2025,
+          "week": 11,
+          "team": "LV",
+          "pfr": "MereJo00"
+        }
+      ]
+    },
+    "2026": {
+      "status": "ok",
+      "unique_snap_player_weeks": 7370,
+      "not_in_same_week_team_roster": 1375,
+      "coverage_pct": 81.343,
+      "examples": [
+        {
+          "season": 2026,
+          "week": 1,
+          "team": "BAL",
+          "pfr": "VorhAn00"
+        },
+        {
+          "season": 2026,
+          "week": 1,
+          "team": "TB",
+          "pfr": "GoedLu00"
+        },
+        {
+          "season": 2026,
+          "week": 4,
+          "team": "LAC",
+          "pfr": "StraCo01"
+        },
+        {
+          "season": 2026,
+          "week": 1,
+          "team": "DET",
+          "pfr": "RatlTa00"
+        },
+        {
+          "season": 2026,
+          "week": 4,
+          "team": "PIT",
+          "pfr": "FrazZa00"
+        },
+        {
+          "season": 2026,
+          "week": 2,
+          "team": "LA",
+          "pfr": "QuesDa00"
+        },
+        {
+          "season": 2026,
+          "week": 5,
+          "team": "CHI",
+          "pfr": "NewmLu00"
+        },
+        {
+          "season": 2026,
+          "week": 5,
+          "team": "DET",
+          "pfr": "BoroLa00"
+        },
+        {
+          "season": 2026,
+          "week": 1,
+          "team": "LAC",
+          "pfr": "AltxJo01"
+        },
+        {
+          "season": 2026,
+          "week": 1,
+          "team": "CHI",
+          "pfr": "GardBe01"
+        }
+      ]
+    }
+  },
+  "definition": "Cross-check distinct roster PFR IDs by season/team/week against snaps. Coverage rates conditional; missing mappings quarantined. No guessed names."
+}
