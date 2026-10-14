@@ -1,0 +1,61 @@
+{
+  "checkedAt": "2026-10-14T01:38:13.622739+00:00",
+  "url": "https://nfl-studio-kldl8vmdr-marcj-1079.vercel.app/api/diagnostics/espn",
+  "httpStatus": 200,
+  "result": {
+    "ok": true,
+    "source": "ESPN (point d’acces non officiel)",
+    "reference": "Buffalo Bills officiel / Pro Football Reference",
+    "gameId": "401872994",
+    "fetchedAt": "2026-10-14T01:12:06.956Z",
+    "fetchDurationMs": 412,
+    "score": {
+      "observed": {
+        "LAR": "34",
+        "BUF": "37"
+      },
+      "expected": {
+        "BUF": 37,
+        "LAR": 34
+      },
+      "match": true
+    },
+    "comparisons": [
+      {
+        "name": "Josh Allen",
+        "category": "passing",
+        "label": "YDS",
+        "expected": "210",
+        "observed": "210",
+        "match": true
+      },
+      {
+        "name": "Josh Allen",
+        "category": "rushing",
+        "label": "YDS",
+        "expected": "121",
+        "observed": "121",
+        "match": true
+      },
+      {
+        "name": "Khalil Shakir",
+        "category": "receiving",
+        "label": "YDS",
+        "expected": "80",
+        "observed": "80",
+        "match": true
+      },
+      {
+        "name": "Puka Nacua",
+        "category": "receiving",
+        "label": "YDS",
+        "expected": "138",
+        "observed": "138",
+        "match": true
+      }
+    ],
+    "summaryError": null,
+    "liveLatencyValidated": false,
+    "note": "Le temps de telechargement ne mesure pas le retard des mises a jour ESPN."
+  }
+}
