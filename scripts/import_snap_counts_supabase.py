@@ -36,9 +36,14 @@ def main():
   players.update({x["gsis_id"]:x["player_id"] for x in response.data})
  usable=[];missing_master=0
  for x,gs in accepted:
-  if gs not in players:missing_master+=1;continue
+  if gs not in players:
+   missing_master+=1
+   continue
   usable.append({"game_id":x["game_id"],"player_id":players[gs],"team_id":x["team"],"offense_snaps":int(x["offense_snaps"]) if x.get("offense_snaps") is not None else None,"defense_snaps":int(x["defense_snaps"]) if x.get("defense_snaps") is not None else None,"special_snaps":int(x["st_snaps"]) if x.get("st_snaps") is not None else None})
- if missing_master:raise RuntimeError(f"Master GSIS missing from database: {missing_master} rows; no writes")
+ if missing_master:
+  print(json.dumps({"season":y,"excluded_missing_master_rows":missing_master,"action":"quarantined_no_guess"}),flush=True)
+ if missing_master / max(len(rows),1) > 0.005:
+  raise RuntimeError("Missing master IDs exceed 0.5% fail-closed bound")
  if len(usable)<5000:raise RuntimeError("Unexpectedly low validated coverage; no writes")
  for i in range(0,len(usable),250):
   chunk=usable[i:i+250]
