@@ -1,0 +1,1 @@
+{"log_tail": "Traceback (most recent call last):\n  File \"/home/runner/work/NFL/NFL/scripts/import_player_stats_compact_v2.py\", line 41, in <module>\n    if len(snaps)!=1:raise RuntimeError(\"Snapshot lookup failed\")\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: Snapshot lookup failed\n"}
