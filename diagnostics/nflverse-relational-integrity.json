@@ -1,0 +1,200 @@
+{
+  "created_utc": "2026-10-14T02:52:34.972099+00:00",
+  "years": [
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "checks": {
+    "2023": {
+      "pbp_rows": 49665,
+      "schedule_rows": 285,
+      "pbp_unique_game_ids": 285,
+      "scheduled_unique_game_ids": 285,
+      "pbp_without_schedule_ids": [],
+      "schedule_without_pbp_count": 0,
+      "completed_scored_schedule_without_pbp_ids": [],
+      "pbp_id_missing": {
+        "game_id": 0,
+        "play_id": 0,
+        "posteam": 2638,
+        "defteam": 2638,
+        "passer_player_id": 28868,
+        "rusher_player_id": 34333,
+        "receiver_player_id": 31215
+      },
+      "snap_rows": 26540,
+      "roster_rows": 45655,
+      "snap_id_columns": [
+        "game_id",
+        "pfr_game_id",
+        "season",
+        "week",
+        "pfr_player_id",
+        "team"
+      ],
+      "roster_id_columns": [
+        "season",
+        "team",
+        "gsis_id",
+        "espn_id",
+        "sportradar_id",
+        "yahoo_id",
+        "rotowire_id",
+        "pff_id",
+        "pfr_id",
+        "fantasy_data_id",
+        "sleeper_id",
+        "week",
+        "esb_id",
+        "gsis_it_id",
+        "smart_id"
+      ],
+      "status": "ok"
+    },
+    "2024": {
+      "pbp_rows": 49492,
+      "schedule_rows": 285,
+      "pbp_unique_game_ids": 285,
+      "scheduled_unique_game_ids": 285,
+      "pbp_without_schedule_ids": [],
+      "schedule_without_pbp_count": 0,
+      "completed_scored_schedule_without_pbp_ids": [],
+      "pbp_id_missing": {
+        "game_id": 0,
+        "play_id": 0,
+        "posteam": 2713,
+        "defteam": 2713,
+        "passer_player_id": 29410,
+        "rusher_player_id": 34011,
+        "receiver_player_id": 31644
+      },
+      "snap_rows": 26615,
+      "roster_rows": 46579,
+      "snap_id_columns": [
+        "game_id",
+        "pfr_game_id",
+        "season",
+        "week",
+        "pfr_player_id",
+        "team"
+      ],
+      "roster_id_columns": [
+        "season",
+        "team",
+        "gsis_id",
+        "espn_id",
+        "sportradar_id",
+        "yahoo_id",
+        "rotowire_id",
+        "pff_id",
+        "pfr_id",
+        "fantasy_data_id",
+        "sleeper_id",
+        "week",
+        "esb_id",
+        "gsis_it_id",
+        "smart_id"
+      ],
+      "status": "ok"
+    },
+    "2025": {
+      "pbp_rows": 48771,
+      "schedule_rows": 285,
+      "pbp_unique_game_ids": 285,
+      "scheduled_unique_game_ids": 285,
+      "pbp_without_schedule_ids": [],
+      "schedule_without_pbp_count": 0,
+      "completed_scored_schedule_without_pbp_ids": [],
+      "pbp_id_missing": {
+        "game_id": 0,
+        "play_id": 0,
+        "posteam": 2729,
+        "defteam": 2729,
+        "passer_player_id": 28952,
+        "rusher_player_id": 33424,
+        "receiver_player_id": 31189
+      },
+      "snap_rows": 26613,
+      "roster_rows": 46849,
+      "snap_id_columns": [
+        "game_id",
+        "pfr_game_id",
+        "season",
+        "week",
+        "pfr_player_id",
+        "team"
+      ],
+      "roster_id_columns": [
+        "season",
+        "team",
+        "gsis_id",
+        "espn_id",
+        "sportradar_id",
+        "yahoo_id",
+        "rotowire_id",
+        "pff_id",
+        "pfr_id",
+        "fantasy_data_id",
+        "sleeper_id",
+        "week",
+        "esb_id",
+        "gsis_it_id",
+        "smart_id"
+      ],
+      "status": "ok"
+    },
+    "2026": {
+      "pbp_rows": 13842,
+      "schedule_rows": 272,
+      "pbp_unique_game_ids": 79,
+      "scheduled_unique_game_ids": 272,
+      "pbp_without_schedule_ids": [],
+      "schedule_without_pbp_count": 193,
+      "completed_scored_schedule_without_pbp_ids": [],
+      "pbp_id_missing": {
+        "game_id": 0,
+        "play_id": 0,
+        "posteam": 753,
+        "defteam": 753,
+        "passer_player_id": 8225,
+        "rusher_player_id": 9617,
+        "receiver_player_id": 8836
+      },
+      "snap_rows": 7370,
+      "roster_rows": 15293,
+      "snap_id_columns": [
+        "game_id",
+        "pfr_game_id",
+        "season",
+        "week",
+        "pfr_player_id",
+        "team"
+      ],
+      "roster_id_columns": [
+        "season",
+        "team",
+        "gsis_id",
+        "espn_id",
+        "sportradar_id",
+        "yahoo_id",
+        "rotowire_id",
+        "pff_id",
+        "pfr_id",
+        "fantasy_data_id",
+        "sleeper_id",
+        "week",
+        "esb_id",
+        "gsis_it_id",
+        "smart_id"
+      ],
+      "status": "ok"
+    }
+  },
+  "caveats": [
+    "Schedule ids must be inspected for semantics; matched games are not necessarily fully finalized.",
+    "player identifiers may have a field naming variation across datasets.",
+    "Null and duplicate counts do not prove semantic correctness."
+  ]
+}
