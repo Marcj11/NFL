@@ -1,0 +1,23 @@
+name: NFL Supabase PBP 2024 import
+on:
+  push:
+    paths:
+      - '.github/workflows/nfl-pbp-2024.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import-pbp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NFL_PBP_SEASON: '2024'
+      SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - run: python scripts/import_pbp_supabase.py
