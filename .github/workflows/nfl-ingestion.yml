@@ -1,0 +1,30 @@
+name: NFL controlled Supabase ingestion
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: NFL season
+        required: true
+        default: '2024'
+      commit:
+        description: 'true ONLY after source license review, credentials and timezone validation'
+        required: true
+        default: 'false'
+permissions:
+  contents: read
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NFL_SEASON: ${{ inputs.season }}
+      NFL_IMPORT_COMMIT: ${{ inputs.commit }}
+      SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - run: python scripts/import_nfl_supabase.py
