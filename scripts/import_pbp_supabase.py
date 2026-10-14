@@ -36,7 +36,11 @@ def main():
         seen.add(key)
         item={"game_id":str(gid),"play_id":int(pid),"season":season}
         for src,dst in [("posteam","posteam"),("defteam","defteam"),("qtr","quarter"),("game_seconds_remaining","game_seconds_remaining"),("down","down"),("ydstogo","ydstogo"),("yardline_100","yardline_100"),("play_type","play_type"),("epa","epa"),("wp","wp"),("passer_player_id","passer_gsis_id"),("rusher_player_id","rusher_gsis_id"),("receiver_player_id","receiver_gsis_id")]:
-            item[dst]=normalize(x.get(src))
+            value=normalize(x.get(src))
+            if dst in ("quarter","game_seconds_remaining","down","ydstogo") and value is not None:
+                if not float(value).is_integer(): raise RuntimeError(f"Non-integral {dst} for {key}: {value}")
+                value=int(value)
+            item[dst]=value
         clean.append(item)
     if rejected:raise RuntimeError(f"PBP quarantined {rejected} rows; import blocked for review")
     if len(clean)<10000:raise RuntimeError(f"Unexpectedly small PBP {len(clean)}")
