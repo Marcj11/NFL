@@ -15,7 +15,7 @@ on:
           - '2025'
           - '2026'
 permissions:
-  contents: read
+  contents: write
 jobs:
   import:
     runs-on: ubuntu-latest
@@ -31,4 +31,24 @@ jobs:
           python-version: '3.12'
       - run: pip install nflreadpy polars supabase
       - name: Import compact player-game stats
-        run: python scripts/import_player_stats_compact_v2.py
+        id: ingest
+        continue-on-error: true
+        run: python scripts/import_player_stats_compact_v2.py > /tmp/compact-v2.log 2>&1
+      - name: Save sanitized diagnostics
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,pathlib,re
+          p=pathlib.Path('/tmp/compact-v2.log')
+          log=p.read_text() if p.exists() else 'No log'
+          log=re.sub(r'sb_secret_[A-Za-z0-9_-]+','[REDACTED]',log)
+          log=re.sub(r'eyJ[A-Za-z0-9_.-]{30,}','[REDACTED]',log)
+          pathlib.Path('diagnostics/compact-v2-2026.json').write_text(json.dumps({'log_tail':log[-5000:]}))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/compact-v2-2026.json
+          git diff --cached --quiet || (git commit -m 'Record compact v2 import diagnostics' && git push)
+      - name: Fail on importer error
+        if: steps.ingest.outcome == 'failure'
+        run: exit 1
