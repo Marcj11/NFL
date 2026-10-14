@@ -4,18 +4,18 @@
 // Test against the current ESPN payload before trusting any mappings. No automatic source verification.
 const { ESPN_TEAM, GAME_ID, TEAM_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
 if (!/^[a-z0-9]{2,4}$/i.test(ESPN_TEAM || '') || !/^20\d\d_\d\d_[A-Z]{2,3}_[A-Z]{2,3}$/.test(GAME_ID || '') || !/^[A-Z]{2,3}$/.test(TEAM_ID || '')) throw new Error('team and game identifiers required');
-const sourceUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${encodeURIComponent(ESPN_TEAM)}/depthchart`;
+const sourceUrl = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${encodeURIComponent(ESPN_TEAM)}/depthcharts`;
 const response = await fetch(sourceUrl, {headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)});
 if (!response.ok) throw new Error(`ESPN depthchart HTTP ${response.status}`);
 const payload = await response.json();
 const capturedAt = new Date().toISOString();
 // ESPN depth charts can evolve; fail closed on unknown structures.
-const root = payload.depthchart ?? payload.depthcharts;
+const root = payload.depthCharts ?? payload.depthcharts ?? payload.depthchart;
 const charts = Array.isArray(root) ? root : root && typeof root === 'object' ? Object.values(root) : [];
 const rows = [];
 const seen = new Set();
 for (const chart of charts) {
-  const positions = Array.isArray(chart?.positions) ? chart.positions : [];
+  const positions = Array.isArray(chart?.positions) ? chart.positions : chart?.positions && typeof chart.positions === 'object' ? Object.values(chart.positions) : [];
   for (const position of positions) {
     const abbreviation = position?.position?.abbreviation ?? position?.abbreviation;
     const entries = Array.isArray(position?.athletes) ? position.athletes : [];
