@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/nflverse-conditional-quality.yml'
+      - 'scripts/audit_nflverse_conditional.py'
 permissions:
   contents: write
 concurrency:
