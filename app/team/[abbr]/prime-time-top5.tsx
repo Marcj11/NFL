@@ -10,7 +10,7 @@ export default function PrimeTimeTop5(p:Props){
  const cards=[...p.picks].filter(x=>Number.isFinite(x.decimal)&&x.decimal>1).sort((a,b)=>(b.probability??1/b.decimal)-(a.probability??1/a.decimal)).slice(0,5);
  const awayPct=p.homeProbability!==null?100-pct(p.homeProbability):null;
  const isPlayer=(a:Pick)=>a.market.startsWith('player_');
- const target=(a:Pick)=>isPlayer(a)?(a.player||a.name)+' · '+(a.side==='Over'?'Plus de ':'Moins de ')+(a.point??'')+' '+(a.market==='player_pass_yds'?'verges à la passe':a.market==='player_rush_yds'?'verges au sol':'verges en réception'):a.market==='h2h'?'Victoire · '+a.name:a.market==='spreads'?'Handicap · '+a.name+' '+(a.point??''):'Total du match · '+(a.name.toLowerCase()==='over'?'Plus de ':'Moins de ')+(a.point??'')+' points';
+ const target=(a:Pick)=>isPlayer(a)?(a.player||a.name)+' · '+(a.side?.toLowerCase()==='over'?'Plus de ':'Moins de ')+(a.point??'')+' '+(a.market==='player_pass_yds'?'verges à la passe':a.market==='player_rush_yds'?'verges au sol':'verges en réception'):a.market==='h2h'?'Victoire · '+a.name:a.market==='spreads'?'Handicap · '+a.name+' '+(a.point??''):'Total du match · '+(a.name.toLowerCase()==='over'?'Plus de ':'Moins de ')+(a.point??'')+' points';
  const person=(a:Pick)=>isPlayer(a)?(a.player||a.name):a.market==='h2h'?a.name:a.market==='spreads'?a.name:'Total des points';
  const image=(a:Pick)=>isPlayer(a)?p.photos[(a.player||a.name).toLowerCase()]||null:a.market==='h2h'||a.market==='spreads'?logo(a.name===p.teamNames[p.home]?p.home:p.away):null;
  const date=new Date(p.kickoff);
