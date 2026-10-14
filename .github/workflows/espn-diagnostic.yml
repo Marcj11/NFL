@@ -1,0 +1,38 @@
+name: ESPN diagnostic verification
+on:
+  push:
+    paths:
+      - '.github/workflows/espn-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Query public NFL Studio diagnostic
+        run: |
+          mkdir -p diagnostics
+          python3 - <<'PY'
+          import urllib.request,json,datetime
+          url='https://nfl-studio-kldl8vmdr-marcj-1079.vercel.app/api/diagnostics/espn'
+          result={'checkedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'url':url}
+          try:
+              req=urllib.request.Request(url,headers={'User-Agent':'NFL-Studio-Diagnostic/1.0'})
+              with urllib.request.urlopen(req,timeout=20) as response:
+                  result['httpStatus']=response.status
+                  raw=response.read(120000).decode('utf-8',errors='replace')
+                  try: result['result']=json.loads(raw)
+                  except Exception: result['bodyPreview']=raw[:800]
+          except Exception as exc: result['error']=str(exc)
+          with open('diagnostics/espn-latest.json','w') as file: json.dump(result,file,indent=2,ensure_ascii=False)
+          print(json.dumps(result,ensure_ascii=False)[:1500])
+          PY
+      - name: Commit check result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/espn-latest.json
+          git diff --cached --quiet || (git commit -m "Diagnostic ESPN: rapport de verification HTTP" && git push)
