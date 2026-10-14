@@ -15,9 +15,10 @@ export async function GET(req:Request){
  const target=(await query('games',{game_id:'eq.'+id,limit:'1'}))[0] as Game|undefined;
  if(!target)return NextResponse.json({error:'not_found'},{status:404});
  const teams=[target.home_team_id,target.away_team_id];
- const [games,cache]=await Promise.all([
+ const [games,cache,playerRows]=await Promise.all([
  query('games',{or:'(home_team_id.in.('+teams.join(',')+'),away_team_id.in.('+teams.join(',')+'))',kickoff_utc:'lt.'+target.kickoff_utc,order:'kickoff_utc.desc',limit:'70'}),
- query('nfl_studio_live_odds_cache',{id:'eq.nfl',limit:'1'})]);
+ query('nfl_studio_live_odds_cache',{id:'eq.nfl',limit:'1'}),
+ query('nfl_studio_expected_player_impact_v1',{game_id:'eq.'+id,limit:'250'}).catch(()=>[])]);
  const prior=(games as Game[]).filter(g=>teams.includes(g.home_team_id)||teams.includes(g.away_team_id));
  const results=prior.length?await query('game_results',{game_id:'in.('+prior.map(g=>g.game_id).join(',')+')',limit:'70'}):[] as Score[];
  const scoreMap=new Map((results as Score[]).filter(r=>r.home_score!==null&&r.away_score!==null).map(r=>[r.game_id,r]));
@@ -32,6 +33,12 @@ export async function GET(req:Request){
  const marketGame=payload.find((g:any)=>g.home_team===names[target.home_team_id]&&g.away_team===names[target.away_team_id]&&Math.abs(Date.parse(g.commence_time)-Date.parse(target.kickoff_utc))<86400000);
  const offers=new Map<string,Offer>();
  for(const b of marketGame?.bookmakers||[])for(const m of b.markets||[]){if(!['h2h','spreads','totals'].includes(m.key))continue;for(const o of m.outcomes||[]){const d=decimal(o.price);if(!Number.isFinite(d)||d<=1)continue;const k=[m.key,o.name,o.point??''].join('|');const current=offers.get(k);if(!current||d>current.decimal)offers.set(k,{market:m.key,name:o.name,point:o.point,price:o.price,book:b.title,decimal:d})}}
+ const playerInsights=teams.map(team=>{
+ const list=(playerRows as any[]).filter(p=>p.team_id===team&&Number(p.history_games)>=3);
+ const best=(position:string,field:string)=>list.filter(p=>p.position===position&&Number(p[field])>0).sort((a,b)=>Number(b[field])-Number(a[field]))[0];
+ const qb=best('QB','prior_passing_yards'),rb=best('RB','prior_rushing_yards'),wr=best('WR','prior_receiving_yards'),te=best('TE','prior_receiving_yards');
+ return {team,qb:qb?{name:qb.display_name,passing:Number(qb.prior_passing_yards),sample:qb.history_games}:null,rb:rb?{name:rb.display_name,rushing:Number(rb.prior_rushing_yards),sample:rb.history_games}:null,receivers:[wr,te].filter(Boolean).map(p=>({name:p.display_name,receiving:Number(p.prior_receiving_yards),targets:Number(p.prior_targets),sample:p.history_games}))};
+ });
  const home=stats[target.home_team_id],away=stats[target.away_team_id];
  const ready=home.games>=4&&away.games>=4&&home.points!==null&&away.points!==null;
  const projectedHome=ready?(home.points+away.allowed)/2:null;
@@ -43,11 +50,13 @@ export async function GET(req:Request){
   if(o.market==='totals'&&projectedTotal!==null&&o.point!==undefined){baseline=projectedTotal;signal=(o.name.toLowerCase()==='over'?projectedTotal-o.point:o.point-projectedTotal);angle='Projection indicative basée sur les points marqués et encaissés lors des cinq derniers matchs de chaque équipe.'}
   if(o.market==='spreads'&&projectedDiff!==null&&o.point!==undefined){const side=o.name===names[target.home_team_id]?projectedDiff:-projectedDiff;baseline=side;signal=side+o.point;angle='Comparaison entre les marges de points récentes et le handicap proposé.'}
   if(o.market==='h2h'&&projectedDiff!==null){const side=o.name===names[target.home_team_id]?projectedDiff:-projectedDiff;baseline=side;signal=side;angle='Différentiel de points attendu à partir des attaques et défenses récentes, sans estimation calibrée de probabilité.'}
-  return {...o,baseline,signal,angle};
+  const focus=playerInsights.find(p=>p.team_id===undefined)||playerInsights.find(p=>names[p.team]===o.name)||playerInsights[0];
+  const context=focus?.qb?' Contexte individuel : '+focus.qb.name+' a produit '+focus.qb.passing.toFixed(0)+' verges aériennes par match sur '+focus.qb.sample+' rencontres; '+(focus.rb?focus.rb.name+' a ajouté '+focus.rb.rushing.toFixed(0)+' verges au sol par match.':'le jeu au sol reste à examiner.'):' Statistiques individuelles insuffisantes pour confirmer un avantage.';
+  return {...o,baseline,signal,angle:angle+context};
  }).filter(o=>o.baseline!==null&&o.angle&&Math.abs(o.signal)>0.1);
  const best=candidates.sort((a,b)=>Math.abs(b.signal)-Math.abs(a.signal));
  const selected:typeof best=[];const used=new Set<string>();
  for(const o of best){const group=o.market+'|'+(o.market==='h2h'?o.name:o.market==='totals'?o.name:o.name);if(used.has(group))continue;used.add(group);selected.push(o);if(selected.length===5)break}
- return NextResponse.json({game_id:id,stats,model:'five_recent_games_points_for_against',quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,analysis:selected.map(({price,...o})=>({...o,decimal:Number(o.decimal.toFixed(2)),signal:Number(o.signal.toFixed(2)),status:'observation_not_recommendation'}))},{headers:{'Cache-Control':'no-store'}});
+ return NextResponse.json({game_id:id,stats,model:'recent_team_scores_plus_player_context_v1',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,analysis:selected.map(({price,...o})=>({...o,decimal:Number(o.decimal.toFixed(2)),signal:Number(o.signal.toFixed(2)),status:'observation_not_recommendation'}))},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({error:'analysis_unavailable'},{status:503})}
 }
