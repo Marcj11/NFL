@@ -36,7 +36,7 @@ export async function GET(req:Request){
  const cacheGameId=marketGame?.id?String(marketGame.id).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,100):null;
  const propStored=cacheGameId?await query('nfl_studio_live_odds_cache',{id:'eq.props_'+cacheGameId,limit:'1'}).catch(()=>[]):[];
  const propRows=Array.isArray(propStored[0]?.payload)?propStored[0].payload:[];
- const namesOfPlayers=[...new Set(propRows.map((x:any)=>String(x.player||'').trim()).filter((x:string)=>x.length>2))].slice(0,36);
+ const namesOfPlayers:string[]=[...new Set<string>((propRows as any[]).map((x:any)=>String(x.player||'').trim()).filter((x:string)=>x.length>2))].slice(0,36);
  const escaped=namesOfPlayers.map((x:string)=>'"'+x.replaceAll('\\','\\\\').replaceAll('"','\\"')+'"').join(',');
  const recent=escaped?await query('nfl_studio_player_recent_prop_results_v1',{team_id:'in.('+teams.join(',')+')',display_name:'in.('+escaped+')',limit:'250'}).catch(()=>[]):[];
  const recentByName=new Map<string,any[]>();
