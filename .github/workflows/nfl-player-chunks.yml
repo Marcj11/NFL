@@ -1,0 +1,26 @@
+name: Stage NFL player batches
+on:
+  push:
+    paths:
+      - 'scripts/split_nfl_players.py'
+      - '.github/workflows/nfl-player-chunks.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Split
+        run: python scripts/split_nfl_players.py
+      - name: Save
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/player-chunks/
+          git diff --cached --quiet || (git commit -m "Stage player chunks for database transfer" && git push)
