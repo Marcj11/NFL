@@ -18,7 +18,7 @@ export async function GET(req:Request){
  const [games,cache,playerRows]=await Promise.all([
  query('games',{or:'(home_team_id.in.('+teams.join(',')+'),away_team_id.in.('+teams.join(',')+'))',kickoff_utc:'lt.'+target.kickoff_utc,order:'kickoff_utc.desc',limit:'70'}),
  query('nfl_studio_live_odds_cache',{id:'eq.nfl',limit:'1'}),
- query('nfl_studio_expected_player_impact_v1',{game_id:'eq.'+id,limit:'250'}).catch(()=>[])]);
+ query('nfl_studio_expected_player_impact_v1',{game_id:'eq.'+id,limit:'100'}).catch(()=>[])]);
  const prior=(games as Game[]).filter(g=>teams.includes(g.home_team_id)||teams.includes(g.away_team_id));
  const results=prior.length?await query('game_results',{game_id:'in.('+prior.map(g=>g.game_id).join(',')+')',limit:'70'}):[] as Score[];
  const scoreMap=new Map((results as Score[]).filter(r=>r.home_score!==null&&r.away_score!==null).map(r=>[r.game_id,r]));
@@ -58,5 +58,5 @@ export async function GET(req:Request){
  const selected:typeof best=[];const used=new Set<string>();
  for(const o of best){const group=o.market+'|'+(o.market==='h2h'?o.name:o.market==='totals'?o.name:o.name);if(used.has(group))continue;used.add(group);selected.push(o);if(selected.length===5)break}
  return NextResponse.json({game_id:id,stats,model:'recent_team_scores_plus_player_context_v1',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,analysis:selected.map(({price,...o})=>({...o,decimal:Number(o.decimal.toFixed(2)),signal:Number(o.signal.toFixed(2)),status:'observation_not_recommendation'}))},{headers:{'Cache-Control':'no-store'}});
- }catch{return NextResponse.json({error:'analysis_unavailable'},{status:503})}
+ }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
