@@ -496,3 +496,13 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .team-form-probbar>div{height:100%;border-radius:30px;background:linear-gradient(90deg,#32b0ff,#6ff6c6)}
 .team-form-prob small{color:#abc9db;font-size:11px}
 @media(max-width:650px){.team-form-panel{padding:14px}.team-form-chart{gap:5px;min-height:185px}.team-form-bars{height:135px;gap:4px}.team-form-bars div b{font-size:10px}.team-form-kpis div{min-width:115px}}
+
+/* Stadium-grade team colors, lights and matchup navigation */
+.nfl-premium-fixture{position:relative!important;box-shadow:0 15px 34px #000a,0 0 26px color-mix(in srgb,var(--home-glow),transparent 72%)!important;border:1px solid color-mix(in srgb,var(--away-glow),#6b9ac6 40%)!important;background:radial-gradient(ellipse at 0% 0%,color-mix(in srgb,var(--away-glow),transparent 78%),transparent 55%),radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--home-glow),transparent 72%),transparent 55%),linear-gradient(110deg,#08172d,#0d223a,#08172d)!important}
+.nfl-premium-fixture:before{content:'';position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,var(--away-glow),#52c6ff,var(--home-glow));box-shadow:0 0 19px #469fffb3;pointer-events:none}
+.nfl-premium-fixture .match-team img{filter:drop-shadow(0 0 13px #93ccff88);transition:transform .3s,filter .3s}
+.nfl-premium-fixture:hover .match-team img{transform:scale(1.08);filter:drop-shadow(0 0 20px #89d4ffd5)}
+.nfl-premium-fixture .match-at>span{font-style:italic;font-weight:950;color:#e4f8ff;text-shadow:0 0 20px #7bd8ff}
+.nfl-fixture-duel-link{display:block;text-decoration:none;margin-top:14px;border-radius:11px;padding:14px 10px;text-align:center;background:linear-gradient(110deg,#51e6bc,#3699ff);color:#05182b!important;font-weight:950;font-size:12px;letter-spacing:.5px;border:1px solid #a4f9ee;box-shadow:0 0 22px #379de269}
+.nfl-fixture-duel-link:hover{filter:brightness(1.13)}
+@media(prefers-reduced-motion:reduce){.nfl-premium-fixture .match-team img{transition:none!important}.nfl-premium-fixture:hover .match-team img{transform:none!important}}
