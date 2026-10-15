@@ -50,11 +50,17 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const [gamesResearch,SET_GAMES_RESEARCH]=useState<Record<string,{home_win_probability:number;away_win_probability:number;projected_margin:number;projected_total:number;spread_sd:number;total_sd:number;explanation:string}>>({});
  useEffect(()=>{let active=true;fetch('/api/odds').then(r=>r.json()).then(async d=>{
   const events=(d.games||[]).filter((g:{commence_time:string})=>Date.parse(g.commence_time)>Date.now()).slice(0,16);
-  const data=await Promise.all(events.map(async(g:{home_team:string;away_team:string;commence_time:string})=>{
-   const home=teamCodes[g.home_team],away=teamCodes[g.away_team];if(!home||!away)return null;
-   try{const p=new URLSearchParams({home,away,before:g.commence_time});const r=await fetch('/api/expert-game-research?'+p,{cache:'no-store'});const x=await r.json();return x.status==='experimental_unvalidated'?{key:g.away_team+' vs '+g.home_team,value:x}:null}catch{return null}
-  }));
-  if(active)SET_GAMES_RESEARCH(Object.fromEntries(data.filter((x):x is {key:string;value:any}=>Boolean(x)).map(x=>[x.key,x.value])));
+  // Limit parallel research requests to avoid function saturation on Hobby deployments.
+  const data:Array<{key:string;value:any}|null>=[];
+  for(let i=0;i<events.length&&active;i+=3){
+   const batch=await Promise.all(events.slice(i,i+3).map(async(g:{home_team:string;away_team:string;commence_time:string})=>{
+    const home=teamCodes[g.home_team],away=teamCodes[g.away_team];if(!home||!away)return null;
+    try{const p=new URLSearchParams({home,away,before:g.commence_time});const r=await fetch('/api/expert-game-research?'+p,{cache:'no-store'});if(!r.ok)return null;const x=await r.json();return x.status==='experimental_unvalidated'?{key:g.away_team+' vs '+g.home_team,value:x}:null}catch{return null}
+   }));
+   data.push(...batch);
+   if(active)SET_GAMES_RESEARCH(Object.fromEntries(data.filter((x):x is {key:string;value:any}=>Boolean(x)).map(x=>[x.key,x.value])));
+  }
+
  }).catch(()=>{});return()=>{active=false}},[]);
  const gameProjection=(o:Offer):number|null=>{
   const g=gamesResearch[o.game];if(!g)return null;
