@@ -332,3 +332,21 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .nfl-expert-unavailable{padding:30px;text-align:center;color:#cce0f2;border:1px dashed #5a8aab;border-radius:14px}
 @media(max-width:1100px){.nfl-expert-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.nfl-expert-showcase{padding:15px}.nfl-expert-showcase-head{align-items:flex-start;flex-direction:column}.nfl-expert-live{padding:9px 13px}.nfl-expert-grid{grid-template-columns:1fr}.nfl-expert-duel img{height:74px}}
+
+/* Fix oversized home spotlight graphics and reinforce broadcast presentation */
+.shell .studio-weekly-spotlight{margin:20px 0;padding:22px;border:1px solid #448ac0;border-radius:19px;background:linear-gradient(120deg,#092340,#061322);box-shadow:inset 0 1px #c9f5ff28,0 16px 40px #0008}
+.shell .studio-spotlight-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.shell .studio-spotlight-header h2{font-size:clamp(22px,2.4vw,31px);color:#fff;text-shadow:0 0 20px #319eff66}
+.shell .studio-spotlight-header button{padding:10px 16px;border:1px solid #9ce0ff;background:linear-gradient(120deg,#1888d9,#0d4d9b);color:white;border-radius:10px;font-weight:900;cursor:pointer}
+.shell .studio-spotlight-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:15px!important;align-items:stretch!important}
+.shell .studio-spotlight-match{display:flex!important;flex-direction:column!important;min-width:0!important;min-height:205px!important;max-width:100%!important;overflow:hidden!important;box-sizing:border-box!important;padding:14px!important;border:1px solid #367fb7!important;border-radius:15px!important;background:radial-gradient(circle at 50% 20%,#155e9c65,transparent 75%),#07192e!important;box-shadow:inset 0 1px #ffffff22,0 0 18px #1d8efa22!important}
+.shell .studio-spotlight-meta{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:space-between!important;font-size:11px!important;color:#abd9f8!important;gap:6px}
+.shell .studio-spotlight-teams{display:grid!important;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr)!important;align-items:center!important;justify-items:stretch!important;gap:4px!important;min-width:0!important;margin:12px 0!important}
+.shell .studio-spotlight-teams>div{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;min-width:0!important;gap:3px!important}
+.shell .studio-spotlight-teams>div img{display:block!important;width:100%!important;max-width:90px!important;height:73px!important;max-height:73px!important;object-fit:contain!important;position:static!important;filter:drop-shadow(0 0 10px #3b9aff66)!important}
+.shell .studio-spotlight-teams>div strong{font-size:13px!important;color:white!important}
+.shell .studio-spotlight-teams>div b{font-size:15px!important;color:#77e9ca!important}
+.shell .studio-spotlight-vs{font-size:12px!important;align-self:center!important;color:#bcdaee!important;font-weight:950!important}
+.shell .studio-spotlight-foot{margin-top:auto!important;display:flex!important;justify-content:space-between!important;gap:8px!important;font-size:11px!important;color:#a8c9dc!important}
+@media(max-width:1080px){.shell .studio-spotlight-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:650px){.shell .studio-spotlight-grid{grid-template-columns:1fr!important}.shell .studio-spotlight-header{align-items:flex-start;flex-direction:column}.shell .studio-spotlight-match{min-height:180px!important}}
