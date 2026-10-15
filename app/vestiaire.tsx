@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
-type Story={id:string;team:string;opponent:string;headline:string;body:string;punchline:string;metric:string;kind:string;kickoff_utc:string;source:string};
+type Story={id:string;team:string;opponent:string;headline:string;body:string;punchline:string;metric:string;kind:string;kickoff_utc:string;home_score:number;away_score:number;source:string};
 type Feed={status:string;stories:Story[]};
 type News={id:string;headline:string;excerpt:string;url:string;published:string;source:string;image:string|null};
 const logo=(t:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+(t==='LA'?'lar':t==='WAS'?'wsh':t.toLowerCase())+'.png';
@@ -11,13 +11,13 @@ export default function Vestiaire(){
  const stories=(feed?.stories||[]).filter(s=>filter==='TOUT'||s.kind===filter);
  const filters=['TOUT',...new Set((feed?.stories||[]).map(s=>s.kind))];
  return <section className="locker-room">
-  <div className="locker-hero"><span>🏈 NFL STUDIO ORIGINAL · RÉSULTATS VÉRIFIÉS</span><h1>LE VESTIAIRE <em>DES BOYS</em></h1><p>La NFL racontée comme à la taverne après une grosse game : du slang, des sacres pis des vrais chiffres.</p></div>
-  <div className="locker-disclaimer"><strong>LA RÈGLE DES BOYS</strong> — On s’enflamme sur les résultats enregistrés. Pas de blessures inventées, pas de fausses statistiques de joueurs.</div>
+  <div className="locker-hero"><span>🏈 NFL STUDIO ORIGINAL · RÉSULTATS VÉRIFIÉS</span><h1>LE VESTIAIRE <em>DES BOYS</em></h1><p>La NFL racontée comme à la taverne après une grosse game : du vrai parler québécois pis des chiffres vérifiés.</p></div>
+  <div className="locker-disclaimer"><strong>LA RÈGLE DES BOYS</strong> — On s’enflamme sur les résultats enregistrés. Pas de sacres dans les chroniques, pas de blessures inventées ni de fausses statistiques.</div>
   <div className="locker-tabs" aria-label="Catégories du vestiaire">{filters.map(f=><button key={f} type="button" className={filter===f?'on':''} onClick={()=>FILTER(f)}>{f==='TOUT'?'🔥 TOUT LE VESTIAIRE':f}</button>)}</div>
   {!feed?<div className="locker-wait">Les boys déballent les feuilles de matchs…</div>:feed.status!=='ok'?<div className="locker-wait">Résultats vérifiés indisponibles. Pas de chronique inventée.</div>:stories.length===0?<div className="locker-wait">Aucune chronique dans cette catégorie.</div>:<div className="locker-grid">{stories.map((s,i)=><article className={'locker-story locker-story-'+i%5} key={s.id}>
    <div className="locker-story-top"><span>✦ {s.kind}</span><span>{new Date(s.kickoff_utc).toLocaleDateString('fr-CA',{timeZone:'America/Toronto',day:'numeric',month:'short'})}</span></div>
    <div className="locker-story-teams"><img src={logo(s.team)} alt={'Logo '+s.team}/><div><small>CHIFFRE CONFIRMÉ</small><strong>{s.metric}</strong></div><img src={logo(s.opponent)} alt={'Logo '+s.opponent}/></div>
-   <h2>{s.headline}</h2><p>{s.body}</p><blockquote>« {s.punchline} »</blockquote>
+   <div className="locker-final-score"><span>SCORE FINAL · VISITEURS / DOMICILE</span><strong>{s.away_score} <small>–</small> {s.home_score}</strong></div><h2>{s.headline}</h2><p>{s.body}</p><blockquote>« {s.punchline} »</blockquote>
    <div className="locker-story-footer"><span>Source : {s.source}</span><a href={'/team/'+s.team}>VOIR L’ÉQUIPE ↗</a></div>
   </article>)}</div>}
   <section className="locker-news"><div className="locker-news-intro"><span>📰 LES VRAIES NOUVELLES · SOURCES EXTERNES</span><h2>LES MÉDIAS ONT JASÉ, LES BOYS</h2><p>Des titres et de courts passages publiés par ESPN. La nouvelle reste à la source : clic icitte pour lire l’article original et vérifier le contexte.</p></div>
