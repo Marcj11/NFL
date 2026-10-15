@@ -5,7 +5,7 @@ type Athlete={id:string;displayName?:string;fullName?:string;headshot?:{href?:st
 type Game={date:string;opponent:string;stats:Record<string,string>};
 export default function PlayerPage(){
  const {id}=useParams<{id:string}>();
- const [data,SET]=useState<{athlete:Athlete|null;games:Game[];source:string;status:string}|null>(null);
+ const [data,SET]=useState<{athlete:Athlete|null;games:Game[];source:string;status:string;injuries?:{status:string;detail:string;date:string}[]}|null>(null);
  useEffect(()=>{let active=true;fetch('/api/players/profile?id='+encodeURIComponent(id)).then(r=>r.json()).then(d=>{if(active)SET(d)}).catch(()=>{if(active)SET({athlete:null,games:[],source:'ESPN',status:'unavailable'})});return()=>{active=false}},[id]);
  const a=data?.athlete,games=data?.games||[];
  const graphKey=games.flatMap(g=>Object.keys(g.stats)).find(key=>/ · YDS$| · YARDS$| · TD$| · REC$/.test(key)&&games.some(g=>Number.isFinite(Number(g.stats[key]))));
@@ -18,6 +18,7 @@ export default function PlayerPage(){
  {a?.headshot?.href?<img src={a.headshot.href} alt={a.displayName||''} style={{width:160,height:160,objectFit:'contain'}}/>:<div style={{fontSize:70}}>🏈</div>}
  <div><span style={{color:'#85e9cc',fontWeight:900}}>✦ FICHE JOUEUR · ESPN</span><h1 style={{fontSize:'clamp(28px,5vw,52px)',margin:'9px 0'}}>{a?.displayName||a?.fullName||'Joueur NFL'}</h1><p>{a?.team?.displayName||'Équipe à confirmer'} · {a?.position?.displayName||'Position à confirmer'}</p><small>Source : ESPN · Aucune blessure déduite des statistiques historiques</small></div>
  </section>
+ <section style={{marginTop:20,padding:18,borderRadius:15,border:'1px solid #478aba',background:'#102238'}}><h2>🩺 STATUT DE BLESSURE — SOURCE ESPN</h2>{data?.injuries?.length?data.injuries.map((injury,i)=><p key={i}><strong>{injury.status}</strong>{injury.detail?' · '+injury.detail:''}{injury.date?' · '+injury.date:''}</p>):<p>Aucun statut de blessure récent et explicite disponible dans cette fiche ESPN. Ça ne confirme pas que le joueur est en santé.</p>}</section>
  <section style={{marginTop:22,padding:22,borderRadius:18,background:'#0d2440',border:'1px solid #388dcc'}}><h2>📈 LES 5 DERNIÈRES PERFORMANCES</h2>
  {games.length?<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(135px,1fr))',gap:12}}>{games.map((g,i)=><div key={i} style={{padding:12,borderRadius:12,background:'#152f51',border:'1px solid #4589af'}}><strong>{g.opponent}</strong><p style={{fontSize:12}}>{g.date}</p>{Object.entries(g.stats).slice(0,6).map(([k,v])=><p key={k} style={{fontSize:12}}>{k}: <strong>{v}</strong></p>)}</div>)}</div>:<p>Statistiques des cinq derniers matchs non disponibles à partir de la source actuelle. Aucune donnée inventée.</p>}
  </section>
