@@ -364,3 +364,29 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .nfl-match-moneyline-wide{margin-top:14px;background:linear-gradient(110deg,#0a365a,#10244e)}
 .nfl-match-moneyline-wide .nfl-match-moneyline-numbers strong{font-size:clamp(20px,3vw,32px)}
 @media(max-width:650px){.nfl-match-moneyline{padding:10px}.nfl-match-moneyline-numbers{gap:5px}.nfl-match-moneyline-numbers b{font-size:10px;gap:4px}}
+
+/* Dedicated phone layout for Top paris - one readable ticket per row */
+@media(max-width:760px){
+ .shell main{min-width:0!important;max-width:100vw!important;overflow-x:clip!important}
+ .shell .studio-picks-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important;width:100%!important;max-width:100%!important}
+ .shell .studio-pick-card{display:flex!important;flex-direction:column!important;min-width:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;min-height:0!important;padding:15px!important;overflow:hidden!important;border-radius:17px!important}
+ .shell .studio-pick-card .pick-rank{font-size:31px!important;line-height:1.1!important}
+ .shell .studio-pick-card .pick-market{font-size:10px!important;line-height:1.4!important;max-width:100%!important}
+ .shell .studio-pick-card .pick-art{width:100%!important;max-width:100%!important;grid-column:auto!important;grid-row:auto!important;margin:12px 0 8px!important;height:150px!important;min-height:150px!important}
+ .shell .studio-pick-card .pick-art .pick-versus img{max-width:115px!important;height:120px!important}
+ .shell .studio-pick-card .pick-game{grid-column:auto!important;grid-row:auto!important;font-size:12px!important;line-height:1.5!important;overflow-wrap:anywhere!important;margin:8px 0!important}
+ .shell .studio-pick-card .pick-book{font-size:11px!important;line-height:1.5!important;overflow-wrap:anywhere!important}
+ .shell .studio-pick-card h3{grid-column:auto!important;grid-row:auto!important;font-size:clamp(20px,5.7vw,27px)!important;min-height:0!important;line-height:1.25!important;margin:12px 0!important;overflow-wrap:anywhere!important}
+ .shell .studio-pick-card .pick-metrics{grid-column:auto!important;grid-row:auto!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;width:100%!important;margin:8px 0!important}
+ .shell .studio-pick-card .pick-metrics>div{padding:11px 7px!important;min-width:0!important}
+ .shell .studio-pick-card .pick-metrics strong{font-size:clamp(22px,6vw,30px)!important;overflow-wrap:anywhere!important}
+ .shell .studio-pick-card .pick-action{display:block!important;width:100%!important;min-height:50px!important;margin-top:16px!important;font-size:15px!important}
+ .shell .market-tabs{display:flex!important;overflow-x:auto!important;max-width:100%!important;gap:8px!important;scroll-snap-type:x proximity;padding-bottom:10px!important;-webkit-overflow-scrolling:touch}
+ .shell .market-tabs button{flex:0 0 auto!important;white-space:nowrap!important;scroll-snap-align:start;min-height:43px}
+ .shell .player-prop-art .player-action-image{max-height:140px!important;object-fit:contain!important}
+}
+@media(max-width:390px){
+ .shell .studio-pick-card{padding:12px!important}
+ .shell .studio-pick-card .pick-metrics strong{font-size:21px!important}
+ .shell .studio-pick-card .pick-art .pick-versus img{max-width:88px!important;height:102px!important}
+}
