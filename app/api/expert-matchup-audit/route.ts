@@ -35,6 +35,10 @@ export async function GET(req:Request){
    }
    results.push({team,ready:stats.every(x=>x.plays>=100&&!x.truncated),historical_games:games.length,stats});
   }
-  return NextResponse.json({status:'historical_matchup_research',home,away,cutoff_utc:new Date(before).toISOString(),teams:results,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
+  const qbQuery=new URLSearchParams({select:'game_id,team_id,qb_name,announced_status,source_name,source_published_at,usable_pregame',team_id:'in.('+home+','+away+')',usable_pregame:'eq.true',source_published_at:'lt.'+new Date(before).toISOString(),order:'source_published_at.desc',limit:'20'});
+  const qbr=await fetch(base+'/rest/v1/nfl_studio_pregame_qb_sources_v1?'+qbQuery,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
+  const qbSources=qbr.ok?await qbr.json() as Array<{team_id:string;game_id:string;qb_name:string;source_published_at:string}>:[];
+  const qbCoverage=[home,away].map(team=>({team,pregame_sources:qbSources.filter(q=>q.team_id===team).length,latest_source_at:qbSources.find(q=>q.team_id===team)?.source_published_at||null,starter_confirmed_for_requested_game:false}));
+  return NextResponse.json({status:'historical_matchup_research',home,away,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'data_unavailable',publishable:false},{status:502})}
 }
