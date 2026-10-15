@@ -2,7 +2,7 @@
 import {useEffect,useState} from 'react';
 import {useParams} from 'next/navigation';
 import Link from 'next/link';
-import PrimeTimeTop5 from './prime-time-top5';
+import OfficialTeamTop5 from './official-team-top5';
 const teams:Record<string,[string,string,string]>={ARI:['Arizona Cardinals','#97233F','#141414'],ATL:['Atlanta Falcons','#A71930','#111'],BAL:['Baltimore Ravens','#241773','#9E7C0C'],BUF:['Buffalo Bills','#00338D','#C60C30'],CAR:['Carolina Panthers','#0085CA','#101820'],CHI:['Chicago Bears','#0B162A','#C83803'],CIN:['Cincinnati Bengals','#FB4F14','#111'],CLE:['Cleveland Browns','#311D00','#FF3C00'],DAL:['Dallas Cowboys','#003594','#869397'],DEN:['Denver Broncos','#FB4F14','#002244'],DET:['Detroit Lions','#0076B6','#B0B7BC'],GB:['Green Bay Packers','#203731','#FFB612'],HOU:['Houston Texans','#03202F','#A71930'],IND:['Indianapolis Colts','#002C5F','#FFF'],JAX:['Jacksonville Jaguars','#006778','#D7A22A'],KC:['Kansas City Chiefs','#E31837','#FFB81C'],LV:['Las Vegas Raiders','#333','#A5ACAF'],LAC:['Los Angeles Chargers','#0080C6','#FFC20E'],LA:['Los Angeles Rams','#003594','#FFA300'],MIA:['Miami Dolphins','#008E97','#FC4C02'],MIN:['Minnesota Vikings','#4F2683','#FFC62F'],NE:['New England Patriots','#002244','#C60C30'],NO:['New Orleans Saints','#101820','#D3BC8D'],NYG:['New York Giants','#0B2265','#A71930'],NYJ:['New York Jets','#125740','#FFF'],PHI:['Philadelphia Eagles','#004C54','#A5ACAF'],PIT:['Pittsburgh Steelers','#101820','#FFB612'],SF:['San Francisco 49ers','#AA0000','#B3995D'],SEA:['Seattle Seahawks','#002244','#69BE28'],TB:['Tampa Bay Buccaneers','#D50A0A','#FF7900'],TEN:['Tennessee Titans','#4B92DB','#002244'],WAS:['Washington Commanders','#5A1414','#FFB612']};
 const logo=(x:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+({LA:'lar',WAS:'wsh'} as Record<string,string>)[x]?.toLowerCase()+'.png';
 function teamLogo(x:string){return 'https://a.espncdn.com/i/teamlogos/nfl/500/'+(x==='LA'?'lar':x==='WAS'?'wsh':x.toLowerCase())+'.png'}
@@ -109,8 +109,7 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
 </article>}):<p style={{padding:12,color:'#d4e2ed',background:'#07172599',borderRadius:11}}>{r.injuryFeedAvailable?'Aucun joueur signalé dans le flux ESPN à cette vérification.':'Rapport de blessures indisponible pour cette équipe; aucune absence ne peut être confirmée.'}</p>}
 </div></div>})}
 </div><p style={{fontSize:12,color:'#a9bdce',marginTop:12}}>Les Player Props continuent d’être utilisés dans le calcul du Top 5 ci-dessous; leur longue liste séparée a été retirée. Les blessures ESPN ne remplacent pas la liste officielle des inactifs NFL.</p>
-</section>
-<PrimeTimeTop5 team={abbr} opponent={data.opponent||''} home={data.next?.home_team_id||abbr} away={data.next?.away_team_id||data.opponent||abbr} teamNames={Object.fromEntries(Object.entries(teams).map(([k,v])=>[k,v[0]]))} kickoff={data.next?.kickoff_utc||new Date().toISOString()} homeProbability={data.probability?Number(data.probability.home_win_probability):null} picks={analysis?.analysis||[]} loading={analysisRunning||(!analysis&&!analysisError)} error={analysisError} photos={photos} stats={analysis?.stats} homeProjection={analysis?.home_projection} awayProjection={analysis?.away_projection} oddsAt={odds?.fetched_at}/>
+</sec<OfficialTeamTop5 team={abbr}/>_at}/>
 
  <p style={{color:'#7e99ac',fontSize:12,marginTop:20}}>Rapport automatiquement rédigé à partir de résultats historiques et d’effectifs recensés. Toute information non confirmée est signalée. Actualisé : {new Date(data.updatedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'})}.</p>
  </>}
