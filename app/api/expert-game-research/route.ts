@@ -1,3 +1,5 @@
+import {extractEspnQBs} from '../../../lib/expert-nfl/espn-qb-parser';
+import {espnTeamId} from '../../../lib/expert-nfl/espn-team-ids';
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
 type Game={game_id:string;kickoff_utc:string;home_team_id:string;away_team_id:string;game_results:{home_score:number;away_score:number}|{home_score:number;away_score:number}[]|null};
@@ -12,7 +14,17 @@ export async function GET(req:Request){
  const headers={apikey:key,Authorization:'Bearer '+key};
  const load=async(team:string)=>{const p=new URLSearchParams({select:'game_id,kickoff_utc,home_team_id,away_team_id,game_results(home_score,away_score)',or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'lt.'+new Date(before).toISOString(),order:'kickoff_utc.desc',limit:'12'});const r=await fetch(base+'/rest/v1/games?'+p,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error('history_unavailable');return r.json() as Promise<Game[]>};
  try{const [h,a]=await Promise.all([load(home),load(away)]),hm=moments(h,home),am=moments(a,away);if(!hm||!am)return NextResponse.json({status:'insufficient_history',home,away,decision:'PASSER',explanation:'Moins de cinq matchs terminés disponibles par équipe.'});
+ const qbContext=await Promise.all([home,away].map(async team=>{
+  const id=espnTeamId(team);
+  if(!id)return {team,projected_qb:null,status:'unknown_team'};
+  try{
+   const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+id+'/depthcharts',{cache:'no-store',signal:AbortSignal.timeout(4500)});
+   if(!r.ok)return {team,projected_qb:null,status:'espn_unavailable'};
+   const parsed=extractEspnQBs(await r.json());
+   return {team,projected_qb:parsed.qbs[0]?.name||null,status:parsed.qbs.length?'espn_probable':'espn_no_depth_chart_qb'};
+  }catch{return {team,projected_qb:null,status:'espn_unavailable'}}
+ }));
  const homePoints=(hm.pf+am.pa)/2+1.5,awayPoints=(am.pf+hm.pa)/2;const margin=homePoints-awayPoints,total=homePoints+awayPoints;const marginSd=13.5,totalSd=17.5;
- return NextResponse.json({status:'experimental_unvalidated',home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. Sans blessures ni titulaire QB confirmés, contexte météo ni validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
+ return NextResponse.json({status:'experimental_unvalidated',home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbContext,qb_assumptions_included_in_numeric_forecast:false,model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN affichés comme hypothèses sans ajustement chiffré, blessures et météo non modélisées, aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'history_unavailable',decision:'PASSER'},{status:502})}
 }
