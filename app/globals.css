@@ -464,3 +464,35 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .studio-live-alert{display:block;font-size:11px;color:#ffdf8b;margin:9px 0}
 .studio-live-ticket small{display:block;color:#a4bace;font-size:10px}
 @media(max-width:720px){.studio-live{padding:13px}.studio-live-grid{grid-template-columns:1fr}.studio-live-score strong{font-size:15px}}
+
+/* Franchise performance broadcast graphics */
+.team-form-panel{margin:22px 0 5px;padding:22px;border:1px solid #4d9cc5;border-radius:20px;background:radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--team-primary),transparent 65%),transparent 62%),linear-gradient(110deg,#0a243b,#081729);box-shadow:inset 0 0 40px #1852a02b,0 13px 33px #0006;overflow:hidden}
+.team-form-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:20px}
+.team-form-header span{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#87d9ff}
+.team-form-header h2{font-size:clamp(25px,3vw,38px);color:white;margin:9px 0;text-shadow:0 0 18px #409dff7b}
+.team-form-header p{max-width:550px;font-size:12px;color:#c7dce9}
+.team-form-kpis{display:flex;gap:11px;flex-wrap:wrap}
+.team-form-kpis div{min-width:130px;padding:13px;border:1px solid #4380b5;background:#071d36;border-radius:12px}
+.team-form-kpis small{display:block;color:#b3d7ed;font-size:9px;font-weight:900;letter-spacing:.7px}
+.team-form-kpis strong{display:block;font-size:27px;color:#72f3be;text-shadow:0 0 14px #47e8b87b}
+.team-form-chart{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:23px;min-height:240px}
+.team-form-column{min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px;color:#dcecf8}
+.team-form-bars{height:180px;width:100%;max-width:110px;display:flex;gap:6px;align-items:end;justify-content:center;background:repeating-linear-gradient(0deg,#30506a24,#30506a24 1px,transparent 1px,transparent 36px);border-bottom:1px solid #5d90b9}
+.team-form-bars div{width:36%;max-width:36px;min-height:3px;background:linear-gradient(0deg,var(--team-primary),#70e8ff);border-radius:6px 6px 0 0;position:relative;box-shadow:0 0 12px #3b9ee87a}
+.team-form-bars .allowed{background:linear-gradient(0deg,#804aa5,#ffb66c);box-shadow:0 0 12px #d783b075}
+.team-form-bars div b{position:absolute;top:-23px;left:50%;transform:translateX(-50%);font-size:11px;color:white}
+.team-form-result{font-size:10px;font-weight:900;padding:4px 10px;border-radius:30px;background:#345a7a}
+.team-form-result.win{background:#166a52}.team-form-result.loss{background:#82435a}
+.team-form-column small{font-size:11px;color:#9fc0d7}
+.team-form-legend{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0;color:#bddeee;font-size:11px}
+.team-form-legend span{display:flex;align-items:center;gap:7px}
+.team-form-legend i{display:inline-block;width:12px;height:12px;background:#4dcfff;border-radius:3px}
+.team-form-legend span:last-child i{background:#ffac77}
+.team-form-prob{border:1px solid #498cc0;background:#081c34;padding:16px;border-radius:13px}
+.team-form-prob>div:first-child{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center}
+.team-form-prob span{font-size:10px;letter-spacing:1px;color:#9addff;font-weight:900}
+.team-form-prob strong{font-size:20px;color:#6af7c6}
+.team-form-probbar{height:11px;border-radius:30px;margin:11px 0;background:linear-gradient(90deg,#183f70,#3869b9);overflow:hidden}
+.team-form-probbar>div{height:100%;border-radius:30px;background:linear-gradient(90deg,#32b0ff,#6ff6c6)}
+.team-form-prob small{color:#abc9db;font-size:11px}
+@media(max-width:650px){.team-form-panel{padding:14px}.team-form-chart{gap:5px;min-height:185px}.team-form-bars{height:135px;gap:4px}.team-form-bars div b{font-size:10px}.team-form-kpis div{min-width:115px}}
