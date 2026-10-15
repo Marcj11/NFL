@@ -37,7 +37,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  useEffect(()=>{let alive=true;fetch('/api/expert-prop-research',{cache:'no-store'}).then(r=>r.json()).then(data=>{
   if(!alive)return;SET_RESEARCH_STATUS(String(data.status||'inconnu'));const map:Record<string,{probability:number;explanation:string}>={};
   for(const row of data.evaluations||[]){if(row.experimental===true&&typeof row.probability==='number'&&row.probability>=0&&row.probability<=1){
-   const o=row.offer||{};const key=[o.player,o.market,o.line,String(o.selection).toLowerCase()].join('|').toLowerCase();
+   const o=row.offer||{};const market=String(o.selection||'').split(' · ').pop()||'';const direction=/\bover\b/i.test(String(o.selection))?'over':/\bunder\b/i.test(String(o.selection))?'under':'';const key=[o.player,market,o.line,direction].join('|').toLowerCase();
    map[key]={probability:row.probability,explanation:String(row.explanation||'Simulation experimentale non validee')};
   }}SET_RESEARCH(map);
  }).catch(()=>{if(alive)SET_RESEARCH_STATUS('indisponible')});return()=>{alive=false}},[]);
