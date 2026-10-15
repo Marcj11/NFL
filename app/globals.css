@@ -508,3 +508,8 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 @media(prefers-reduced-motion:reduce){.nfl-premium-fixture .match-team img{transition:none!important}.nfl-premium-fixture:hover .match-team img{transform:none!important}}
 
 .studio-live-alerts{border:1px solid #ffd071;border-radius:11px;padding:12px 15px;background:linear-gradient(110deg,#43331a,#1b253e);box-shadow:0 0 17px #f6b73d48;margin:16px 0}.studio-live-alerts>strong{color:#fff0af;font-size:12px}.studio-live-alerts p{margin:7px 0;color:#f4e6bf;font-size:12px}
+
+/* Player-profile action sits below the artwork, never inside its portrait flex layer */
+.shell .studio-pick-card .pick-player-link{display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 24px);max-width:100%;margin:10px 12px 5px;padding:10px 8px;font-size:11px;line-height:1.35;letter-spacing:.3px;text-transform:uppercase;white-space:normal;overflow-wrap:anywhere;min-height:42px;flex-wrap:wrap;border:1px solid #7effd8;border-radius:10px;background:linear-gradient(110deg,#0d604f,#1b739f);color:#effff9;font-weight:900;cursor:pointer;box-shadow:0 0 12px #53e8ce3d}
+.shell .studio-pick-card .pick-player-link span{font-size:16px}
+@media(max-width:700px){.shell .studio-pick-card .pick-player-link{font-size:10px;min-height:40px;padding:9px 7px;margin:8px 12px 4px}}
