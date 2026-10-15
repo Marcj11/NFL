@@ -2,6 +2,7 @@
 import {useEffect,useState} from 'react';
 import {useParams} from 'next/navigation';
 import Link from 'next/link';
+import MatchBetEntry from './match-bet-entry';
 const teams:Record<string,[string,string,string]>={ARI:['Arizona Cardinals','#97233F','#141414'],ATL:['Atlanta Falcons','#A71930','#111'],BAL:['Baltimore Ravens','#241773','#9E7C0C'],BUF:['Buffalo Bills','#00338D','#C60C30'],CAR:['Carolina Panthers','#0085CA','#101820'],CHI:['Chicago Bears','#0B162A','#C83803'],CIN:['Cincinnati Bengals','#FB4F14','#111'],CLE:['Cleveland Browns','#311D00','#FF3C00'],DAL:['Dallas Cowboys','#003594','#869397'],DEN:['Denver Broncos','#FB4F14','#002244'],DET:['Detroit Lions','#0076B6','#B0B7BC'],GB:['Green Bay Packers','#203731','#FFB612'],HOU:['Houston Texans','#03202F','#A71930'],IND:['Indianapolis Colts','#002C5F','#FFF'],JAX:['Jacksonville Jaguars','#006778','#D7A22A'],KC:['Kansas City Chiefs','#E31837','#FFB81C'],LV:['Las Vegas Raiders','#333','#A5ACAF'],LAC:['Los Angeles Chargers','#0080C6','#FFC20E'],LA:['Los Angeles Rams','#003594','#FFA300'],MIA:['Miami Dolphins','#008E97','#FC4C02'],MIN:['Minnesota Vikings','#4F2683','#FFC62F'],NE:['New England Patriots','#002244','#C60C30'],NO:['New Orleans Saints','#101820','#D3BC8D'],NYG:['New York Giants','#0B2265','#A71930'],NYJ:['New York Jets','#125740','#FFF'],PHI:['Philadelphia Eagles','#004C54','#A5ACAF'],PIT:['Pittsburgh Steelers','#101820','#FFB612'],SF:['San Francisco 49ers','#AA0000','#B3995D'],SEA:['Seattle Seahawks','#002244','#69BE28'],TB:['Tampa Bay Buccaneers','#D50A0A','#FF7900'],TEN:['Tennessee Titans','#4B92DB','#002244'],WAS:['Washington Commanders','#5A1414','#FFB612']};
 const logo=(x:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+({LA:'lar',WAS:'wsh'} as Record<string,string>)[x]?.toLowerCase()+'.png';
 function teamLogo(x:string){return 'https://a.espncdn.com/i/teamlogos/nfl/500/'+(x==='LA'?'lar':x==='WAS'?'wsh':x.toLowerCase())+'.png'}
@@ -122,7 +123,7 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
  <div style={{marginTop:10,fontSize:17,color:pick.expected_value>0?'#5cf7b7':'#ffc19a',fontWeight:900}}>EV théorique : {pick.expected_value>=0?'+':''}{(pick.expected_value*100).toFixed(1)} %</div>
  <div style={{fontSize:12,marginTop:10,color:'#c4d7e7'}}>{pick.angle||'Performance récente du joueur et fréquence historique lissée; faible échantillon.'}</div>
  <div style={{fontSize:11,marginTop:11,color:'#f6d8a3'}}>{pick.heavyball?'Un long shot pour des corones en titane… mais ça peut planter en maudit.':'Projection exploratoire : un avantage calculé n’est pas un gain garanti.'}</div>
- <div style={{fontSize:10,marginTop:8,color:'#9fbdd1'}}>Source des cotes : {pick.book}</div>
+ <div style={{fontSize:10,marginTop:8,color:'#9fbdd1'}}>Source des cotes : {pick.book}</div><MatchBetEntry pick={pick} gameId={data.next.game_id} game={(teams[data.next.away_team_id]?.[0]||'Visiteurs')+' vs '+(teams[data.next.home_team_id]?.[0]||'Domicile')} team={abbr}/>
  </article>)}
  </div>
  {!analysis.analysis.some(p=>p.heavyball)&&<p style={{marginTop:15,color:'#ffd39b'}}>🔥 Aucun Heavyball à cote de 3,00 ou plus avec une EV positive calculée pour ce match. On n’invente pas un pari pour remplir la case.</p>}
