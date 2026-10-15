@@ -75,6 +75,11 @@ export async function GET(req:Request){
     return {team,status:qb?(source_kind==='depth_chart'?'espn_depth_chart':'espn_roster_qbs_only'):'espn_qb_missing',projected_qb:source_kind==='depth_chart'?qb?.name||null:null,roster_qb_example:source_kind==='roster_only'?qb?.name||null:null,espn_id:qb?.espn_id||null,observed_at:new Date().toISOString(),depth_http_status:response?.status||null,confirmed:false,usable_for_historical_cutoff:false};
    }catch{return {team,status:'espn_unreachable',projected_qb:null,confirmed:false}}
   }));
-  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
+  const profile=(team:string,side:string)=>{const entry=results.find(x=>x.team===team);return entry&&'stats'in entry?entry.stats?.find(x=>x.side===side):null};
+  const matchup_comparisons=[
+   {offense:home,defense:away,offense_epa_per_play:profile(home,'offense_team')?.epa_per_play??null,defense_epa_allowed_per_play:profile(away,'defense_team')?.epa_per_play??null},
+   {offense:away,defense:home,offense_epa_per_play:profile(away,'offense_team')?.epa_per_play??null,defense_epa_allowed_per_play:profile(home,'defense_team')?.epa_per_play??null}
+  ];
+  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,matchup_comparisons,matchup_adjustment_calibrated:false,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'data_unavailable',publishable:false},{status:502})}
 }
