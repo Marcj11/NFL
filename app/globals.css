@@ -350,3 +350,17 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .shell .studio-spotlight-foot{margin-top:auto!important;display:flex!important;justify-content:space-between!important;gap:8px!important;font-size:11px!important;color:#a8c9dc!important}
 @media(max-width:1080px){.shell .studio-spotlight-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:650px){.shell .studio-spotlight-grid{grid-template-columns:1fr!important}.shell .studio-spotlight-header{align-items:flex-start;flex-direction:column}.shell .studio-spotlight-match{min-height:180px!important}}
+
+/* In-card Moneyline: neon probability split, no dead dashboard widgets */
+.nfl-match-moneyline{margin:12px 0 8px;padding:11px 13px;border-radius:12px;border:1px solid #367ab3;background:linear-gradient(115deg,#0c3159e9,#0b1b36e9);box-shadow:inset 0 0 17px #127ef42b,0 0 17px #0a8dff1c;min-width:0}
+.nfl-match-moneyline-label{font-weight:950;letter-spacing:1.1px;font-size:10px;color:#a1e5ff;margin-bottom:8px}
+.nfl-match-moneyline-numbers{display:flex;align-items:center;justify-content:space-between;gap:9px;color:#d1e8fa}
+.nfl-match-moneyline-numbers b{display:flex;align-items:baseline;gap:7px;font-size:11px}
+.nfl-match-moneyline-numbers strong{font-size:clamp(16px,2vw,23px);font-weight:950;color:#64e9c0;text-shadow:0 0 13px #00dca85b}
+.nfl-match-moneyline-numbers b:last-child strong{color:#75baff;text-shadow:0 0 13px #167bfc72}
+.nfl-match-moneyline-bar{margin-top:8px;height:10px;border-radius:99px;overflow:hidden;border:1px solid #7badf080;background:linear-gradient(90deg,#194eab,#3f86ff);box-shadow:0 0 12px #1570ff48}
+.nfl-match-moneyline-bar>div{height:100%;border-radius:99px;background:linear-gradient(90deg,#1ecfa0,#67f5be);box-shadow:0 0 12px #2ee9ac}
+.nfl-match-moneyline small{color:#aacbe1;font-size:11px}
+.nfl-match-moneyline-wide{margin-top:14px;background:linear-gradient(110deg,#0a365a,#10244e)}
+.nfl-match-moneyline-wide .nfl-match-moneyline-numbers strong{font-size:clamp(20px,3vw,32px)}
+@media(max-width:650px){.nfl-match-moneyline{padding:10px}.nfl-match-moneyline-numbers{gap:5px}.nfl-match-moneyline-numbers b{font-size:10px;gap:4px}}
