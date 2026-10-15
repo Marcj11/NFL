@@ -57,10 +57,10 @@ export async function GET(req:Request){
    {offense:home,defense:away,offense_epa:getEpa(home,'offense_team'),opponent_defense_epa_allowed:getEpa(away,'defense_team')},
    {offense:away,defense:home,offense_epa:getEpa(away,'offense_team'),opponent_defense_epa_allowed:getEpa(home,'defense_team')}
   ];
-  const qbQuery=new URLSearchParams({select:'game_id,team_id,qb_name,announced_status,source_name,source_published_at,usable_pregame',team_id:'in.('+home+','+away+')',usable_pregame:'eq.true',source_published_at:'lt.'+new Date(before).toISOString(),order:'source_published_at.desc',limit:'20'});
+  const qbQuery=new URLSearchParams({select:'game_id,team_id,qb_name,announced_status,source_name,source_published_at,first_observed_at,usable_pregame',team_id:'in.('+home+','+away+')',usable_pregame:'eq.true',source_published_at:'lt.'+new Date(before).toISOString(),order:'source_published_at.desc',limit:'20'});
   if(requestedGame&&/^[a-zA-Z0-9_-]{3,80}$/.test(requestedGame))qbQuery.set('game_id','eq.'+requestedGame);
   const qbr=await fetch(base+'/rest/v1/nfl_studio_pregame_qb_sources_v1?'+qbQuery,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
-  const qbSources=qbr.ok?await qbr.json() as Array<{team_id:string;game_id:string;qb_name:string;source_published_at:string;announced_status:string;source_name:string}>:[];
+  const qbSources=qbr.ok?await qbr.json() as Array<{team_id:string;game_id:string;qb_name:string;source_published_at:string;first_observed_at:string;announced_status:string;source_name:string}>:[];
   const historyQuery=new URLSearchParams({select:'game_id,team_id,qb_name,source_release_id',team_id:'in.('+home+','+away+')',limit:'24'});
   if(requestedGame)historyQuery.set('game_id','eq.'+requestedGame);
   const historyResp=await fetch(base+'/rest/v1/game_starting_quarterbacks?'+historyQuery,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
@@ -71,8 +71,9 @@ export async function GET(req:Request){
    const status=source?.announced_status?.toLowerCase()||'';
    const confirmed=/^(confirmed|official|starter_confirmed|announced_starter)$/.test(status);
    const publicationValid=!!source?.source_published_at&&new Date(source.source_published_at).getTime()<new Date(before).getTime();
+   const observedValid=!!source?.first_observed_at&&new Date(source.first_observed_at).getTime()<new Date(before).getTime();
    const hasProvenance=!!source?.source_name?.trim();
-   const verified=!!requestedGame&&confirmed&&publicationValid&&hasProvenance;
+   const verified=!!requestedGame&&confirmed&&publicationValid&&observedValid&&hasProvenance;
    return {team,source_count:sources.length,qb_name_for_game:source?.qb_name||null,announced_status:source?.announced_status||null,source_name:source?.source_name||null,source_published_at:source?.source_published_at||null,starter_confirmed_for_requested_game:verified,verification:verified?'source_flagged_confirmed':'not_verified',reason:verified?'Source supplied an official pregame starter status':sources.length?'Pregame source exists but lacks confirmed starter status or provenance':'No verified pregame QB source for the requested game'};
   });
   const espnDepthCharts=await Promise.all([home,away].map(async team=>{
