@@ -36,7 +36,7 @@ function PlayerPortrait({player,game}:{player:string;game:string}){
  },[player,game]);
  return <div className="player-feature"><div className="player-electric" aria-hidden="true"/>
   {source&&status==='ready'?<img className="player-action-image" src={source} alt={'Portrait ESPN de '+player} onError={()=>{SET_SOURCE(null);SET_STATUS('missing')}}/>:<div className="player-photo-unavailable">{status==='loading'?'PHOTO ESPN EN CHARGEMENT':'PORTRAIT NON DISPONIBLE'}</div>}
-  <div className="player-feature-name">{player}</div>
+  <div className="player-feature-name">{player}</div><button type="button" onClick={async()=>{try{const r=await fetch('/api/players/lookup?name='+encodeURIComponent(player));const d=await r.json();if(d.player?.id)window.location.href='/player/'+d.player.id;else window.alert('Fiche ESPN indisponible pour ce joueur.')}catch{window.alert('Recherche du joueur momentanément indisponible.')}}} style={{padding:'8px 12px',background:'#58ddb8',borderRadius:8,color:'#031c2d',fontWeight:900,marginTop:8,cursor:'pointer'}}>VOIR SA FICHE ↗</button>
  </div>;
 }
 export default function BettingHub({view}:{view:'top'|'live'|'history'}){
