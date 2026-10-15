@@ -5,7 +5,7 @@ type Input={offer?:{player?:string;selection?:string;odds?:number;line?:number;b
 export async function GET(request:Request){
  try{
   const origin=new URL(request.url).origin;
-  const response=await fetch(origin+'/api/expert-prop-batch?limit=2',{cache:'no-store',signal:AbortSignal.timeout(25000)});
+  const response=await fetch(origin+'/api/expert-prop-batch?limit=5',{cache:'no-store',signal:AbortSignal.timeout(25000)});
   if(!response.ok)return NextResponse.json({status:'batch_unavailable',evaluations:[]},{status:502});
   const batch=await response.json();
   const evaluations=(Array.isArray(batch.inputs)?batch.inputs as Input[]:[]).map((item)=>{
