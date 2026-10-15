@@ -18,11 +18,20 @@ export async function GET(req:Request){
    const stats=[];
    for(const side of ['offense_team','defense_team']){
     const q=new URLSearchParams({select:'game_id,play_id,epa,success',game_id:'in.('+ids+')',[side]:'eq.'+team,epa:'not.is.null',limit:'1000',order:'game_id.asc,play_id.asc'});
-    const r=await fetch(base+'/rest/v1/game_plays?'+q,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
-    if(!r.ok)throw Error('plays_fetch_failed');
-    const rows=await r.json() as Array<{epa:number;game_id:string;play_id:string}>;
+    const rows:Array<{epa:number;game_id:string;play_id:string}>=[];
+    let truncated=false;
+    for(let page=0;page<4;page++){
+     q.set('offset',String(page*1000));
+     const r=await fetch(base+'/rest/v1/game_plays?'+q,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
+     if(!r.ok)throw Error('plays_fetch_failed');
+     const batch=await r.json() as typeof rows;
+     rows.push(...batch);
+     if(batch.length<1000)break;
+     if(page===3)truncated=true;
+    }
     const unique=[...new Map(rows.map(x=>[x.game_id+'|'+x.play_id,x])).values()];
-    stats.push({side,plays:unique.length,epa_per_play:unique.length?unique.reduce((a,x)=>a+Number(x.epa),0)/unique.length:null,truncated:rows.length===1000});
+    if(unique.length!==rows.length)truncated=true;
+    stats.push({side,plays:unique.length,epa_per_play:unique.length?unique.reduce((a,x)=>a+Number(x.epa),0)/unique.length:null,truncated,duplicate_rows:rows.length-unique.length});
    }
    results.push({team,ready:stats.every(x=>x.plays>=100&&!x.truncated),historical_games:games.length,stats});
   }
