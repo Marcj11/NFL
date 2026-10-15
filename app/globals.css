@@ -437,3 +437,5 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .locker-news-body>a{display:block;text-decoration:none;text-align:center;padding:11px;background:linear-gradient(90deg,#5dedc2,#58b4fc);color:#031d32;font-size:12px;font-weight:900;border-radius:9px}
 .locker-news-credit,.locker-news-empty{font-size:11px;color:#a6c4da;margin-top:14px}
 @media(max-width:700px){.locker-news{padding:13px}.locker-news-grid{grid-template-columns:1fr}}
+
+.locker-final-score{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 12px;padding:13px 15px;border:1px solid #60c8ff;border-radius:13px;background:linear-gradient(110deg,#09294f,#19385e);box-shadow:0 0 19px #168ffd44}.locker-final-score span{color:#a5dafa;font-size:10px;font-weight:900;letter-spacing:1.4px}.locker-final-score strong{white-space:nowrap;font-size:clamp(23px,3vw,34px);color:#65f1cb;text-shadow:0 0 12px #46f4c777}.locker-final-score small{color:#e7f5ff;font-size:17px}@media(max-width:440px){.locker-final-score{padding:10px}.locker-final-score span{font-size:9px;letter-spacing:.5px}}
