@@ -2,7 +2,6 @@
 import {useEffect,useState} from 'react';
 import {useParams} from 'next/navigation';
 import Link from 'next/link';
-import OfficialTeamTop5 from './official-team-top5';
 const teams:Record<string,[string,string,string]>={ARI:['Arizona Cardinals','#97233F','#141414'],ATL:['Atlanta Falcons','#A71930','#111'],BAL:['Baltimore Ravens','#241773','#9E7C0C'],BUF:['Buffalo Bills','#00338D','#C60C30'],CAR:['Carolina Panthers','#0085CA','#101820'],CHI:['Chicago Bears','#0B162A','#C83803'],CIN:['Cincinnati Bengals','#FB4F14','#111'],CLE:['Cleveland Browns','#311D00','#FF3C00'],DAL:['Dallas Cowboys','#003594','#869397'],DEN:['Denver Broncos','#FB4F14','#002244'],DET:['Detroit Lions','#0076B6','#B0B7BC'],GB:['Green Bay Packers','#203731','#FFB612'],HOU:['Houston Texans','#03202F','#A71930'],IND:['Indianapolis Colts','#002C5F','#FFF'],JAX:['Jacksonville Jaguars','#006778','#D7A22A'],KC:['Kansas City Chiefs','#E31837','#FFB81C'],LV:['Las Vegas Raiders','#333','#A5ACAF'],LAC:['Los Angeles Chargers','#0080C6','#FFC20E'],LA:['Los Angeles Rams','#003594','#FFA300'],MIA:['Miami Dolphins','#008E97','#FC4C02'],MIN:['Minnesota Vikings','#4F2683','#FFC62F'],NE:['New England Patriots','#002244','#C60C30'],NO:['New Orleans Saints','#101820','#D3BC8D'],NYG:['New York Giants','#0B2265','#A71930'],NYJ:['New York Jets','#125740','#FFF'],PHI:['Philadelphia Eagles','#004C54','#A5ACAF'],PIT:['Pittsburgh Steelers','#101820','#FFB612'],SF:['San Francisco 49ers','#AA0000','#B3995D'],SEA:['Seattle Seahawks','#002244','#69BE28'],TB:['Tampa Bay Buccaneers','#D50A0A','#FF7900'],TEN:['Tennessee Titans','#4B92DB','#002244'],WAS:['Washington Commanders','#5A1414','#FFB612']};
 const logo=(x:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+({LA:'lar',WAS:'wsh'} as Record<string,string>)[x]?.toLowerCase()+'.png';
 function teamLogo(x:string){return 'https://a.espncdn.com/i/teamlogos/nfl/500/'+(x==='LA'?'lar':x==='WAS'?'wsh':x.toLowerCase())+'.png'}
@@ -19,7 +18,7 @@ export default function TeamPage(){
 
  const [analysisRequestedAt,setAnalysisRequestedAt]=useState<string|null>(null);
  const [analysisNonce,setAnalysisNonce]=useState(0);
- const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;point?:number;book:string;decimal:number;signal:number;angle:string;status:string}[]}|null>(null);
+ const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;signal:number;angle?:string;probability:number;expected_value:number;heavyball?:boolean;status:string}[]}|null>(null);
  useEffect(()=>{if(!data?.next?.game_id){setAnalysis(null);return}let active=true;setAnalysisRunning(true);fetch('/api/match-player-props?home='+encodeURIComponent(teams[data.next!.home_team_id]?.[0]||'')+'&away='+encodeURIComponent(teams[data.next!.away_team_id]?.[0]||''),{cache:'no-store'}).catch(()=>null).then(()=>fetch('/api/match-top5?game_id='+encodeURIComponent(data.next!.game_id)+'&requested_at='+analysisNonce,{cache:'no-store'})).then(async r=>{const j=await r.json();if(!r.ok)throw Error(j.error||'Erreur serveur '+r.status);return j}).then(j=>{if(active){setAnalysis(j);setAnalysisError('');setAnalysisRequestedAt(new Date().toISOString());setAnalysisRunning(false)}}).catch(e=>{if(active){setAnalysis(null);setAnalysisError(String(e.message));setAnalysisRunning(false)}});return()=>{active=false}},[data?.next?.game_id,analysisNonce]);
  const [error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{if(!data?.next||!data.opponent)return;let active=true;setLiveLoading(true);
@@ -110,7 +109,25 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
 </div></div>})}
 </div><p style={{fontSize:12,color:'#a9bdce',marginTop:12}}>Les Player Props continuent d’être utilisés dans le calcul du Top 5 ci-dessous; leur longue liste séparée a été retirée. Les blessures ESPN ne remplacent pas la liste officielle des inactifs NFL.</p>
 </section>
-<OfficialTeamTop5 team={abbr}/>
+<section style={{margin:'26px 0',padding:'22px',borderRadius:22,border:'1px solid #327dba',background:'linear-gradient(135deg,#092641,#071321)'}}>
+ <span style={{fontSize:11,letterSpacing:3,color:'#89dbff',fontWeight:900}}>NFL STUDIO · PROCHAIN AFFRONTEMENT</span>
+ <h2 style={{fontSize:'clamp(24px,3vw,36px)',margin:'9px 0',color:'#fff'}}>🏆 TOP 5 DU MATCH + HEAVYBALL</h2>
+ <p style={{color:'#b6d1e4',fontSize:13}}>Les quatre meilleures valeurs espérées disponibles et un Heavyball admissible à cote élevée. Un Heavyball n’est jamais inventé si aucun pari ne satisfait aux critères. Probabilités expérimentales, non calibrées.</p>
+ {analysisRunning?<p>Les boys, on sort les chiffres… calcul du prochain match en cours.</p>:analysisError?<p style={{color:'#ffb4b4'}}>Analyse indisponible : {analysisError}</p>:!analysis?<p>Aucun calcul reçu pour cette rencontre.</p>:<>
+ <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,250px),1fr))',gap:13,marginTop:20}}>
+ {analysis.analysis.map((pick,i)=><article key={pick.market+'-'+pick.name+'-'+String(pick.point)+'-'+i} style={{border:'1px solid '+(pick.heavyball?'#f4b64b':'#3576a6'),borderRadius:16,padding:17,background:pick.heavyball?'linear-gradient(140deg,#573a1c,#171b2b)':'linear-gradient(140deg,#173b59,#0a192b)',boxShadow:pick.heavyball?'0 0 23px #db963633':'0 8px 22px #0004'}}>
+ <div style={{fontSize:11,letterSpacing:1.6,color:pick.heavyball?'#ffd17c':'#93dbff',fontWeight:900}}>{pick.heavyball?'🔥 HEAVYBALL · CORONES SUR LE SYNTHÉTIQUE':'#'+(i+1)+' · '+pick.market.toUpperCase()}</div>
+ <h3 style={{fontSize:20,margin:'12px 0',color:'#fff'}}>{pick.player||pick.name}{typeof pick.point==='number'?' · '+pick.point:''}</h3>
+ <div style={{display:'flex',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}><span>Cote <b>{pick.decimal.toFixed(2)}</b></span><span>Modèle <b>{(pick.probability*100).toFixed(1)} %</b></span></div>
+ <div style={{marginTop:10,fontSize:17,color:pick.expected_value>0?'#5cf7b7':'#ffc19a',fontWeight:900}}>EV théorique : {pick.expected_value>=0?'+':''}{(pick.expected_value*100).toFixed(1)} %</div>
+ <div style={{fontSize:12,marginTop:10,color:'#c4d7e7'}}>{pick.angle||'Performance récente du joueur et fréquence historique lissée; faible échantillon.'}</div>
+ <div style={{fontSize:11,marginTop:11,color:'#f6d8a3'}}>{pick.heavyball?'Un long shot pour des corones en titane… mais ça peut planter en maudit.':'Projection exploratoire : un avantage calculé n’est pas un gain garanti.'}</div>
+ <div style={{fontSize:10,marginTop:8,color:'#9fbdd1'}}>Source des cotes : {pick.book}</div>
+ </article>)}
+ </div>
+ {!analysis.analysis.some(p=>p.heavyball)&&<p style={{marginTop:15,color:'#ffd39b'}}>🔥 Aucun Heavyball à cote de 3,00 ou plus avec une EV positive calculée pour ce match. On n’invente pas un pari pour remplir la case.</p>}
+ </>}
+ </section>
 
  <p style={{color:'#7e99ac',fontSize:12,marginTop:20}}>Rapport automatiquement rédigé à partir de résultats historiques et d’effectifs recensés. Toute information non confirmée est signalée. Actualisé : {new Date(data.updatedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'})}.</p>
  </>}
