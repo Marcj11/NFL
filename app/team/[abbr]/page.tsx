@@ -123,7 +123,7 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
  <div style={{marginTop:10,fontSize:17,color:pick.expected_value>0?'#5cf7b7':'#ffc19a',fontWeight:900}}>EV théorique : {pick.expected_value>=0?'+':''}{(pick.expected_value*100).toFixed(1)} %</div>
  <div style={{fontSize:12,marginTop:10,color:'#c4d7e7'}}>{pick.angle||'Performance récente du joueur et fréquence historique lissée; faible échantillon.'}</div>
  <div style={{fontSize:11,marginTop:11,color:'#f6d8a3'}}>{pick.heavyball?'Un long shot pour des corones en titane… mais ça peut planter en maudit.':'Projection exploratoire : un avantage calculé n’est pas un gain garanti.'}</div>
- <div style={{fontSize:10,marginTop:8,color:'#9fbdd1'}}>Source des cotes : {pick.book}</div><MatchBetEntry pick={pick} gameId={data.next.game_id} game={(teams[data.next.away_team_id]?.[0]||'Visiteurs')+' vs '+(teams[data.next.home_team_id]?.[0]||'Domicile')} team={abbr}/>
+ <div style={{fontSize:10,marginTop:8,color:'#9fbdd1'}}>Source des cotes : {pick.book}</div><MatchBetEntry pick={pick} gameId={data?.next?.game_id||''} game={(teams[data?.next?.away_team_id||'']?.[0]||'Visiteurs')+' vs '+(teams[data?.next?.home_team_id||'']?.[0]||'Domicile')} team={abbr}/>
  </article>)}
  </div>
  {!analysis.analysis.some(p=>p.heavyball)&&<p style={{marginTop:15,color:'#ffd39b'}}>🔥 Aucun Heavyball à cote de 3,00 ou plus avec une EV positive calculée pour ce match. On n’invente pas un pari pour remplir la case.</p>}
