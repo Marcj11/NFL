@@ -45,8 +45,13 @@ export function extractEspnRosterQBs(payload:unknown):EspnQB[]{
  for(const group of groups){
   const g=object(group)||{},position=object(g.position)||{};
   const label=[str(g.position),str(g.name),str(position.abbreviation),str(position.name)].join(' ');
-  if(!isQB(label))continue;
-  for(const x of arr(g.items)){
+  const items=arr(g.items);
+  if(!isQB(label)){
+   const ownPosition=object(g.position)||{};
+   if(!items.length&&isQB([str(ownPosition.abbreviation),str(ownPosition.name)].join(' ')))items.push(g);
+   else continue;
+  }
+  for(const x of items){
    const e=object(x)||{},player=object(e.athlete)||e;
    const name=str(player.displayName)||str(player.fullName)||str(player.name);
    if(name)qbs.push({name,espn_id:player.id!=null?String(player.id):null,rank:null});
