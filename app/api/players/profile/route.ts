@@ -7,6 +7,8 @@ export async function GET(req:Request){
   const r=await fetch('https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/'+id,{next:{revalidate:3600},signal:AbortSignal.timeout(9000)});
   if(!r.ok)throw Error('espn');
   const raw=await r.json();const a=raw.athlete||raw;const athlete={id,displayName:a.displayName||a.fullName,headshot:a.headshot,team:a.team,position:a.position};
+  const injuryReports=Array.isArray(a.injuries)?a.injuries:[];
+  const injuries=injuryReports.filter((entry:any)=>entry&&typeof entry==='object').map((entry:any)=>({status:String(entry.status||entry.type?.description||'Non précisé'),detail:String(entry.details?.detail||entry.detail||''),date:String(entry.date||entry.updatedAt||'')})).slice(0,4);
   const s=await fetch('https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/'+id+'/gamelog?season=2026',{next:{revalidate:900},signal:AbortSignal.timeout(9000)}).catch(()=>null);
   const x=s?.ok?await s.json():null;
   const events=x?.events||{},groups=Array.isArray(x?.seasonTypes)?x.seasonTypes:[];
@@ -27,6 +29,6 @@ export async function GET(req:Request){
    }
   }
   const games=[...resolved.values()].sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)).slice(0,5);
-  return NextResponse.json({status:'ok',athlete,games,source:'ESPN'});
+  return NextResponse.json({status:'ok',athlete,games,injuries,source:'ESPN',injurySource:injuries.length?'ESPN athlete injury report':'Non confirmé — ne pas inférer une blessure'});
  }catch{return NextResponse.json({status:'unavailable',athlete:null,games:[]})}
 }
