@@ -57,12 +57,17 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   return typeof prob==='number'?prob:null;
  };
  const ranking=useMemo(()=>{
- const relevant=offers.filter(o=>{
-  if(category==='props')return o.market==='props'&&researchValue(o)!==null;
-  if(category==='general')return (o.market==='moneyline'&&officialProbability(o)!==null)||(o.market==='props'&&researchValue(o)!==null);
-  return o.market==='moneyline'&&category==='moneyline'&&officialProbability(o)!==null;
+ const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
+ const eligible=offers.filter(o=>{
+  if(family==='props')return o.market==='props'&&researchValue(o)!==null;
+  if(family)return o.market===family;
+  if(category==='heavy')return o.odds>=3;
+  return o.market==='moneyline'||(o.market==='props'&&researchValue(o)!==null);
  });
- return relevant.sort((a,b)=>(researchValue(b)?.probability??officialProbability(b)??0)-(researchValue(a)?.probability??officialProbability(a)??0)).slice(0,5);
+ const score=(o:Offer)=>researchValue(o)?.probability??officialProbability(o)??(o.odds>1?1/o.odds:0);
+ const ordered=eligible.sort((a,b)=>category==='heavy'?b.odds-a.odds:score(b)-score(a));
+ const seen=new Set<string>();
+ return ordered.filter(o=>{const key=[o.game,o.market,o.selection].join('|');if(seen.has(key))return false;seen.add(key);return true}).slice(0,5);
  },[category,offers,official,research]);
  const choose=(v:Offer)=>{SELECT(v);ODD(fmt(v.odds).replace(',','.'));STAKE('5')};
  const add=()=>{if(!selected)return;const d=Number(odd.replace(',','.')),s=Number(stake.replace(',','.'));if(!Number.isFinite(d)||d<=1||!Number.isFinite(s)||s<=0)return;save([{...selected,chosenOdds:d,stake:s,placedAt:new Date().toISOString(),status:'open'},...bets]);SELECT(null)};
