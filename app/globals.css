@@ -390,3 +390,34 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
  .shell .studio-pick-card .pick-metrics strong{font-size:21px!important}
  .shell .studio-pick-card .pick-art .pick-versus img{max-width:88px!important;height:102px!important}
 }
+
+.locker-room{padding:16px 0 45px;color:#eef7ff}
+.locker-hero{border:1px solid #3ebdf1;border-radius:22px;padding:35px 25px;background:radial-gradient(ellipse at right top,#832dd05e,transparent 60%),linear-gradient(120deg,#092e4e,#091428);box-shadow:0 0 30px #188cea5a}
+.locker-hero>span{font-size:11px;letter-spacing:2px;color:#82e8ff;font-weight:900}
+.locker-hero h1{font-size:clamp(32px,6vw,65px);margin:10px 0;color:white;text-shadow:0 0 24px #3cb1ff}
+.locker-hero h1 em{font-style:normal;color:#ffcf78}
+.locker-hero p{font-size:14px;color:#c1e6ff}
+.locker-disclaimer{margin:16px 0;padding:13px;background:#1b2843;border:1px solid #557db3;border-radius:12px;font-size:12px}
+.locker-tabs{display:flex;gap:9px;overflow-x:auto;padding:10px 0 15px}
+.locker-tabs button{flex:0 0 auto;padding:11px;border-radius:10px;border:1px solid #3e9cda;background:#113155;color:white;font-weight:800;cursor:pointer}
+.locker-tabs .on{background:linear-gradient(100deg,#71efc0,#52aefe);color:#071a29}
+.locker-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.locker-story{min-width:0;display:flex;flex-direction:column;border:1px solid #398bd2;border-radius:16px;padding:17px;background:linear-gradient(145deg,#193a63,#091729);box-shadow:0 0 18px #1b7ed035}
+.locker-story-1{border-color:#9a62e8;background:linear-gradient(145deg,#36245b,#0d162a)}
+.locker-story-2{border-color:#f4b44c;background:linear-gradient(145deg,#50341a,#0d162a)}
+.locker-story-3{border-color:#25bca5;background:linear-gradient(145deg,#134d52,#0d162a)}
+.locker-story-4{border-color:#f476a0;background:linear-gradient(145deg,#51223e,#0d162a)}
+.locker-story-top,.locker-story-footer{display:flex;justify-content:space-between;gap:10px;color:#addaff;font-size:11px}
+.locker-story-teams{display:grid;grid-template-columns:1fr 1.2fr 1fr;align-items:center;gap:7px;margin:14px 0;text-align:center}
+.locker-story-teams img{width:100%;height:80px;object-fit:contain;filter:drop-shadow(0 0 10px #77beff)}
+.locker-story-teams small{display:block;font-size:9px;color:#c5d9e8}
+.locker-story-teams strong{color:#64f3c1;font-size:20px}
+.locker-story h2{font-size:21px;line-height:1.3;color:white}
+.locker-story p{font-size:13px;line-height:1.65;color:#dbeafa;flex:1}
+.locker-story blockquote{margin:10px 0;padding:12px;background:#071626;border-left:3px solid #ffd47b;color:#ffdf9d;font-weight:800}
+.locker-story-footer{border-top:1px solid #6eabce55;padding-top:12px;align-items:center}
+.locker-story-footer a{color:#64ebcf;font-weight:900}
+.locker-wait{padding:30px;border:1px dashed #3b8fc2;color:#c5d9ef}
+.locker-footnote{margin-top:18px;font-size:11px;color:#a4bfd3}
+@media(max-width:1100px){.locker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.locker-grid{grid-template-columns:1fr}.locker-hero{padding:24px 17px}}
