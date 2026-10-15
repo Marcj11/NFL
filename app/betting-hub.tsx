@@ -222,7 +222,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const settled=bets.filter(b=>b.status==='won'||b.status==='lost').sort((a,b)=>Date.parse(a.resultConfirmedAt||a.placedAt)-Date.parse(b.resultConfirmedAt||b.placedAt));
  const weeklySummary=Object.entries(bets.reduce<Record<string,{count:number;wins:number;losses:number;profit:number;stake:number}>>((out,b)=>{
   const dt=new Date(b.placedAt||Date.now());const date=Number.isFinite(dt.getTime())?dt.toISOString().slice(0,10):'Date inconnue';
-  const wk=date.slice(0,7)+' · semaine '+Math.ceil(dt.getUTCDate()/7);
+  const monday=new Date(Date.UTC(dt.getUTCFullYear(),dt.getUTCMonth(),dt.getUTCDate()));monday.setUTCDate(monday.getUTCDate()-((monday.getUTCDay()+6)%7));const wk='Semaine du '+monday.toISOString().slice(0,10);
   const item=out[wk]||{count:0,wins:0,losses:0,profit:0,stake:0};
   item.count++;if(b.status==='won'){item.wins++;item.stake+=b.stake;item.profit+=b.stake*(b.chosenOdds-1)}if(b.status==='lost'){item.losses++;item.stake+=b.stake;item.profit-=b.stake}out[wk]=item;return out
  },{})).sort((a,b)=>b[0].localeCompare(a[0]));
