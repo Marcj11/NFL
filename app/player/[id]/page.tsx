@@ -12,6 +12,11 @@ export default function PlayerPage(){
  const graphKey=games.flatMap(g=>Object.keys(g.stats)).find(key=>/ · YDS$| · YARDS$| · TD$| · REC$/.test(key)&&games.some(g=>Number.isFinite(Number(g.stats[key]))));
  const trend=graphKey?games.slice().reverse().map(g=>({date:g.date,value:Number(g.stats[graphKey]||0)})).filter(p=>Number.isFinite(p.value)):[];
  const ceiling=Math.max(1,...trend.map(p=>p.value));
+ const availableStats=[...new Set(games.flatMap(g=>Object.keys(g.stats)))].filter(key=>games.some(g=>g.stats[key]!==undefined&&g.stats[key]!==''&&Number.isFinite(Number(g.stats[key]))));
+ const keyStat=availableStats.find(k=>/receiving.*YDS|rushing.*YDS|passing.*YDS/i.test(k))||availableStats[0];
+ const statNums=keyStat?games.map(g=>Number(g.stats[keyStat])).filter(n=>Number.isFinite(n)):[];
+ const average=statNums.length?statNums.reduce((a,b)=>a+b,0)/statNums.length:null;
+
 
  return <main style={{maxWidth:1100,margin:'auto',padding:'22px 18px 100px',color:'#eaf7ff',background:'#061426',minHeight:'100vh',fontFamily:'Arial,sans-serif'}}>
  <a href="/" style={{color:'#87dbff'}}>← NFL STUDIO / ACCUEIL</a>
@@ -20,6 +25,7 @@ export default function PlayerPage(){
  <div><span style={{color:'#85e9cc',fontWeight:900}}>✦ FICHE JOUEUR · ESPN</span><h1 style={{fontSize:'clamp(28px,5vw,52px)',margin:'9px 0'}}>{a?.displayName||a?.fullName||'Joueur NFL'}</h1><p>{a?.team?.displayName||'Équipe à confirmer'} · {a?.position?.displayName||'Position à confirmer'}</p><small>Source : ESPN · Aucune blessure déduite des statistiques historiques</small></div>
  </section>
  <section style={{marginTop:20,padding:18,borderRadius:15,border:'1px solid #478aba',background:'#102238'}}><h2>🩺 STATUT DE BLESSURE — SOURCE ESPN</h2>{data?.injuries?.length?data.injuries.map((injury,i)=><p key={i}><strong>{injury.status}</strong>{injury.detail?' · '+injury.detail:''}{injury.date&&Number.isFinite(Date.parse(injury.date))?' · '+new Date(injury.date).toLocaleDateString('fr-CA',{day:'numeric',month:'short',year:'numeric',timeZone:'America/Toronto'}):''}</p>):<p>Aucun statut de blessure récent et explicite disponible dans cette fiche ESPN. Ça ne confirme pas que le joueur est en santé.</p>}</section>
+ <section style={{marginTop:18,display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:10}}><div style={{padding:16,border:'1px solid #4ac3e7',borderRadius:14,background:'#132e4d'}}><small style={{color:'#9bd9f2'}}>MATCHS AVEC STATISTIQUES</small><strong style={{display:'block',fontSize:30,color:'#6df2ca'}}>{games.length}</strong></div><div style={{padding:16,border:'1px solid #4ac3e7',borderRadius:14,background:'#132e4d'}}><small style={{color:'#9bd9f2'}}>MOYENNE · {keyStat||'EN ATTENTE'}</small><strong style={{display:'block',fontSize:30,color:'#6df2ca'}}>{average===null?'—':average.toFixed(1)}</strong></div></section>
  <section style={{marginTop:22,padding:22,borderRadius:18,background:'#0d2440',border:'1px solid #388dcc'}}><h2>📈 LES 5 DERNIÈRES PERFORMANCES</h2>
  {games.length?<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,230px),1fr))',gap:12}}>{games.map((g,i)=><div key={i} style={{padding:12,borderRadius:12,background:'#152f51',border:'1px solid #4589af'}}><strong>{g.opponent}</strong><p style={{fontSize:12,color:'#a5c8e0'}}>{new Date(g.date).toLocaleDateString('fr-CA',{day:'numeric',month:'short',year:'numeric',timeZone:'America/Toronto'})}</p>{Object.entries(g.stats).filter(([,value])=>value!==''&&value!=='—').slice(0,8).map(([k,v])=><p key={k} style={{fontSize:12,overflowWrap:'anywhere'}}>{k.replaceAll(' · ',' — ')}: <strong>{v}</strong></p>)}</div>)}</div>:<p>Statistiques des cinq derniers matchs non disponibles à partir de la source actuelle. Aucune donnée inventée.</p>}
  </section>
