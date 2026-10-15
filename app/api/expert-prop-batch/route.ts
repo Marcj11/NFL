@@ -12,12 +12,15 @@ export async function GET(request:Request){
    if(!o.player||!o.selection||!Number.isFinite(Number(o.line)))return false;
    const k=o.player+'|'+o.selection;if(seen.has(k))return false;seen.add(k);return true;
   }).slice(0,requested);
+  const oddsResponse=await fetch(origin+'/api/odds',{cache:'no-store',signal:AbortSignal.timeout(10000)});
+  if(!oddsResponse.ok)throw Error('odds_unavailable');
+  const games=await oddsResponse.json();
+  const events=Array.isArray(games.games)?games.games:[];
   const inputs=[];
   for(const offer of selected){
    const market=String(offer.selection).split(' · ').pop()||'';
    const match=String(offer.game||'');
-   const games=await fetch(origin+'/api/odds',{cache:'no-store',signal:AbortSignal.timeout(10000)}).then(r=>r.json());
-   const event=(Array.isArray(games.games)?games.games:[]).find((g:{away_team:string;home_team:string})=>g.away_team+' vs '+g.home_team===match);
+   const event=events.find((g:{away_team:string;home_team:string})=>g.away_team+' vs '+g.home_team===match);
    if(!event?.commence_time){inputs.push({offer,eligible:false,reason:'kickoff_missing'});continue}
    const qs=new URLSearchParams({player:offer.player,market,before:event.commence_time});
    const result=await fetch(origin+'/api/expert-player-history?'+qs,{cache:'no-store',signal:AbortSignal.timeout(10000)}).then(r=>r.json());
