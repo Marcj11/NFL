@@ -16,6 +16,17 @@ export default function TeamPage(){
  const [propsData,setPropsData]=useState<{status:string;fetchedAt?:string;props:{market:string;player:string;side:string;point:number;decimal:number;book:string}[]}|null>(null);
  const [liveLoading,setLiveLoading]=useState(false);
 
+ const [chosenPick,CHOOSE_PICK]=useState<{market:string;name:string;player?:string;point?:number;book:string;decimal:number;probability:number}|null>(null);
+ const [entryOdds,ENTRY_ODDS]=useState(''),[entryStake,ENTRY_STAKE]=useState('5'),[entryError,ENTRY_ERROR]=useState('');
+ const openPick=(pick:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;probability:number})=>{CHOOSE_PICK(pick);ENTRY_ODDS(String(pick.decimal));ENTRY_STAKE('5');ENTRY_ERROR('')};
+ const recordPick=()=>{
+  if(!chosenPick||!data?.next)return;
+  const price=Number(entryOdds.replace(',','.')),amount=Number(entryStake.replace(',','.'));
+  if(!Number.isFinite(price)||price<=1||!Number.isFinite(amount)||amount<=0){ENTRY_ERROR('Cote supérieure à 1,00 et mise positive nécessaires.');return}
+  const oddsGame=teams[data.next.away_team_id]?.[0]+' vs '+teams[data.next.home_team_id]?.[0];
+  const item={id:'match:'+data.next.game_id+':'+chosenPick.market+':'+chosenPick.name+':'+Date.now(),game:oddsGame,market:chosenPick.market==='h2h'?'moneyline':chosenPick.market==='player_pass_yds'||chosenPick.market==='player_rush_yds'||chosenPick.market==='player_reception_yds'?'props':chosenPick.market==='totals'?'totals':chosenPick.market==='spreads'?'spreads':chosenPick.market,selection:(chosenPick.player?chosenPick.player+' · ':'')+chosenPick.name+(typeof chosenPick.point==='number'?' '+chosenPick.point:''),line:chosenPick.point,book:chosenPick.book,odds:chosenPick.decimal,prob:chosenPick.probability,team:abbr,player:chosenPick.player,stake:amount,chosenOdds:price,placedAt:new Date().toISOString(),status:'open'};
+  try{const key='nfl-studio-bets-v1';const existing=JSON.parse(localStorage.getItem(key)||'[]');const records=Array.isArray(existing)?existing:[];localStorage.setItem(key,JSON.stringify([item,...records]));CHOOSE_PICK(null)}catch{ENTRY_ERROR('Impossible d’enregistrer dans ce navigateur.')}
+ };
  const [analysisRequestedAt,setAnalysisRequestedAt]=useState<string|null>(null);
  const [analysisNonce,setAnalysisNonce]=useState(0);
  const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;signal:number;angle?:string;probability:number;expected_value:number;heavyball?:boolean;status:string}[]}|null>(null);
@@ -122,7 +133,7 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
  <div style={{marginTop:10,fontSize:17,color:pick.expected_value>0?'#5cf7b7':'#ffc19a',fontWeight:900}}>EV théorique : {pick.expected_value>=0?'+':''}{(pick.expected_value*100).toFixed(1)} %</div>
  <div style={{fontSize:12,marginTop:10,color:'#c4d7e7'}}>{pick.angle||'Performance récente du joueur et fréquence historique lissée; faible échantillon.'}</div>
  <div style={{fontSize:11,marginTop:11,color:'#f6d8a3'}}>{pick.heavyball?'Un long shot pour des corones en titane… mais ça peut planter en maudit.':'Projection exploratoire : un avantage calculé n’est pas un gain garanti.'}</div>
- <div style={{fontSize:10,marginTop:8,color:'#9fbdd1'}}>Source des cotes : {pick.book}</div>
+ <div style={{fontSize:10,marginTop:8,color:'#9fbdd1'}}>Source des cotes : {pick.book}</div><button onClick={()=>openPick(pick)} style={{width:'100%',marginTop:13,padding:12,border:'1px solid #83e9ff',borderRadius:10,fontWeight:950,color:'#021525',background:'linear-gradient(110deg,#51f0b1,#51bbff)',boxShadow:'0 0 18px #2db1fa66',cursor:'pointer'}}>Gros, fais pas ton peureux, clic icitte →</button>
  </article>)}
  </div>
  {!analysis.analysis.some(p=>p.heavyball)&&<p style={{marginTop:15,color:'#ffd39b'}}>🔥 Aucun Heavyball à cote de 3,00 ou plus avec une EV positive calculée pour ce match. On n’invente pas un pari pour remplir la case.</p>}
@@ -131,5 +142,15 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
 
  <p style={{color:'#7e99ac',fontSize:12,marginTop:20}}>Rapport automatiquement rédigé à partir de résultats historiques et d’effectifs recensés. Toute information non confirmée est signalée. Actualisé : {new Date(data.updatedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'})}.</p>
  </>}
+ {chosenPick&&<div role="presentation" onClick={()=>CHOOSE_PICK(null)} style={{position:'fixed',inset:0,zIndex:99999,background:'#020812e8',backdropFilter:'blur(13px)',display:'grid',placeItems:'center',padding:18}}><div role="dialog" aria-modal="true" aria-label="Ajouter le pari au suivi" onClick={e=>e.stopPropagation()} style={{width:'min(500px,100%)',padding:25,borderRadius:19,background:'linear-gradient(145deg,#154775,#09182e)',border:'1px solid #70d4ff',boxShadow:'0 0 60px #168bdc66'}}>
+ <div style={{display:'flex',justifyContent:'space-between',gap:12}}><h2 style={{margin:0}}>🏈 BON, ON MISE COMBIEN LE GROS ?</h2><button onClick={()=>CHOOSE_PICK(null)} aria-label="Fermer" style={{fontSize:20,cursor:'pointer'}}>✕</button></div>
+ <p style={{fontSize:17,fontWeight:800}}>{chosenPick.player||chosenPick.name}{typeof chosenPick.point==='number'?' · '+chosenPick.point:''}</p><p>Cote repérée : {chosenPick.decimal.toFixed(2)} · {chosenPick.book}</p>
+ <div style={{display:'flex',gap:15,flexWrap:'wrap'}}><label>Cote réelle au moment de miser<input value={entryOdds} onChange={e=>ENTRY_ODDS(e.target.value)} type="number" step="0.01" min="1.01" style={{display:'block',width:150,padding:10,borderRadius:7,color:'#101a28'}}/></label><label>Mise ($ CAD)<input value={entryStake} onChange={e=>ENTRY_STAKE(e.target.value)} type="number" step="0.50" min="0.01" style={{display:'block',width:150,padding:10,borderRadius:7,color:'#101a28'}}/></label></div>
+ <p>Profit potentiel : {Number(entryOdds)>1&&Number(entryStake)>0?(Number(entryStake)*(Number(entryOdds)-1)).toFixed(2)+' 
+:'—'}</p>
+ {entryError&&<p style={{color:'#ffc1ae'}}>{entryError}</p>}
+ <button onClick={recordPick} style={{width:'100%',padding:14,border:0,borderRadius:10,background:'linear-gradient(110deg,#4dedac,#39aaff)',fontSize:16,fontWeight:950,color:'#041425',cursor:'pointer'}}>C’EST DANS MES PARIS EN COURS, ESTI !</button>
+ <p style={{fontSize:12,color:'#b6ccdf'}}>Le pari est enregistré localement, dans le même suivi que les billets du Top paris.</p>
+ </div></div>}
  </main>
 }
