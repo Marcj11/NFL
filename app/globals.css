@@ -441,3 +441,26 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .locker-final-score{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 12px;padding:13px 15px;border:1px solid #60c8ff;border-radius:13px;background:linear-gradient(110deg,#09294f,#19385e);box-shadow:0 0 19px #168ffd44}.locker-final-score span{color:#a5dafa;font-size:10px;font-weight:900;letter-spacing:1.4px}.locker-final-score strong{white-space:nowrap;font-size:clamp(23px,3vw,34px);color:#65f1cb;text-shadow:0 0 12px #46f4c777}.locker-final-score small{color:#e7f5ff;font-size:17px}@media(max-width:440px){.locker-final-score{padding:10px}.locker-final-score span{font-size:9px;letter-spacing:.5px}}
 
 .locker-facts{margin:12px 0;padding:14px;border:1px solid #4dbeff;border-radius:13px;background:linear-gradient(140deg,#10365d,#071b31);box-shadow:0 0 16px #2f9eee37}.locker-facts>strong{display:block;color:#83eaff;font-size:12px;letter-spacing:1px;margin-bottom:10px}.locker-facts>p{padding:9px 0;margin:0;border-bottom:1px solid #639fcb4d;font-size:13px;line-height:1.6;color:#f0f8ff}.locker-facts>small{display:block;color:#a8cce5;font-size:10px;margin-top:10px}
+
+/* Open bets: ESPN score and prop tracking */
+.studio-live{margin:18px 0;padding:20px;border:1px solid #3296d7;border-radius:18px;background:radial-gradient(ellipse at 100% 0%,#6425b547,transparent 53%),#081b30}
+.studio-live-head>span{font-size:11px;letter-spacing:1.5px;color:#63eec0;font-weight:900}
+.studio-live-head h2{font-size:clamp(22px,3vw,35px);color:white;margin:10px 0;text-shadow:0 0 20px #399dff}
+.studio-live-head p{font-size:12px;color:#b9d9ed}
+.studio-live-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+.studio-live-ticket{min-width:0;border:1px solid #3792cf;border-radius:13px;padding:15px;background:linear-gradient(120deg,#102e52,#071629);box-shadow:0 0 19px #1a84dd39}
+.studio-live-top,.studio-live-score{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.studio-live-top{color:#b8daf2;font-size:11px;font-weight:900}
+.studio-live-top>span:first-child{color:#55e8a7}
+.studio-live-score{margin:13px 0;padding:10px;background:#091e3a;border-radius:10px}
+.studio-live-score strong{font-size:18px;white-space:nowrap}
+.studio-live-score strong b{color:#7ff9ca;font-size:29px;margin-left:7px}
+.studio-live-score>span{color:#93b4c8;font-size:11px}
+.studio-live-pick>span{color:#81d6f9;font-size:10px;font-weight:900}
+.studio-live-pick h3{font-size:16px;margin:7px 0;color:#fff;overflow-wrap:anywhere}
+.studio-live-pick p{font-size:13px;color:#e1f0fd}
+.studio-live-progress{height:10px;border-radius:20px;background:#183958;overflow:hidden;margin:11px 0}
+.studio-live-progress>div{height:100%;background:linear-gradient(90deg,#37a6ff,#62f1b3);box-shadow:0 0 13px #65fcc2}
+.studio-live-alert{display:block;font-size:11px;color:#ffdf8b;margin:9px 0}
+.studio-live-ticket small{display:block;color:#a4bace;font-size:10px}
+@media(max-width:720px){.studio-live{padding:13px}.studio-live-grid{grid-template-columns:1fr}.studio-live-score strong{font-size:15px}}
