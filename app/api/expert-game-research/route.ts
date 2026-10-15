@@ -24,7 +24,28 @@ export async function GET(req:Request){
    return {team,projected_qb:parsed.qbs[0]?.name||null,status:parsed.qbs.length?'espn_probable':'espn_no_depth_chart_qb'};
   }catch{return {team,projected_qb:null,status:'espn_unavailable'}}
  }));
- const homePoints=(hm.pf+am.pa)/2+1.5,awayPoints=(am.pf+hm.pa)/2;const margin=homePoints-awayPoints,total=homePoints+awayPoints;const marginSd=13.5,totalSd=17.5;
- return NextResponse.json({status:'experimental_unvalidated',home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbContext,qb_assumptions_included_in_numeric_forecast:false,model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN affichés comme hypothèses sans ajustement chiffré, blessures et météo non modélisées, aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
+ // ESPN projected starters are matched against their own pre-kickoff passing history.
+ // A small, capped conversion translates QB yardage relative to a neutral
+ // 230-yard baseline into points. No stats means no fabricated QB adjustment.
+ const qbEffects=await Promise.all(qbContext.map(async q=>{
+  if(!q.projected_qb)return {...q,sample_games:0,passing_yards_average:null,points_adjustment:0,applied:false};
+  try{
+   const p=new URLSearchParams({select:'game_id,passing_yards,kickoff_utc',display_name:'eq.'+q.projected_qb,kickoff_utc:'lt.'+new Date(before).toISOString(),order:'kickoff_utc.desc',limit:'12'});
+   const r=await fetch(base+'/rest/v1/nfl_studio_player_recent_prop_results_v1?'+p,{headers,cache:'no-store',signal:AbortSignal.timeout(6000)});
+   if(!r.ok)throw Error('qb_history_'+r.status);
+   const rows=await r.json() as Array<{game_id:string;passing_yards:number|null}>;
+   const distinct=new Map<string,number>();
+   for(const row of rows)if(row.game_id&&!distinct.has(row.game_id)&&row.passing_yards!==null&&Number.isFinite(Number(row.passing_yards)))distinct.set(row.game_id,Number(row.passing_yards));
+   const vals=[...distinct.values()];
+   if(vals.length<3)return {...q,sample_games:vals.length,passing_yards_average:null,points_adjustment:0,applied:false};
+   const average=vals.reduce((sum,v)=>sum+v,0)/vals.length;
+   const adjustment=Math.max(-5,Math.min(5,(average-230)*0.03));
+   return {...q,sample_games:vals.length,passing_yards_average:average,points_adjustment:adjustment,applied:true};
+  }catch{return {...q,sample_games:0,passing_yards_average:null,points_adjustment:0,applied:false}}
+ }));
+ const homePoints=(hm.pf+am.pa)/2+1.5+qbEffects[0].points_adjustment;
+ const awayPoints=(am.pf+hm.pa)/2+qbEffects[1].points_adjustment;
+ const margin=homePoints-awayPoints,total=homePoints+awayPoints;const marginSd=13.5,totalSd=17.5;
+ return NextResponse.json({status:'experimental_unvalidated',home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbEffects,qb_assumptions_included_in_numeric_forecast:qbEffects.some(q=>q.applied),model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN projetés intégrés par ajustement explicite et plafonné lorsque trois matchs historiques ou plus sont disponibles; sinon ajustement nul signalé. Les titularisations, blessures et météo ne sont pas confirmées; aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'history_unavailable',decision:'PASSER'},{status:502})}
 }
