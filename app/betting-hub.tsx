@@ -79,12 +79,12 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const eligible=offers.filter(o=>{const p=probability(o);return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)});
  const edge=(o:Offer)=>probability(o)!*o.odds-1;
  const ordered=eligible.sort((a,b)=>edge(b)-edge(a));
- const selected:Offer[]=[],seen=new Set<string>(),byFamily=new Map<string,number>(),byGame=new Map<string,number>();
+ const selected:Offer[]=[],seen=new Set<string>();
  for(const o of ordered){
   const key=[o.game,o.market,o.selection].join('|');
   if(seen.has(key))continue;
-  if(category==='general'&&((byFamily.get(o.market)||0)>=2||(byGame.get(o.game)||0)>=1))continue;
-  seen.add(key);selected.push(o);byFamily.set(o.market,(byFamily.get(o.market)||0)+1);byGame.set(o.game,(byGame.get(o.game)||0)+1);
+  
+  seen.add(key);selected.push(o);
   if(selected.length>=5)break;
  }
  return selected;
