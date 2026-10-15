@@ -9,8 +9,24 @@ export async function GET(req:Request){
   const raw=await r.json();const a=raw.athlete||raw;const athlete={id,displayName:a.displayName||a.fullName,headshot:a.headshot,team:a.team,position:a.position};
   const s=await fetch('https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/'+id+'/gamelog?season=2026',{next:{revalidate:900},signal:AbortSignal.timeout(9000)}).catch(()=>null);
   const x=s?.ok?await s.json():null;
-  const events=x?.events||{};const stats:any[]=Array.isArray(x?.seasonTypes)?x.seasonTypes.flatMap((t:any)=>t.categories||[]):[];
-  const games=stats.flatMap((category:any)=>Array.isArray(category.events)?category.events.map((ev:any)=>({date:String(events[ev.eventId]?.gameDate||''),opponent:String(events[ev.eventId]?.opponent?.abbreviation||events[ev.eventId]?.opponent||'NFL'),stats:Object.fromEntries((category.labels||[]).slice(0,8).map((k:string,i:number)=>[k,String(ev.stats?.[i]??'—')]))})):[]).slice(0,5);
+  const events=x?.events||{},groups=Array.isArray(x?.seasonTypes)?x.seasonTypes:[];
+  const resolved=new Map<string,{date:string;opponent:string;stats:Record<string,string>}>();
+  for(const season of groups){
+   for(const category of Array.isArray(season.categories)?season.categories:[]){
+    const labels=Array.isArray(category.labels)?category.labels:[];
+    const rows=Array.isArray(category.events)?category.events:[];
+    for(const row of rows){
+     const ref=String(row.eventId||row.id||'');if(!ref)continue;
+     const info=events[ref]||{},date=String(info.gameDate||info.date||'');
+     if(!date||!Number.isFinite(Date.parse(date)))continue;
+     const previous=resolved.get(ref)||{date,opponent:String(info.opponent?.abbreviation||info.opponent?.displayName||'NFL'),stats:{}};
+     const values=Array.isArray(row.stats)?row.stats:[];
+     labels.forEach((label:string,i:number)=>{const value=values[i];if(value!==null&&value!==undefined&&String(value).trim()!=='')previous.stats[String(category.displayName||category.name||'')+' · '+label]=String(value)});
+     resolved.set(ref,previous);
+    }
+   }
+  }
+  const games=[...resolved.values()].sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)).slice(0,5);
   return NextResponse.json({status:'ok',athlete,games,source:'ESPN'});
  }catch{return NextResponse.json({status:'unavailable',athlete:null,games:[]})}
 }
