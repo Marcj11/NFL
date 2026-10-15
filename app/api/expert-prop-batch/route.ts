@@ -12,21 +12,17 @@ export async function GET(request:Request){
    if(!o.player||!o.selection||!Number.isFinite(Number(o.line)))return false;
    const k=o.player+'|'+o.selection;if(seen.has(k))return false;seen.add(k);return true;
   }).slice(0,requested);
-  const oddsResponse=await fetch(origin+'/api/odds',{cache:'no-store',signal:AbortSignal.timeout(10000)});
-  if(!oddsResponse.ok)throw Error('odds_unavailable');
-  const games=await oddsResponse.json();
-  const events=Array.isArray(games.games)?games.games:[];
-  const inputs=await Promise.all(selected.map(async (offer:{player:string;selection:string;game?:string})=>{
+  
+  const inputs=await Promise.all(selected.map(async (offer:{player:string;selection:string;game?:string;kickoff_utc?:string})=>{
    const market=String(offer.selection).split(' · ').pop()||'';
-   const match=String(offer.game||'');
-   const event=events.find((g:{away_team:string;home_team:string})=>g.away_team+' vs '+g.home_team===match);
-   if(!event?.commence_time)return {offer,eligible:false,reason:'kickoff_missing'};
+   const kickoff=String(offer.kickoff_utc||'');
+   if(!Number.isFinite(Date.parse(kickoff)))return {offer,eligible:false,reason:'kickoff_missing'};
    try{
-    const qs=new URLSearchParams({player:offer.player,market,before:event.commence_time});
+    const qs=new URLSearchParams({player:offer.player,market,before:kickoff});
     const response=await fetch(origin+'/api/expert-player-history?'+qs,{cache:'no-store',signal:AbortSignal.timeout(12000)});
     if(!response.ok)return {offer,eligible:false,reason:'history_http_'+response.status};
     const result=await response.json();
-    return {offer,eligible:result.eligible===true,reason:result.eligible?'research_input_only':'history_or_identity_unverified',history:result.history||[],kickoff_utc:event.commence_time};
+    return {offer,eligible:result.eligible===true,reason:result.eligible?'research_input_only':'history_or_identity_unverified',history:result.history||[],kickoff_utc:kickoff};
    }catch{return {offer,eligible:false,reason:'history_unavailable'}}
   }));
   return NextResponse.json({source:'independent_expert_nfl_player_props',status:'research_inputs_only',models_executed:false,recommendations_validated:false,count:inputs.length,inputs},{headers:{'Cache-Control':'no-store'}});
