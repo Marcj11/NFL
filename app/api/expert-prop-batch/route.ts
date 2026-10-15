@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
 export async function GET(request:Request){
  const origin=new URL(request.url).origin;
- const requested=Math.min(80,Math.max(1,Number(new URL(request.url).searchParams.get('limit')||60)));
+ const requested=Math.min(40,Math.max(1,Number(new URL(request.url).searchParams.get('limit')||30)));
  try{
   const res=await fetch(origin+'/api/player-props',{cache:'no-store',signal:AbortSignal.timeout(10000)});
   if(!res.ok)throw Error('offers_unavailable');
@@ -14,8 +14,8 @@ export async function GET(request:Request){
   }).slice(0,requested);
   
   const inputs:Array<Record<string,unknown>>=[];
-  for(let i=0;i<selected.length;i+=5){
-   const batch=await Promise.all(selected.slice(i,i+5).map(async (offer:{player:string;selection:string;game?:string;kickoff_utc?:string})=>{
+  for(let i=0;i<selected.length;i+=10){
+   const batch=await Promise.all(selected.slice(i,i+10).map(async (offer:{player:string;selection:string;game?:string;kickoff_utc?:string})=>{
    const market=String(offer.selection).split(' · ').pop()||'';
    const kickoff=String(offer.kickoff_utc||'');
    if(!Number.isFinite(Date.parse(kickoff)))return {offer,eligible:false,reason:'kickoff_missing'};
