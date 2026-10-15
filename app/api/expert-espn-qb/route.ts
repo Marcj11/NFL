@@ -1,9 +1,12 @@
+import {espnTeamId} from '../../../lib/expert-nfl/espn-team-ids';
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
 export async function GET(req:Request){
  const team=new URL(req.url).searchParams.get('team')?.toLowerCase()||'';
  if(!/^[a-z]{2,3}$/.test(team))return NextResponse.json({error:'invalid_team'},{status:400});
- const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+encodeURIComponent(team)+'/depthcharts';
+ const id=espnTeamId(team);
+ if(!id)return NextResponse.json({error:'unknown_team'},{status:400});
+ const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+id+'/depthcharts';
  try{
   const r=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(8000)});
   if(!r.ok)return NextResponse.json({status:'espn_unavailable',team},{status:502});
