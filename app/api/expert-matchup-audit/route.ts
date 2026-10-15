@@ -48,6 +48,18 @@ export async function GET(req:Request){
    const source=sources[0];
    return {team,source_count:sources.length,qb_name_for_game:source?.qb_name||null,announced_status:source?.announced_status||null,source_name:source?.source_name||null,source_published_at:source?.source_published_at||null,starter_confirmed_for_requested_game:false,verification:'not_verified',reason:sources.length?'Announcement exists but confirmation criteria not established':'No verified pregame QB source for the requested game'};
   });
-  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
+  const espnDepthCharts=await Promise.all([home,away].map(async team=>{
+   const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+encodeURIComponent(team.toLowerCase())+'/depthcharts';
+   try{
+    const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(5000)});
+    if(!response.ok)return {team,status:'espn_http_error',http_status:response.status,projected_qb:null,confirmed:false};
+    const data=await response.json();
+    const charts=Array.isArray(data.depthCharts)?data.depthCharts:[];
+    const candidates=charts.flatMap((c:{positions?:Record<string,{athletes?:Array<{rank?:number;athlete?:{displayName?:string;id?:string}}>} >})=>Object.entries(c.positions||{}).filter(([k])=>k.toLowerCase()==='qb'||k.toLowerCase().includes('quarterback')).flatMap(([,v])=>v.athletes||[]));
+    const qbs=candidates.filter((x:{athlete?:{displayName?:string}})=>!!x.athlete?.displayName).sort((a:{rank?:number},b:{rank?:number})=>(a.rank??99)-(b.rank??99));
+    return {team,status:qbs.length?'espn_depth_chart':'espn_qb_missing',projected_qb:qbs[0]?.athlete?.displayName||null,observed_at:new Date().toISOString(),confirmed:false};
+   }catch{return {team,status:'espn_unreachable',projected_qb:null,confirmed:false}}
+  }));
+  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'data_unavailable',publishable:false},{status:502})}
 }
