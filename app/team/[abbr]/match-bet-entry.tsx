@@ -9,7 +9,7 @@ export default function MatchBetEntry({pick,gameId,game,team}:{pick:MatchPick;ga
   if(!Number.isFinite(odds)||odds<=1||!Number.isFinite(amount)||amount<=0){setError('La cote doit dépasser 1,00 et la mise doit être positive.');return}
   const market=['player_pass_yds','player_rush_yds','player_reception_yds'].includes(pick.market)?'props':pick.market==='h2h'?'moneyline':pick.market;
   const item={id:'match:'+gameId+':'+pick.market+':'+pick.name+':'+Date.now(),game,market,selection:(pick.player?pick.player+' · ':'')+pick.name+(typeof pick.point==='number'?' '+pick.point:''),line:pick.point,book:pick.book,odds:pick.decimal,prob:pick.probability,team,player:pick.player,stake:amount,chosenOdds:odds,placedAt:new Date().toISOString(),status:'open'};
-  try{const key='nfl-studio-bets-v1';const previous=JSON.parse(localStorage.getItem(key)||'[]');localStorage.setItem(key,JSON.stringify([item,...(Array.isArray(previous)?previous:[])]));setOpen(false);setError('')}catch{setError('Impossible d’enregistrer le billet dans ce navigateur.')}
+  try{const key='nfl-studio-bets-v1';const previous=JSON.parse(localStorage.getItem(key)||'[]');const all=[item,...(Array.isArray(previous)?previous:[])];localStorage.setItem(key,JSON.stringify(all));const secret=localStorage.getItem('nfl-studio-wallet-secret');if(secret)fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',secret,bets:all})}).catch(()=>{});setOpen(false);setError('')}catch{setError('Impossible d’enregistrer le billet dans ce navigateur.')}
  };
  return <>
   <button type="button" onClick={()=>{setPrice(String(pick.decimal));setStake('5');setError('');setOpen(true)}} style={{width:'100%',marginTop:13,padding:12,border:'1px solid #8beaff',borderRadius:10,fontWeight:900,background:'linear-gradient(120deg,#5feeba,#4ba9ff)',color:'#061626',cursor:'pointer'}}>Gros, fais pas ton peureux, clic icitte →</button>
@@ -22,7 +22,7 @@ export default function MatchBetEntry({pick,gameId,game,team}:{pick:MatchPick;ga
     <p>Profit potentiel : {Number(price)>1&&Number(stake)>0?(Number(stake)*(Number(price)-1)).toFixed(2)+' $':'—'}</p>
     {error&&<p style={{color:'#ffbbab'}}>{error}</p>}
     <button type="button" onClick={record} style={{width:'100%',padding:13,border:0,borderRadius:10,fontWeight:900,background:'#51eaba',color:'#081a2b',cursor:'pointer'}}>ENREGISTRER DANS MES PARIS EN COURS, ESTI !</button>
-    <p style={{fontSize:12,color:'#c4d8e6'}}>Le billet est conservé dans le même navigateur que tes autres paris NFL Studio.</p>
+    <p style={{fontSize:12,color:'#c4d8e6'}}>Le billet est conservé localement et synchronisé si ton coffre privé est relié.</p>
    </div>
   </div>}
  </>;
