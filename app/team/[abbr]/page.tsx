@@ -109,7 +109,8 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
 </article>}):<p style={{padding:12,color:'#d4e2ed',background:'#07172599',borderRadius:11}}>{r.injuryFeedAvailable?'Aucun joueur signalé dans le flux ESPN à cette vérification.':'Rapport de blessures indisponible pour cette équipe; aucune absence ne peut être confirmée.'}</p>}
 </div></div>})}
 </div><p style={{fontSize:12,color:'#a9bdce',marginTop:12}}>Les Player Props continuent d’être utilisés dans le calcul du Top 5 ci-dessous; leur longue liste séparée a été retirée. Les blessures ESPN ne remplacent pas la liste officielle des inactifs NFL.</p>
-</sec<OfficialTeamTop5 team={abbr}/>_at}/>
+</section>
+<OfficialTeamTop5 team={abbr}/>
 
  <p style={{color:'#7e99ac',fontSize:12,marginTop:20}}>Rapport automatiquement rédigé à partir de résultats historiques et d’effectifs recensés. Toute information non confirmée est signalée. Actualisé : {new Date(data.updatedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'})}.</p>
  </>}
