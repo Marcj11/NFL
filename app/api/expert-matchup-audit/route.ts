@@ -39,11 +39,14 @@ export async function GET(req:Request){
   if(requestedGame&&/^[a-zA-Z0-9_-]{3,80}$/.test(requestedGame))qbQuery.set('game_id','eq.'+requestedGame);
   const qbr=await fetch(base+'/rest/v1/nfl_studio_pregame_qb_sources_v1?'+qbQuery,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
   const qbSources=qbr.ok?await qbr.json() as Array<{team_id:string;game_id:string;qb_name:string;source_published_at:string;announced_status:string;source_name:string}>:[];
+  const historyQuery=new URLSearchParams({select:'game_id,team_id,qb_name,source_release_id',team_id:'in.('+home+','+away+')',limit:'24'});
+  const historyResp=await fetch(base+'/rest/v1/game_starting_quarterbacks?'+historyQuery,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
+  const historicalQB=historyResp.ok?await historyResp.json() as Array<{game_id:string;team_id:string;qb_name:string}>:[];
   const qbCoverage=[home,away].map(team=>{
    const sources=qbSources.filter(q=>q.team_id===team&&!!requestedGame&&q.game_id===requestedGame);
    const source=sources[0];
    return {team,source_count:sources.length,qb_name_for_game:source?.qb_name||null,announced_status:source?.announced_status||null,source_name:source?.source_name||null,source_published_at:source?.source_published_at||null,starter_confirmed_for_requested_game:false,verification:'not_verified',reason:sources.length?'Announcement exists but confirmation criteria not established':'No verified pregame QB source for the requested game'};
   });
-  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,historical_qb_examples:historicalQB,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'data_unavailable',publishable:false},{status:502})}
 }
