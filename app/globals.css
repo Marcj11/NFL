@@ -237,3 +237,50 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 @keyframes player-charge{50%{opacity:1;filter:blur(6px)}}
 @media(max-width:700px){.player-team-logo{height:28px!important;width:28px!important}.player-feature-name{font-size:9px}.player-photo-unavailable{font-size:8px;padding:5px}}
 @media(prefers-reduced-motion:reduce){.player-electric{animation:none}}
+
+
+/* Card art: contained team logos, no clipping or overlapping edges at 5-up width */
+.shell .studio-pick-card .pick-art{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  position:relative!important;isolation:isolate;overflow:hidden!important;
+  width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+  margin:10px 0 5px!important;height:140px!important;min-height:140px!important;
+  border:1px solid #4e8eb1;border-radius:12px!important;
+  background:radial-gradient(ellipse at 50% 45%,#3878b544,transparent 72%),linear-gradient(180deg,#0b1a31,#071d31)!important;
+}
+.shell .studio-pick-card .pick-art>.pick-main-team-logo{
+  display:block!important;position:relative!important;z-index:1;
+  width:min(38%,104px)!important;height:90px!important;max-width:104px!important;
+  object-fit:contain!important;object-position:center!important;
+}
+.shell .studio-pick-card .pick-art .pick-versus{
+  position:absolute!important;left:4%!important;right:4%!important;
+  top:4px!important;bottom:4px!important;width:92%!important;
+  display:grid!important;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr)!important;
+  align-items:center!important;justify-items:center!important;
+  padding:5px!important;gap:3px!important;box-sizing:border-box!important;
+  border:0!important;background:transparent!important;z-index:3!important;
+}
+.shell .studio-pick-card .pick-art .pick-versus img{
+  width:100%!important;max-width:97px!important;height:105px!important;max-height:100%!important;
+  object-fit:contain!important;min-width:0!important;
+  filter:drop-shadow(0 0 10px #84ccff77)!important;
+}
+.shell .studio-pick-card .pick-art .pick-versus b{
+  font-size:11px!important;color:#ecf8ff!important;text-shadow:0 1px 5px #000!important;
+}
+.shell .studio-pick-card .pick-art:has(.pick-versus)>.pick-main-team-logo{display:none!important}
+.shell .studio-pick-card .pick-art.player-prop-art .player-feature{inset:0!important;width:100%;height:100%;overflow:hidden}
+.shell .studio-pick-card .pick-art.player-prop-art .player-action-image{
+  display:block!important;position:relative!important;z-index:3!important;
+  height:100%!important;width:auto!important;max-width:78%!important;object-fit:contain!important;
+  object-position:center bottom!important;
+}
+.shell .studio-pick-card .pick-art.player-prop-art .player-feature-name{
+  background:linear-gradient(transparent,#021125de);padding:13px 3px 4px!important;bottom:0!important;
+}
+@media(max-width:760px){
+ .shell .studio-pick-card .pick-art{height:122px!important;min-height:122px!important}
+ .shell .studio-pick-card .pick-art .pick-versus img{max-width:82px!important;height:90px!important}
+ .shell .studio-pick-card .pick-art .pick-versus{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr)!important}
+}
