@@ -1,3 +1,4 @@
+import {espnTeamId} from '../../../lib/expert-nfl/espn-team-ids';
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
 export async function GET(req:Request){
@@ -49,7 +50,7 @@ export async function GET(req:Request){
    return {team,source_count:sources.length,qb_name_for_game:source?.qb_name||null,announced_status:source?.announced_status||null,source_name:source?.source_name||null,source_published_at:source?.source_published_at||null,starter_confirmed_for_requested_game:false,verification:'not_verified',reason:sources.length?'Announcement exists but confirmation criteria not established':'No verified pregame QB source for the requested game'};
   });
   const espnDepthCharts=await Promise.all([home,away].map(async team=>{
-   const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+encodeURIComponent(team.toLowerCase())+'/depthcharts';
+   const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+(espnTeamId(team)||'invalid')+'/depthcharts';
    try{
     const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(5000)});
     if(!response.ok)return {team,status:'espn_http_error',http_status:response.status,projected_qb:null,confirmed:false};
