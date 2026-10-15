@@ -29,6 +29,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const best=new Map<string,Offer>();for(const x of out){const older=best.get(x.id);if(!older||x.odds>older.odds)best.set(x.id,x)}
  if(active){setOffers([...best.values()]);LOADED(true)}
  }).catch(()=>{if(active)LOADED(true)});return()=>{active=false}},[]);
+ useEffect(()=>{let active=true;fetch('/api/player-props').then(r=>r.json()).then(data=>{if(!active||!Array.isArray(data.offers))return;setOffers(previous=>{const map=new Map(previous.map(o=>[o.id,o]));for(const prop of data.offers){if(prop.market==='props'&&Number(prop.odds)>1)map.set(prop.id,prop as Offer)}return [...map.values()]})}).catch(()=>{});return()=>{active=false}},[]);
  const ranking=useMemo(()=>{
  const all=offers.filter(x=>category==='heavy'?x.odds>=2.7:category==='props'?x.market==='props':category==='general'?true:x.market===category).sort((a,b)=>category==='heavy'?b.odds-a.odds:b.prob-a.prob);
  const seen=new Set<string>();const distinct=all.filter(o=>{if(seen.has(o.game))return false;seen.add(o.game);return true});return [...distinct,...all.filter(o=>!distinct.includes(o))].slice(0,5);
