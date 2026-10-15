@@ -9,10 +9,11 @@ export async function GET(req:Request){
   if(!r.ok)return NextResponse.json({status:'espn_unavailable',team},{status:502});
   const data=await r.json();
   type Athlete={rank?:number;athlete?:{id?:string;displayName?:string};id?:string;displayName?:string};
-  const charts=Array.isArray(data.depthCharts)?data.depthCharts:Array.isArray(data.depthcharts)?data.depthcharts:Array.isArray(data.items)?data.items:[];
+  const raw=data.depthCharts??data.depthcharts??data.depthchart??data.items??[];
+  const charts=Array.isArray(raw)?raw:typeof raw==='object'&&raw!==null?[raw]:[];
   const qbEntries:Athlete[]=[];
   for(const chart of charts){
-   const positions=chart?.positions||{};
+   const positions=chart?.positions||chart?.depthchart?.positions||{};
    for(const [key,position] of Object.entries(positions as Record<string,{athletes?:Athlete[];position?:{abbreviation?:string;name?:string}}>)){
     const label=[key,position?.position?.abbreviation,position?.position?.name].join(' ').toLowerCase();
     if(/(^|[^a-z])qb([^a-z]|$)|quarterback/.test(label))qbEntries.push(...(Array.isArray(position?.athletes)?position.athletes:[]));
