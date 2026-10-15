@@ -224,3 +224,16 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .live-bet-row:hover{transform:translateY(-2px);border-color:#75bcf7}
 @media(max-width:700px){.studio-hero-inner{padding:27px 11px!important}.studio-hero-title{font-size:clamp(26px,8.5vw,39px)!important;letter-spacing:.4px!important}.studio-hero-inner>p{font-size:12px!important}.studio-pick-card{border-radius:13px!important}.studio-pick-card .pick-action{min-height:43px}.studio-bet-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.studio-bet-kpis>div{min-width:0}.studio-bet-kpis strong{font-size:16px!important;overflow-wrap:anywhere}.live-bet-row:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){.live-bet-row,.studio-pick-card .pick-action{transition:none!important;transform:none!important}}
+
+
+/* Player-first premium cards: no fabricated photos or props */
+.player-prop-art{position:relative;isolation:isolate;overflow:hidden!important;background:radial-gradient(ellipse at 50% 35%,#308bfb70,transparent 72%),url('/stadium-night.svg') center/cover!important}
+.player-feature{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:2}
+.player-electric{position:absolute;inset:-20%;background:conic-gradient(from 15deg at 50% 55%,transparent 0deg,#63c9ffb5 9deg,transparent 15deg 79deg,#a5e5ffbc 84deg,transparent 92deg 173deg,#2b7bffc4 179deg,transparent 188deg 360deg);filter:blur(11px);opacity:.75;animation:player-charge 5s ease-in-out infinite}
+.player-action-image{position:relative!important;z-index:2;max-width:82%;height:95%!important;width:auto!important;object-fit:contain;filter:drop-shadow(0 0 14px #52bfff) drop-shadow(0 10px 12px #010915)!important}
+.player-team-logo{position:absolute!important;right:4px;top:5px;width:44px!important;height:44px!important;object-fit:contain;z-index:3;filter:drop-shadow(0 0 7px #fff8)!important}
+.player-feature-name{position:absolute;bottom:2px;left:0;right:0;z-index:4;text-align:center;font-size:11px;font-weight:900;letter-spacing:.5px;text-shadow:0 2px 8px #000,0 0 12px #60c9ff;color:#fff}
+.player-photo-unavailable{position:relative;z-index:2;border:1px solid #70a5d8;color:#bbd9f1;border-radius:7px;padding:8px;font-size:10px;font-weight:800;background:#061628c9;text-align:center}
+@keyframes player-charge{50%{opacity:1;filter:blur(6px)}}
+@media(max-width:700px){.player-team-logo{height:28px!important;width:28px!important}.player-feature-name{font-size:9px}.player-photo-unavailable{font-size:8px;padding:5px}}
+@media(prefers-reduced-motion:reduce){.player-electric{animation:none}}
