@@ -76,7 +76,6 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
  const probability=(o:Offer)=>officialProbability(o)??(o.market==='props'?researchValue(o)?.probability??null:gameProjection(o));
- const categoryResearchOnly=(o:Offer)=>officialProbability(o)===null;
  const eligible=offers.filter(o=>{
   const p=probability(o);
   if(family)return o.market===family&&p!==null;
