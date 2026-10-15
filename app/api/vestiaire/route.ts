@@ -52,8 +52,7 @@ function story(game:Game,result:Result,index:number):Story{
  const lead='Score final : '+score+'. Les visiteurs ont inscrit '+a+' points, contre '+h+' pour les locaux, pour un total de '+total+' points.';
  const finish=tie?'Cette égalité laisse les deux clubs au même niveau au tableau final.':margin>=21?'Avec '+margin+' points d’écart, on parle d’une victoire très convaincante au pointage.':margin<=3?'Avec seulement '+margin+' point'+(margin>1?'s':'')+' entre les deux gangs, ça s’est joué serré au tableau.':'Le différentiel de '+margin+' points donne une bonne idée de l’ampleur du résultat.';
  const body=lead+' '+reading+' '+finish+' Les chiffres ci-dessus sont tirés du résultat enregistré; les séquences de jeu, blessures et performances individuelles ne sont pas déduites du score.';
- const salt=Array.from(game.game_id).reduce((acc,ch)=>acc+ch.charCodeAt(0),0);
- const punchline=endings[(salt+index)%endings.length];
+ const punchline=endings[index%endings.length];
  return {id:game.game_id,team:winner,opponent:loser,game_id:game.game_id,headline,body,punchline,metric:tie?'ÉGALITÉ':margin+' PTS D’ÉCART',kind,kickoff_utc:game.kickoff_utc,home_score:h,away_score:a,source:'NFL Studio · games + game_results (résultat enregistré)'};
 }
 export async function GET(){
