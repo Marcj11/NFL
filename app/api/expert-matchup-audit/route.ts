@@ -1,4 +1,4 @@
-import {extractEspnQBs} from '../../../lib/expert-nfl/espn-qb-parser';
+import {extractEspnQBs,extractEspnRosterQBs} from '../../../lib/expert-nfl/espn-qb-parser';
 import {espnTeamId} from '../../../lib/expert-nfl/espn-team-ids';
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
@@ -57,8 +57,14 @@ export async function GET(req:Request){
     if(!response.ok)return {team,status:'espn_http_error',http_status:response.status,projected_qb:null,confirmed:false};
     const data=await response.json();
     const parsed=extractEspnQBs(data);
-    const qb=parsed.qbs[0]||null;
-    return {team,status:qb?'espn_depth_chart':'espn_qb_missing',projected_qb:qb?.name||null,espn_id:qb?.espn_id||null,observed_at:new Date().toISOString(),confirmed:false,usable_for_historical_cutoff:false};
+    let qbs=parsed.qbs;
+    let source_kind='depth_chart';
+    if(!qbs.length){
+     const roster=await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+(espnTeamId(team)||'invalid')+'/roster',{cache:'no-store',signal:AbortSignal.timeout(5000)}).catch(()=>null);
+     if(roster?.ok){qbs=extractEspnRosterQBs(await roster.json());source_kind='roster_only'}
+    }
+    const qb=qbs[0]||null;
+    return {team,status:qb?(source_kind==='depth_chart'?'espn_depth_chart':'espn_roster_qbs_only'):'espn_qb_missing',projected_qb:source_kind==='depth_chart'?qb?.name||null:null,roster_qb_example:source_kind==='roster_only'?qb?.name||null:null,espn_id:qb?.espn_id||null,observed_at:new Date().toISOString(),confirmed:false,usable_for_historical_cutoff:false};
    }catch{return {team,status:'espn_unreachable',projected_qb:null,confirmed:false}}
   }));
   return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
