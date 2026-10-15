@@ -9,6 +9,15 @@ export async function GET(req:Request){
  if(!base||!key)return NextResponse.json({status:'not_configured',publishable:false},{status:503});
  const headers={apikey:key,Authorization:'Bearer '+key};
  try{
+  if(requestedGame){
+   const exact=new URLSearchParams({select:'game_id,home_team_id,away_team_id,kickoff_utc',game_id:'eq.'+requestedGame,limit:'1'});
+   const matchResp=await fetch(base+'/rest/v1/games?'+exact,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
+   if(!matchResp.ok)throw Error('requested_game_unavailable');
+   const matchRows=await matchResp.json() as Array<{home_team_id:string;away_team_id:string;kickoff_utc:string}>;
+   const match=matchRows[0];
+   if(!match||match.home_team_id!==home||match.away_team_id!==away)return NextResponse.json({error:'game_team_mismatch',publishable:false},{status:400});
+   if(new Date(before).getTime()>new Date(match.kickoff_utc).getTime())return NextResponse.json({error:'cutoff_after_kickoff',publishable:false},{status:400});
+  }
   const teams=[home,away],results=[];
   for(const team of teams){
    const gq=new URLSearchParams({select:'game_id,kickoff_utc',or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'lt.'+new Date(before).toISOString(),order:'kickoff_utc.desc',limit:'12'});
