@@ -75,14 +75,15 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  };
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
+ const probability=(o:Offer)=>researchValue(o)?.probability??gameProjection(o)??officialProbability(o);
  const eligible=offers.filter(o=>{
-  if(family==='props')return o.market==='props'&&researchValue(o)!==null;
-  if(family)return o.market===family;
-  if(category==='heavy')return o.odds>=3&&(gameProjection(o)!==null||researchValue(o)!==null);
-  return o.market==='moneyline'||(o.market==='props'&&researchValue(o)!==null);
+  const p=probability(o);
+  if(family)return o.market===family&&p!==null;
+  if(category==='heavy')return o.odds>=3&&p!==null;
+  return p!==null;
  });
- const score=(o:Offer)=>researchValue(o)?.probability??gameProjection(o)??officialProbability(o)??(o.odds>1?1/o.odds:0);
- const ordered=eligible.sort((a,b)=>category==='heavy'?(score(b)-1/b.odds)-(score(a)-1/a.odds):score(b)-score(a));
+ const edge=(o:Offer)=>{const p=probability(o);return p===null?-Infinity:p-1/o.odds};
+ const ordered=eligible.sort((a,b)=>edge(b)-edge(a));
  const seen=new Set<string>();
  return ordered.filter(o=>{const key=[o.game,o.market,o.selection].join('|');if(seen.has(key))return false;seen.add(key);return true}).slice(0,5);
  },[category,offers,official,research,gamesResearch]);
