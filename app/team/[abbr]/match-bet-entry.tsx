@@ -8,7 +8,7 @@ export default function MatchBetEntry({pick,gameId,game,team}:{pick:MatchPick;ga
   const odds=Number(price.replace(',','.')),amount=Number(stake.replace(',','.'));
   if(!Number.isFinite(odds)||odds<=1||!Number.isFinite(amount)||amount<=0){setError('La cote doit dépasser 1,00 et la mise doit être positive.');return}
   const market=['player_pass_yds','player_rush_yds','player_reception_yds'].includes(pick.market)?'props':pick.market==='h2h'?'moneyline':pick.market;
-  const item={id:'match:'+gameId+':'+pick.market+':'+pick.name+':'+Date.now(),game,market,selection:(pick.player?pick.player+' · ':'')+pick.name+(typeof pick.point==='number'?' '+pick.point:''),line:pick.point,book:pick.book,odds:pick.decimal,prob:pick.probability,team,player:pick.player,stake:amount,chosenOdds:odds,placedAt:new Date().toISOString(),status:'open'};
+  const item={id:'match:'+gameId+':'+pick.market+':'+pick.name+':'+Date.now(),game,market,marketKey:pick.market,selection:(pick.player?pick.player+' · ':'')+pick.name+(typeof pick.point==='number'?' '+pick.point:''),line:pick.point,book:pick.book,odds:pick.decimal,prob:pick.probability,team,player:pick.player,stake:amount,chosenOdds:odds,placedAt:new Date().toISOString(),status:'open'};
   try{const key='nfl-studio-bets-v1';const previous=JSON.parse(localStorage.getItem(key)||'[]');const all=[item,...(Array.isArray(previous)?previous:[])];localStorage.setItem(key,JSON.stringify(all));const secret=localStorage.getItem('nfl-studio-wallet-secret');if(secret)fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',secret,bets:all})}).catch(()=>{});setOpen(false);setError('')}catch{setError('Impossible d’enregistrer le billet dans ce navigateur.')}
  };
  return <>
