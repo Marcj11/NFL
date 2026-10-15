@@ -284,3 +284,13 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
  .shell .studio-pick-card .pick-art .pick-versus img{max-width:82px!important;height:90px!important}
  .shell .studio-pick-card .pick-art .pick-versus{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr)!important}
 }
+
+/* Primary 32-team navigation */
+.nfl-franchise-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px}
+.nfl-franchise-link{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:0;gap:8px;text-decoration:none;color:#f1f8ff;padding:14px 7px 11px;border:1px solid;border-radius:14px;background:linear-gradient(145deg,#122e4a,#081526);transition:transform .16s,box-shadow .16s}
+.nfl-franchise-link:hover,.nfl-franchise-link:focus-visible{transform:translateY(-3px);box-shadow:0 0 22px #42baff72;background:linear-gradient(145deg,#184472,#0b2038);outline:1px solid #8ed9ff}
+.nfl-franchise-link img{width:100%;height:66px;object-fit:contain;max-width:110px}
+.nfl-franchise-link strong{font-size:11px;text-align:center;overflow-wrap:anywhere}
+@media(max-width:1200px){.nfl-franchise-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:780px){.nfl-franchise-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:450px){.nfl-franchise-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.nfl-franchise-link{padding:10px 4px}.nfl-franchise-link img{height:52px}}
