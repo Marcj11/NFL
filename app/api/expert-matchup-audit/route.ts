@@ -68,7 +68,12 @@ export async function GET(req:Request){
   const qbCoverage=[home,away].map(team=>{
    const sources=qbSources.filter(q=>q.team_id===team&&!!requestedGame&&q.game_id===requestedGame);
    const source=sources[0];
-   return {team,source_count:sources.length,qb_name_for_game:source?.qb_name||null,announced_status:source?.announced_status||null,source_name:source?.source_name||null,source_published_at:source?.source_published_at||null,starter_confirmed_for_requested_game:false,verification:'not_verified',reason:sources.length?'Announcement exists but confirmation criteria not established':'No verified pregame QB source for the requested game'};
+   const status=source?.announced_status?.toLowerCase()||'';
+   const confirmed=/^(confirmed|official|starter_confirmed|announced_starter)$/.test(status);
+   const publicationValid=!!source?.source_published_at&&new Date(source.source_published_at).getTime()<new Date(before).getTime();
+   const hasProvenance=!!source?.source_name?.trim();
+   const verified=!!requestedGame&&confirmed&&publicationValid&&hasProvenance;
+   return {team,source_count:sources.length,qb_name_for_game:source?.qb_name||null,announced_status:source?.announced_status||null,source_name:source?.source_name||null,source_published_at:source?.source_published_at||null,starter_confirmed_for_requested_game:verified,verification:verified?'source_flagged_confirmed':'not_verified',reason:verified?'Source supplied an official pregame starter status':sources.length?'Pregame source exists but lacks confirmed starter status or provenance':'No verified pregame QB source for the requested game'};
   });
   const espnDepthCharts=await Promise.all([home,away].map(async team=>{
    const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+(espnTeamId(team)||'invalid')+'/depthcharts';
@@ -86,6 +91,6 @@ export async function GET(req:Request){
     return {team,status:qb?(source_kind==='depth_chart'?'espn_depth_chart':'espn_roster_qbs_only'):'espn_qb_missing',projected_qb:source_kind==='depth_chart'?qb?.name||null:null,roster_qb_example:source_kind==='roster_only'?qb?.name||null:null,espn_id:qb?.espn_id||null,observed_at:new Date().toISOString(),depth_http_status:response?.status||null,confirmed:false,usable_for_historical_cutoff:false};
    }catch{return {team,status:'espn_unreachable',projected_qb:null,confirmed:false}}
   }));
-  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,matchup_epa,epa_model_calibrated:false,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,matchup_epa,epa_model_calibrated:false,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:qbCoverage.every(q=>q.starter_confirmed_for_requested_game),model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'data_unavailable',publishable:false},{status:502})}
 }
