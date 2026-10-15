@@ -54,8 +54,7 @@ export async function GET(req:Request){
    const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+(espnTeamId(team)||'invalid')+'/depthcharts';
    try{
     const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(5000)});
-    if(!response.ok)return {team,status:'espn_http_error',http_status:response.status,projected_qb:null,confirmed:false};
-    const data=await response.json();
+    const data=response.ok?await response.json().catch(()=>null):null;
     const parsed=extractEspnQBs(data);
     let qbs=parsed.qbs;
     let source_kind='depth_chart';
