@@ -38,3 +38,19 @@ export function extractEspnQBs(payload:unknown):{qbs:EspnQB[];diagnostic:{chart_
  const qbs=[...unique.values()].sort((a,b)=>(a.rank??99)-(b.rank??99));
  return {qbs,diagnostic:{chart_count:charts.length,qb_candidates:candidates,top_level_keys:Object.keys(root).slice(0,12)}};
 }
+
+export function extractEspnRosterQBs(payload:unknown):EspnQB[]{
+ const root=object(payload)||{},groups=arr(root.athletes);
+ const qbs:EspnQB[]=[];
+ for(const group of groups){
+  const g=object(group)||{},position=object(g.position)||{};
+  const label=[str(g.position),str(g.name),str(position.abbreviation),str(position.name)].join(' ');
+  if(!isQB(label))continue;
+  for(const x of arr(g.items)){
+   const e=object(x)||{},player=object(e.athlete)||e;
+   const name=str(player.displayName)||str(player.fullName)||str(player.name);
+   if(name)qbs.push({name,espn_id:player.id!=null?String(player.id):null,rank:null});
+  }
+ }
+ return [...new Map(qbs.map(x=>[x.espn_id||x.name.toLowerCase(),x])).values()];
+}
