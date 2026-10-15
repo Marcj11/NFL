@@ -6,6 +6,16 @@ const fmt=(n:number)=>n.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumF
 const decimal=(n:number)=>n>0?1+n/100:n<0?1+100/Math.abs(n):0;
 const STORE='nfl-studio-bets-v1';
 const WALLET_KEY='nfl-studio-wallet-secret';
+const reconcileBets=(remote:Bet[],local:Bet[])=>{
+ const merged=new Map<string,Bet>();
+ for(const b of remote)if(b?.id)merged.set(b.id,b);
+ for(const b of local)if(b?.id){
+  const prev=merged.get(b.id);
+  if(!prev||(!prev.resultConfirmedAt&&b.resultConfirmedAt)||(prev.resultConfirmedAt&&b.resultConfirmedAt&&Date.parse(b.resultConfirmedAt)>Date.parse(prev.resultConfirmedAt))||(!prev.resultConfirmedAt&&!b.resultConfirmedAt))merged.set(b.id,b);
+ }
+ return [...merged.values()];
+};
+
 const heroTag=(v:'top'|'live'|'history')=>v==='top'?'TOP PARIS':v==='live'?'PARIS EN COURS':'BILAN DE SAISON';
 const logo=(abbr:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+(abbr==='LA'?'lar':abbr==='WAS'?'wsh':abbr.toLowerCase())+'.png';
 const teamCodes:Record<string,string>={'Buffalo Bills':'BUF','Las Vegas Raiders':'LV','Detroit Lions':'DET','Kansas City Chiefs':'KC','Dallas Cowboys':'DAL','Philadelphia Eagles':'PHI','Green Bay Packers':'GB','San Francisco 49ers':'SF','Baltimore Ravens':'BAL','Cincinnati Bengals':'CIN','New York Giants':'NYG','New England Patriots':'NE','Minnesota Vikings':'MIN','Chicago Bears':'CHI','Houston Texans':'HOU','Seattle Seahawks':'SEA','New York Jets':'NYJ','Arizona Cardinals':'ARI','Atlanta Falcons':'ATL','Carolina Panthers':'CAR','Cleveland Browns':'CLE','Denver Broncos':'DEN','Indianapolis Colts':'IND','Jacksonville Jaguars':'JAX','Los Angeles Chargers':'LAC','Los Angeles Rams':'LA','Miami Dolphins':'MIA','New Orleans Saints':'NO','Pittsburgh Steelers':'PIT','Tampa Bay Buccaneers':'TB','Tennessee Titans':'TEN','Washington Commanders':'WAS'};
@@ -48,14 +58,23 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
    const res=await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read',secret})});
    if(!res.ok)throw Error('read');const data=await res.json();
    const remoteBalance=Number(data.startingBalance||0);if(remoteBalance>0){SET_BALANCE(remoteBalance);BALANCE_DRAFT(String(remoteBalance));localStorage.setItem('nfl-studio-starting-bankroll',String(remoteBalance))}
-   const local=JSON.parse(localStorage.getItem(STORE)||'[]'),merged=new Map<string,Bet>();
-   for(const b of Array.isArray(data.bets)?data.bets:[])merged.set(b.id,b);
-   for(const b of Array.isArray(local)?local:[])merged.set(b.id,b);
-   const all=[...merged.values()];localStorage.setItem(WALLET_KEY,secret);WALLET_CODE(secret);BETS(all);localStorage.setItem(STORE,JSON.stringify(all));await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',secret,bets:all,startingBalance:remoteBalance||startingBalance})});SYNC_STATUS('Coffre relié. Garde ton code privé.');
+   const local=JSON.parse(localStorage.getItem(STORE)||'[]');const all=reconcileBets(Array.isArray(data.bets)?data.bets:[],Array.isArray(local)?local:[]);localStorage.setItem(WALLET_KEY,secret);WALLET_CODE(secret);BETS(all);localStorage.setItem(STORE,JSON.stringify(all));await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',secret,bets:all,startingBalance:remoteBalance||startingBalance})});SYNC_STATUS('Coffre relié. Garde ton code privé.');
   }catch{SYNC_STATUS('Connexion impossible. Tes billets locaux sont conservés.')}
  };
- useEffect(()=>{try{const secret=localStorage.getItem(WALLET_KEY);if(!secret)return;WALLET_CODE(secret);fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read',secret})}).then(r=>r.json()).then(d=>{if(!Array.isArray(d.bets))return;const amount=Number(d.startingBalance||0);if(amount>0){SET_BALANCE(amount);BALANCE_DRAFT(String(amount));localStorage.setItem('nfl-studio-starting-bankroll',String(amount))}const old=JSON.parse(localStorage.getItem(STORE)||'[]');const merged=new Map<string,Bet>();for(const b of d.bets)merged.set(b.id,b);for(const b of Array.isArray(old)?old:[])merged.set(b.id,b);const arr=[...merged.values()];BETS(arr);localStorage.setItem(STORE,JSON.stringify(arr))}).catch(()=>{})}catch{}},[]);
+ useEffect(()=>{try{const secret=localStorage.getItem(WALLET_KEY);if(!secret)return;WALLET_CODE(secret);fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read',secret})}).then(r=>r.json()).then(d=>{if(!Array.isArray(d.bets))return;const amount=Number(d.startingBalance||0);if(amount>0){SET_BALANCE(amount);BALANCE_DRAFT(String(amount));localStorage.setItem('nfl-studio-starting-bankroll',String(amount))}const old=JSON.parse(localStorage.getItem(STORE)||'[]');const arr=reconcileBets(d.bets,Array.isArray(old)?old:[]);BETS(arr);localStorage.setItem(STORE,JSON.stringify(arr))}).catch(()=>{})}catch{}},[]);
 
+ useEffect(()=>{
+  if(view==='top')return;
+  const refresh=async()=>{
+   const secret=localStorage.getItem(WALLET_KEY);if(!secret)return;
+   try{const r=await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read',secret})});
+    if(!r.ok)return;const data=await r.json();if(!Array.isArray(data.bets))return;
+    const old=JSON.parse(localStorage.getItem(STORE)||'[]');const merged=reconcileBets(data.bets,Array.isArray(old)?old:[]);
+    BETS(merged);localStorage.setItem(STORE,JSON.stringify(merged));
+   }catch{}
+  };
+  const timer=setInterval(refresh,45000);return()=>clearInterval(timer);
+ },[view]);
  useEffect(()=>{let active=true;LOADED(false);fetch('/api/odds').then(r=>r.json()).then(d=>{
  const out:Offer[]=[];
  for(const g of d.games||[]){const game=g.away_team+' vs '+g.home_team;
