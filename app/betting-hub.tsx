@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
-type Offer={id:string;game:string;market:string;selection:string;line?:number;book:string;odds:number;prob:number;team:string};
+type Offer={id:string;game:string;market:string;selection:string;line?:number;book:string;odds:number;prob:number;team:string;player?:string;playerImage?:string;playerTeam?:string};
 type Bet=Offer&{stake:number;chosenOdds:number;placedAt:string;status:'open'|'won'|'lost'|'void';resultConfirmedAt?:string};
 const fmt=(n:number)=>n.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const decimal=(n:number)=>n>0?1+n/100:n<0?1+100/Math.abs(n):0;
@@ -22,15 +22,15 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  for(const g of d.games||[]){const game=g.away_team+' vs '+g.home_team;
  for(const b of g.bookmakers||[])for(const m of b.markets||[])for(const o of m.outcomes||[]){
  const odds=decimal(Number(o.price));if(odds<=1||!Number.isFinite(odds))continue;
- const market=m.key==='h2h'?'moneyline':m.key==='spreads'?'spreads':m.key==='totals'?'totals':'';
- if(!market)continue;const selection=market==='moneyline'?'Victoire · '+o.name:market==='spreads'?o.name+' '+o.point:o.name+' '+o.point+' points';
- out.push({id:[game,market,o.name,o.point??''].join('|'),game,market,selection,line:o.point,odds,prob:1/odds,book:b.title,team:o.name});
+ const market=m.key==='h2h'?'moneyline':m.key==='spreads'?'spreads':m.key==='totals'?'totals':m.key.startsWith('player_')?'props':'';
+ if(!market)continue;const selection=market==='props'?String(o.description||o.name)+' · '+m.key+' '+(o.point??''):market==='moneyline'?'Victoire · '+o.name:market==='spreads'?o.name+' '+o.point:o.name+' '+o.point+' points';
+ out.push({id:[game,market,o.name,o.point??''].join('|'),game,market,selection,line:o.point,odds,prob:1/odds,book:b.title,team:o.name,player:market==='props'?String(o.description||''):undefined,playerImage:typeof o.player_image==='string'?o.player_image:undefined,playerTeam:typeof o.team==='string'?o.team:undefined});
  }}
  const best=new Map<string,Offer>();for(const x of out){const older=best.get(x.id);if(!older||x.odds>older.odds)best.set(x.id,x)}
  if(active){setOffers([...best.values()]);LOADED(true)}
  }).catch(()=>{if(active)LOADED(true)});return()=>{active=false}},[]);
  const ranking=useMemo(()=>{
- const all=offers.filter(x=>category==='heavy'?x.odds>=2.7:category==='props'?false:category==='general'?true:x.market===category).sort((a,b)=>category==='heavy'?b.odds-a.odds:b.prob-a.prob);
+ const all=offers.filter(x=>category==='heavy'?x.odds>=2.7:category==='props'?x.market==='props':category==='general'?true:x.market===category).sort((a,b)=>category==='heavy'?b.odds-a.odds:b.prob-a.prob);
  const seen=new Set<string>();const distinct=all.filter(o=>{if(seen.has(o.game))return false;seen.add(o.game);return true});return [...distinct,...all.filter(o=>!distinct.includes(o))].slice(0,5);
  },[category,offers]);
  const choose=(v:Offer)=>{SELECT(v);ODD(fmt(v.odds).replace(',','.'));STAKE('5')};
