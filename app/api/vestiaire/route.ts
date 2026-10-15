@@ -55,6 +55,42 @@ function story(game:Game,result:Result,index:number):Story{
  const punchline=endings[index%endings.length];
  return {id:game.game_id,team:winner,opponent:loser,game_id:game.game_id,headline,body,punchline,metric:tie?'ÉGALITÉ':margin+' PTS D’ÉCART',kind,kickoff_utc:game.kickoff_utc,home_score:h,away_score:a,source:'NFL Studio · games + game_results (résultat enregistré)'};
 }
+
+async function gameFacts(g:Game):Promise<string[]>{
+ try{
+  const day=g.kickoff_utc.slice(0,10).replaceAll('-','');
+  const scoreboard=await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates='+day,{next:{revalidate:21600},signal:AbortSignal.timeout(6000)});
+  if(!scoreboard.ok)return [];
+  const events=(await scoreboard.json()).events||[];
+  const alias=(x:string)=>x==='LA'?'LAR':x==='WAS'?'WSH':x;
+  const event=events.find((e:any)=>{const cs=e.competitions?.[0]?.competitors||[];return cs.some((t:any)=>t.homeAway==='home'&&t.team?.abbreviation===alias(g.home_team_id))&&cs.some((t:any)=>t.homeAway==='away'&&t.team?.abbreviation===alias(g.away_team_id))});
+  if(!event?.id)return [];
+  const response=await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event='+event.id,{next:{revalidate:21600},signal:AbortSignal.timeout(6000)});
+  if(!response.ok)return [];
+  const box=(await response.json()).boxscore,facts:string[]=[];
+  for(const group of box?.players||[])for(const cat of group.statistics||[]){
+   const columns=(cat.labels||[]).map((x:string)=>x.toUpperCase()),type=String(cat.name||'').toLowerCase();
+   for(const entry of cat.athletes||[]){
+    const name=entry.athlete?.displayName||'',stats=(entry.stats||[]).map(String);
+    const find=(labels:string[])=>{const i=columns.findIndex((v:string)=>labels.includes(v));return i<0?'':stats[i]};
+    if(!name)continue;
+    if(type.includes('defens')){
+     const pd=Number(find(['PD','PDEF']));if(pd>=2)facts.push(name+' a défendu '+pd+' passes. Le receveur adverse a eu la vie compliquée !');
+     const sacks=Number(find(['SACK','SACKS']));if(sacks>=2)facts.push(name+' a réalisé '+sacks+' sacks. Le QB a sûrement apprécié sa glace après la game !');
+    }
+    if(type.includes('kick')){
+     const fg=find(['FG','FGM/FGA']).split('/').map(Number);
+     if(fg.length===2&&fg[1]>=2&&fg[0]<fg[1])facts.push(name+' a réussi '+fg[0]+' placements sur '+fg[1]+'. Les bottés ratés ont fait grimacer les chums !');
+    }
+    if(type.includes('pass')){
+     const yards=Number(find(['YDS']));if(yards>=300)facts.push(name+' a lancé pour '+yards+' verges. Son bras a travaillé fort toute la soirée !');
+     const ints=Number(find(['INT']));if(ints>=3)facts.push(name+' a lancé '+ints+' interceptions. La défense adverse a reçu des cadeaux !');
+    }
+   }
+  }
+  return facts.slice(0,4);
+ }catch{return []}
+}
 export async function GET(){
  const base=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!base||!key)return NextResponse.json({stories:[],status:'not_configured'},{status:503});
@@ -70,6 +106,7 @@ export async function GET(){
   const results=await resultsResponse.json() as Result[];
   const byId=new Map(results.filter(r=>r.home_score!==null&&r.away_score!==null).map(r=>[r.game_id,r]));
   const verified=games.filter(g=>byId.has(g.game_id)).slice(0,12);
-  return NextResponse.json({status:'ok',stories:verified.map((g,i)=>story(g,byId.get(g.game_id)!,i)),verified_games:verified.length,updated_at:new Date().toISOString(),basis:'Scores de matchs enregistrés; aucune supposition sur les blessures ou statistiques individuelles'},{headers:{'Cache-Control':'no-store'}});
+  const details=await Promise.all(verified.map(gameFacts));
+  return NextResponse.json({status:'ok',stories:verified.map((g,i)=>({...story(g,byId.get(g.game_id)!,i),highlights:details[i],source_details:details[i].length?'Feuille ESPN':'Détails ESPN indisponibles'})),verified_games:verified.length,updated_at:new Date().toISOString(),basis:'Scores de matchs enregistrés; aucune supposition sur les blessures ou statistiques individuelles'},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({status:'unavailable',stories:[],error:e instanceof Error?e.message:'unknown'},{status:503})}
 }
