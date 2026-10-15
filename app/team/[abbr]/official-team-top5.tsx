@@ -1,17 +1,17 @@
 'use client';
 import {useEffect,useState} from 'react';
 type Game={game_id?:string;match?:string;away_team?:string;home_team?:string;favorite?:string|null;favorite_probability?:number|null;home_probability?:number|null;away_probability?:number|null;decision?:string;summary?:string;status?:string};
-type Payload={connected?:boolean;report?:{id:string;created_at?:string;model_version?:string;rows:Game[]}};
+type Payload={connected?:boolean;report?:{id?:string;created_at?:string;model_version?:string;rows?:Game[]}};
 export default function OfficialTeamTop5({team}:{team:string}){
  const [data,setData]=useState<Payload|null>(null);
- useEffect(()=>{let active=true;fetch('/api/expert-nfl',{cache:'no-store'}).then(r=>r.json()).then(j=>{if(active)setData(j)}).catch(()=>{if(active)setData({connected:false})});return()=>{active=false}},[]);
+ useEffect(()=>{let active=true;fetch('/api/expert-independent',{cache:'no-store'}).then(r=>r.json()).then(j=>{if(active)setData(j)}).catch(()=>{if(active)setData({connected:false})});return()=>{active=false}},[]);
  const report=data?.report;
- const games=(report?.rows||[]).filter(x=>x.home_team===team||x.away_team===team);
+ const games=(Array.isArray(report?.rows)?report.rows:[]).filter(x=>x.home_team===team||x.away_team===team);
  const probability=(x:Game)=>x.favorite===x.home_team?x.home_probability:x.favorite===x.away_team?x.away_probability:x.favorite_probability;
  const categories=['Moneyline','Spreads','Player Props','Heavyball'];
  return <section style={{background:'#061321',border:'1px solid #31587b',borderRadius:22,padding:22,margin:'24px 0',color:'#eaf5ff'}}>
  <h2>EXPERT NFL · TOP 5 PAR CATEGORIE</h2>
- <p style={{fontSize:13,color:'#a9c5db'}}>Source officielle · Rapport historique {report?.id||'non disponible'} · {report?.model_version||''} · {report?.created_at||''}</p>
+ <p style={{fontSize:13,color:'#a9c5db'}}>Source EXPERT NFL independant · Rapport {report?.id||'non disponible'} · {report?.model_version||''} · {report?.created_at||''}</p>
  {!data?<p>Chargement du rapport officiel...</p>:!data.connected?<p>Rapport EXPERT NFL indisponible.</p>:null}
  {categories.map(cat=><div key={cat} style={{margin:'22px 0'}}><h3 style={{color:'#8fcaff'}}>{cat.toUpperCase()}</h3>
  {Array.from({length:5},(_,i)=>{const g=cat==='Moneyline'?games[i]:undefined;const p=g?probability(g):null;const hasP=typeof p==='number';const decision=g?.decision==='bet'?'MISER':'PASSER';
