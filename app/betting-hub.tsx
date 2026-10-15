@@ -76,19 +76,18 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
  const probability=(o:Offer)=>officialProbability(o)??(o.market==='props'?researchValue(o)?.probability??null:gameProjection(o));
- const eligible=offers.filter(o=>{
-  const p=probability(o);
-  if(family)return o.market===family&&p!==null;
-  if(category==='heavy')return o.odds>=3&&p!==null;
-  return p!==null;
- });
- const edge=(o:Offer)=>{const p=probability(o);return p===null?-Infinity:p*o.odds-1};
- const ordered=eligible.sort((a,b)=>{
-  const av=officialProbability(a)!==null?1:0,bv=officialProbability(b)!==null?1:0;
-  return bv-av||edge(b)-edge(a);
- });
- const seen=new Set<string>();
- return ordered.filter(o=>{const key=[o.game,o.market,o.selection].join('|');if(seen.has(key))return false;seen.add(key);return true}).slice(0,5);
+ const eligible=offers.filter(o=>{const p=probability(o);return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)});
+ const edge=(o:Offer)=>probability(o)!*o.odds-1;
+ const ordered=eligible.sort((a,b)=>edge(b)-edge(a));
+ const selected:Offer[]=[],seen=new Set<string>(),byFamily=new Map<string,number>(),byGame=new Map<string,number>();
+ for(const o of ordered){
+  const key=[o.game,o.market,o.selection].join('|');
+  if(seen.has(key))continue;
+  if(category==='general'&&((byFamily.get(o.market)||0)>=2||(byGame.get(o.game)||0)>=1))continue;
+  seen.add(key);selected.push(o);byFamily.set(o.market,(byFamily.get(o.market)||0)+1);byGame.set(o.game,(byGame.get(o.game)||0)+1);
+  if(selected.length>=5)break;
+ }
+ return selected;
  },[category,offers,official,research,gamesResearch]);
  const choose=(v:Offer)=>{SELECT(v);ODD(fmt(v.odds).replace(',','.'));STAKE('5')};
  const add=()=>{if(!selected)return;const d=Number(odd.replace(',','.')),s=Number(stake.replace(',','.'));if(!Number.isFinite(d)||d<=1||!Number.isFinite(s)||s<=0)return;save([{...selected,chosenOdds:d,stake:s,placedAt:new Date().toISOString(),status:'open'},...bets]);SELECT(null)};
@@ -109,7 +108,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const mix=Object.entries(bets.reduce<Record<string,{count:number;profit:number;stake:number}>>((a,b)=>{const k=b.market||'autres';const p=a[k]||{count:0,profit:0,stake:0};p.count++;if(b.status==='won'){p.profit+=b.stake*(b.chosenOdds-1);p.stake+=b.stake}else if(b.status==='lost'){p.profit-=b.stake;p.stake+=b.stake}a[k]=p;return a},{})).sort((a,b)=>b[1].profit-a[1].profit);
 
  return <section className="panel" style={{marginTop:16}}>
- <div className={'studio-hero '+(view==='top'&&category==='heavy'?'heavy-hero':'')}><div className="studio-stadium-lights" aria-hidden="true"><span/><span/><span/><span/></div><div className="studio-goalposts" aria-hidden="true"/><div className="studio-hero-inner">{view==='top'&&category==='heavy'?<><div className="heavy-emblem"><span className="heavy-overline">GROS RISQUES · GROS GAINS</span><span>HEAVY</span><strong>BALLS</strong><div className="metal-orbs"><i/><i/></div><div className="heavy-turf" aria-hidden="true"/><div className="heavy-stars" aria-hidden="true">✦ &nbsp; ★ &nbsp; ✦</div><small>ON LES DÉPOSE SUR LE SYNTHÉTIQUE</small></div></>:<><span className="studio-kicker">✦ NFL STUDIO · SAISON 2026</span><div className="studio-hero-title">{view==='top'?'TOP PARIS':view==='live'?'MES PARIS EN COURS':'BILAN DE SAISON'}</div><div className="studio-hero-rule" aria-hidden="true"><span>★</span></div><p>{view==='top'?'Nos cinq angles à examiner, par catégorie':view==='live'?'Toutes tes mises, tes retours potentiels et leur statut':'Ton historique de paris et tes résultats en dollars canadiens'}</p></>}</div></div>
+ <div className={'studio-hero '+(view==='top'&&category==='heavy'?'heavy-hero':'')}><div className="studio-stadium-lights" aria-hidden="true"><span/><span/><span/><span/></div><div className="studio-goalposts" aria-hidden="true"/><div className="studio-hero-inner">{view==='top'&&category==='heavy'?<><div className="heavy-emblem"><span className="heavy-overline">GROS RISQUES · GROS GAINS</span><span>HEAVY</span><strong>BALLS</strong><div className="metal-orbs"><i/><i/></div><div className="heavy-turf" aria-hidden="true"/><div className="heavy-stars" aria-hidden="true">✦ &nbsp; ★ &nbsp; ✦</div><small>ON LES DÉPOSE SUR LE SYNTHÉTIQUE</small></div></>:<><span className="studio-kicker">✦ NFL STUDIO · SAISON 2026</span><div className="studio-hero-title">{view==='top'?'TOP PARIS':view==='live'?'MES PARIS EN COURS':'BILAN DE SAISON'}</div><div className="studio-hero-rule" aria-hidden="true"><span>★</span></div><p>{view==='top'?'Meilleurs angles disponibles, avec diversification entre marchés et matchs':view==='live'?'Toutes tes mises, tes retours potentiels et leur statut':'Ton historique de paris et tes résultats en dollars canadiens'}</p></>}</div></div>
  <h2 style={{fontSize:28,marginBottom:8,display:'none'}}>{view==='top'?'🏆 TOP PARIS · SEMAINE NFL':view==='live'?'🎯 PARIS EN COURS':'📊 BILAN DE SAISON'}</h2>
  {view==='top'?<><p className="muted">Aucune recommandation officielle EXPERT NFL : moteur complet non exécuté. Marchés observés chez les bookmakers. Top 5 exploratoire calculé avec les cotes et les statistiques disponibles. Probabilités expérimentales clairement identifiées; un rapport indépendant vérifié reste prioritaire. Tu choisis librement tes paris. Sans validation de la probabilité et de l’avantage, décision : PASSER.</p>
  <div className="market-tabs" role="tablist" aria-label="Catégories de paris">{[['general','🏆 Top 5 général'],['moneyline','🏈 Moneyline'],['spreads','↔ Spreads'],['totals','📈 Totaux'],['props','▥ Props joueurs'],['heavy','🔥 HEAVY BALLS']].map(([k,v])=><button key={k} role="tab" aria-selected={category===k} className={category===k?'selected':''} onClick={()=>CATEGORY(k as typeof category)}>{v}</button>)}</div>
