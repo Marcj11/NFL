@@ -17,7 +17,7 @@ export async function GET(){
   if(!response.ok)throw Error('cache_unavailable');
   const rows=await response.json() as Cache[];
   const row=rows[0],events=Array.isArray(row?.payload)?row.payload as Event[]:[];
-  const quotes:{event_id:string;home_team:string;away_team:string;kickoff_utc:string;bookmaker:string;bookmaker_key:string;market:string;family:string;selection:string;player:string|null;line:number|null;american_odds:number;decimal_odds:number;observed_at:string}[]=[];
+  const quotes:{event_id:string;home_team:string;away_team:string;kickoff_utc:string;bookmaker:string;bookmaker_key:string;market:string;family:string;selection:string;player:string|null;line:number|null;american_odds:number|null;decimal_odds:number;observed_at:string}[]=[];
   for(const event of events)for(const book of event.bookmakers||[])for(const market of book.markets||[]){
    const family=group(market.key||'');if(!family)continue;
    for(const outcome of market.outcomes||[]){
@@ -35,7 +35,7 @@ export async function GET(){
     for(const item of propsRow.payload as Array<{market?:string;player?:string;side?:string;point?:number;book?:string;decimal?:number}>){
      const odds=Number(item.decimal);
      if(!item.market?.startsWith('player_')||!item.player||!item.side||!Number.isFinite(odds)||odds<=1||!event.id||!event.home_team||!event.away_team)continue;
-     quotes.push({event_id:event.id,home_team:event.home_team,away_team:event.away_team,kickoff_utc:event.commence_time||'',bookmaker:item.book||'Unknown',bookmaker_key:'',market:item.market,family:'player_prop',selection:item.side,player:item.player,line:typeof item.point==='number'?item.point:null,american_odds:0,decimal_odds:odds,observed_at:propsRow.fetched_at});
+     quotes.push({event_id:event.id,home_team:event.home_team,away_team:event.away_team,kickoff_utc:event.commence_time||'',bookmaker:item.book||'Unknown',bookmaker_key:'',market:item.market,family:'player_prop',selection:item.side,player:item.player,line:typeof item.point==='number'?item.point:null,american_odds:null,decimal_odds:odds,observed_at:propsRow.fetched_at});
     }
    }
   }
