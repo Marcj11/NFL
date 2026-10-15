@@ -26,6 +26,19 @@ export async function GET(){
     quotes.push({event_id:event.id,home_team:event.home_team,away_team:event.away_team,kickoff_utc:event.commence_time||'',bookmaker:book.title||book.key||'unknown',bookmaker_key:book.key||'',market:market.key||'',family,selection:outcome.name||'',player:outcome.description||null,line:typeof outcome.point==='number'?outcome.point:null,american_odds:price,decimal_odds:odd,observed_at:row.fetched_at});
    }
   }
-  return NextResponse.json({status:'available',source:'The Odds API via existing NFL Studio cache',fetched_at:row?.fetched_at||null,quote_count:quotes.length,market_coverage:['moneyline','spread','total'],notes:['Quotes are not predictions','Bookmaker settlement rules must be verified','Player props remain in separate cached feeds'],quotes},{headers:{'Cache-Control':'no-store'}});
+  const propsResponse=await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?select=id,payload,fetched_at&id=like.props_*',{headers:{apikey:key,Authorization:'Bearer '+key},cache:'no-store',signal:AbortSignal.timeout(10000)});
+  if(propsResponse.ok){
+   const propsRows=await propsResponse.json() as Cache[];
+   const eventById=new Map(events.filter(e=>e.id).map(e=>[e.id!,e]));
+   for(const propsRow of propsRows){
+    const event=eventById.get(propsRow.id.replace(/^props_/,''));if(!event||!Array.isArray(propsRow.payload)||!propsRow.fetched_at)continue;
+    for(const item of propsRow.payload as Array<{market?:string;player?:string;side?:string;point?:number;book?:string;decimal?:number}>){
+     const odds=Number(item.decimal);
+     if(!item.market?.startsWith('player_')||!item.player||!item.side||!Number.isFinite(odds)||odds<=1||!event.id||!event.home_team||!event.away_team)continue;
+     quotes.push({event_id:event.id,home_team:event.home_team,away_team:event.away_team,kickoff_utc:event.commence_time||'',bookmaker:item.book||'Unknown',bookmaker_key:'',market:item.market,family:'player_prop',selection:item.side,player:item.player,line:typeof item.point==='number'?item.point:null,american_odds:0,decimal_odds:odds,observed_at:propsRow.fetched_at});
+    }
+   }
+  }
+  return NextResponse.json({status:'available',source:'The Odds API via existing NFL Studio cache',fetched_at:row?.fetched_at||null,quote_count:quotes.length,market_coverage:[...new Set(quotes.map(q=>q.family))],notes:['Quotes are not predictions','Bookmaker settlement rules must be verified','Player props loaded from existing cache when available'],quotes},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'unavailable',reason:'database_read_failed'},{status:502})}
 }
