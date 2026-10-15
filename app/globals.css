@@ -513,3 +513,18 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .shell .studio-pick-card .pick-player-link{display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 24px);max-width:100%;margin:10px 12px 5px;padding:10px 8px;font-size:11px;line-height:1.35;letter-spacing:.3px;text-transform:uppercase;white-space:normal;overflow-wrap:anywhere;min-height:42px;flex-wrap:wrap;border:1px solid #7effd8;border-radius:10px;background:linear-gradient(110deg,#0d604f,#1b739f);color:#effff9;font-weight:900;cursor:pointer;box-shadow:0 0 12px #53e8ce3d}
 .shell .studio-pick-card .pick-player-link span{font-size:16px}
 @media(max-width:700px){.shell .studio-pick-card .pick-player-link{font-size:10px;min-height:40px;padding:9px 7px;margin:8px 12px 4px}}
+
+/* NFL Studio player lab - mobile-first premium broadcast treatment */
+.premium-player-page{background:radial-gradient(ellipse at top,#12375d 0%,#051325 48%,#030917 100%)!important}
+.premium-player-page>div{max-width:1100px}
+.premium-player-page section{backdrop-filter:blur(7px)}
+.premium-player-page section:first-of-type{background:linear-gradient(130deg,#00338d 0%,#0b1e45 65%,#b51d42 125%)!important;border:1px solid #77d8ff!important;box-shadow:inset 0 0 35px #53a9ff25,0 0 36px #2872dc55!important}
+.premium-player-page section:first-of-type h1{text-shadow:0 0 18px #a3daff77}
+.premium-player-page .premium-player-injury{border-left:4px solid #f3c76b!important;background:linear-gradient(105deg,#2b2942,#0b243a)!important}
+.premium-player-page .premium-player-panel{background:linear-gradient(145deg,#122d52,#07162f)!important;border:1px solid #4eacde!important;box-shadow:0 15px 33px #0008,inset 0 0 20px #2f9ee51a}
+.premium-player-page .premium-player-panel h2{color:#e6faff;text-shadow:0 0 19px #37b3ff99}
+.premium-player-page .premium-player-game{border:1px solid #55c2ed!important;background:radial-gradient(circle at top right,#2066ac66,transparent 65%),linear-gradient(145deg,#183860,#091b36)!important;box-shadow:0 10px 22px #0007,0 0 14px #3ebcf533}
+.premium-player-page .premium-player-game p{background:#071e3888;border-radius:8px;padding:6px 9px;margin:5px 0;line-height:1.4}
+.premium-player-page .premium-player-game p strong{color:#76f5d0;font-size:16px}
+.premium-player-page input{box-shadow:inset 0 0 11px #0008;border:1px solid #72bce2}
+@media(max-width:700px){.premium-player-page{padding:14px 12px 100px!important}.premium-player-page section{padding:15px!important}.premium-player-page .premium-player-game{padding:14px!important}.premium-player-page h1{overflow-wrap:anywhere}.premium-player-page .premium-player-panel h2{font-size:21px}}
