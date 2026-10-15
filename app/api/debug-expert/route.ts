@@ -6,7 +6,7 @@ const host = 'expert-nfl-maj.protection-i-1817.chatgpt.site';
 const url = 'https://' + host + '/api/cycle';
 
 export async function GET() {
-  const result: {dns:string;fetch:string;status:number|null;error:string|null;response_headers?:Record<string,string>} = {
+  const result: {dns:string;fetch:string;status:number|null;error:string|null;response_headers?:Record<string,string>;title?:string|null;hasLoginForm?:boolean} = {
     dns:'unknown',fetch:'not_attempted',status:null,error:null,
   };
   try {
@@ -28,6 +28,12 @@ export async function GET() {
       'www-authenticate':response.headers.get('www-authenticate')||'',
       'location':response.headers.get('location')||'',
     };
+    if(response.status===401 && response.headers.get('content-type')?.includes('text/html')) {
+      const page=await response.text();
+      const match=page.match(/<title[^>]*>([^<]*)/i);
+      result.title=match?.[1]?.trim().slice(0,120) || null;
+      result.hasLoginForm=page.toLowerCase().includes('<form');
+    }
   } catch(error) {
     result.fetch='failed';
     result.error=error instanceof Error ? error.message.slice(0,160) : 'fetch_error';
