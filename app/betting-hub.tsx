@@ -5,6 +5,7 @@ type Bet=Offer&{stake:number;chosenOdds:number;placedAt:string;status:'open'|'wo
 const fmt=(n:number)=>n.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const decimal=(n:number)=>n>0?1+n/100:n<0?1+100/Math.abs(n):0;
 const STORE='nfl-studio-bets-v1';
+const WALLET_KEY='nfl-studio-wallet-secret';
 const heroTag=(v:'top'|'live'|'history')=>v==='top'?'TOP PARIS':v==='live'?'PARIS EN COURS':'BILAN DE SAISON';
 const logo=(abbr:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+(abbr==='LA'?'lar':abbr==='WAS'?'wsh':abbr.toLowerCase())+'.png';
 const teamCodes:Record<string,string>={'Buffalo Bills':'BUF','Las Vegas Raiders':'LV','Detroit Lions':'DET','Kansas City Chiefs':'KC','Dallas Cowboys':'DAL','Philadelphia Eagles':'PHI','Green Bay Packers':'GB','San Francisco 49ers':'SF','Baltimore Ravens':'BAL','Cincinnati Bengals':'CIN','New York Giants':'NYG','New England Patriots':'NE','Minnesota Vikings':'MIN','Chicago Bears':'CHI','Houston Texans':'HOU','Seattle Seahawks':'SEA','New York Jets':'NYJ','Arizona Cardinals':'ARI','Atlanta Falcons':'ATL','Carolina Panthers':'CAR','Cleveland Browns':'CLE','Denver Broncos':'DEN','Indianapolis Colts':'IND','Jacksonville Jaguars':'JAX','Los Angeles Chargers':'LAC','Los Angeles Rams':'LA','Miami Dolphins':'MIA','New Orleans Saints':'NO','Pittsburgh Steelers':'PIT','Tampa Bay Buccaneers':'TB','Tennessee Titans':'TEN','Washington Commanders':'WAS'};
@@ -34,7 +35,24 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const [showBetForm,SHOW_BET_FORM]=useState(false);
  const [odd,ODD]=useState(''),[stake,STAKE]=useState('5');
  useEffect(()=>{try{const v=JSON.parse(localStorage.getItem(STORE)||'[]');if(Array.isArray(v))BETS(v)}catch{}},[]);
- const save=(v:Bet[])=>{BETS(v);try{localStorage.setItem(STORE,JSON.stringify(v))}catch{}};
+ const [walletCode,WALLET_CODE]=useState(''),[syncStatus,SYNC_STATUS]=useState('');
+ const save=(v:Bet[])=>{BETS(v);try{localStorage.setItem(STORE,JSON.stringify(v));const secret=localStorage.getItem(WALLET_KEY);if(secret)fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',secret,bets:v})}).then(r=>{if(!r.ok)SYNC_STATUS('Erreur de sauvegarde cloud')}).catch(()=>SYNC_STATUS('Synchronisation momentanément indisponible'))}catch{}};
+ const connectWallet=async()=>{
+  let secret=walletCode.trim().toLowerCase();
+  if(!secret){const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);secret=Array.from(bytes).map(x=>x.toString(16).padStart(2,'0')).join('')}
+  if(!/^[a-f0-9]{48,128}$/.test(secret)){SYNC_STATUS('Le code doit être copié au complet.');return}
+  try{
+   SYNC_STATUS('Connexion au coffre…');
+   const res=await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read',secret})});
+   if(!res.ok)throw Error('read');const data=await res.json();
+   const local=JSON.parse(localStorage.getItem(STORE)||'[]'),merged=new Map<string,Bet>();
+   for(const b of Array.isArray(data.bets)?data.bets:[])merged.set(b.id,b);
+   for(const b of Array.isArray(local)?local:[])merged.set(b.id,b);
+   const all=[...merged.values()];localStorage.setItem(WALLET_KEY,secret);WALLET_CODE(secret);save(all);SYNC_STATUS('Coffre relié. Garde ton code privé.');
+  }catch{SYNC_STATUS('Connexion impossible. Tes billets locaux sont conservés.')}
+ };
+ useEffect(()=>{try{const secret=localStorage.getItem(WALLET_KEY);if(!secret)return;WALLET_CODE(secret);fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read',secret})}).then(r=>r.json()).then(d=>{if(!Array.isArray(d.bets))return;const old=JSON.parse(localStorage.getItem(STORE)||'[]');const merged=new Map<string,Bet>();for(const b of d.bets)merged.set(b.id,b);for(const b of Array.isArray(old)?old:[])merged.set(b.id,b);const arr=[...merged.values()];BETS(arr);localStorage.setItem(STORE,JSON.stringify(arr))}).catch(()=>{})}catch{}},[]);
+
  useEffect(()=>{let active=true;LOADED(false);fetch('/api/odds').then(r=>r.json()).then(d=>{
  const out:Offer[]=[];
  for(const g of d.games||[]){const game=g.away_team+' vs '+g.home_team;
@@ -182,7 +200,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const curvePath=coords.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
  const mix=Object.entries(bets.reduce<Record<string,{count:number;profit:number;stake:number}>>((a,b)=>{const k=b.market||'autres';const p=a[k]||{count:0,profit:0,stake:0};p.count++;if(b.status==='won'){p.profit+=b.stake*(b.chosenOdds-1);p.stake+=b.stake}else if(b.status==='lost'){p.profit-=b.stake;p.stake+=b.stake}a[k]=p;return a},{})).sort((a,b)=>b[1].profit-a[1].profit);
 
- return <section className="panel" style={{marginTop:16}}>
+ return <section className="panel" style={{marginTop:16}}>{view!=='top'&&<div style={{padding:16,border:'1px solid #55b9e7',borderRadius:14,marginBottom:18,background:'#102b4d'}}><strong>🔐 COFFRE DES BOYS · MES PARIS SYNCHRONISÉS</strong><p>Crée un code privé, garde-le et colle-le sur ton deuxième appareil pour retrouver tes billets.</p><input value={walletCode} onChange={e=>WALLET_CODE(e.target.value)} placeholder="Code de synchronisation privé" aria-label="Code de synchronisation" style={{width:'100%',maxWidth:550,padding:12,color:'#07162a',borderRadius:7}}/><button type="button" onClick={connectWallet} style={{display:'block',marginTop:10,padding:12,background:'#61ebbd',borderRadius:8,color:'#082333',fontWeight:900}}>CRÉER / RELIER MON COFFRE</button><p style={{fontSize:12}}>{syncStatus}</p></div>}
  <div className={'studio-hero '+(view==='top'&&category==='heavy'?'heavy-hero':'')}><div className="studio-stadium-lights" aria-hidden="true"><span/><span/><span/><span/></div><div className="studio-goalposts" aria-hidden="true"/><div className="studio-hero-inner">{view==='top'&&category==='heavy'?<><div className="heavy-emblem"><span className="heavy-overline">GROS RISQUES · GROS GAINS</span><span>HEAVY</span><strong>BALLS</strong><div className="metal-orbs"><i/><i/></div><div className="heavy-turf" aria-hidden="true"/><div className="heavy-stars" aria-hidden="true">✦ &nbsp; ★ &nbsp; ✦</div><small>ON LES DÉPOSE SUR LE SYNTHÉTIQUE</small></div></>:<><span className="studio-kicker">✦ NFL STUDIO · SAISON 2026</span><div className="studio-hero-title">{view==='top'?'TOP PARIS':view==='live'?'MES PARIS EN COURS':'BILAN DE SAISON'}</div><div className="studio-hero-rule" aria-hidden="true"><span>★</span></div><p>{view==='top'?'Meilleurs angles disponibles, avec diversification entre marchés et matchs':view==='live'?'Toutes tes mises, tes retours potentiels et leur statut':'Ton historique de paris et tes résultats en dollars canadiens'}</p></>}</div></div>
  <h2 style={{fontSize:28,marginBottom:8,display:'none'}}>{view==='top'?'🏆 TOP PARIS · SEMAINE NFL':view==='live'?'🎯 PARIS EN COURS':'📊 BILAN DE SAISON'}</h2>
  {view==='top'?<><p className="muted">Aucune recommandation officielle EXPERT NFL : moteur complet non exécuté. Marchés observés chez les bookmakers. Top 5 exploratoire calculé avec les cotes et les statistiques disponibles. Probabilités expérimentales clairement identifiées; un rapport indépendant vérifié reste prioritaire. Tu choisis librement tes paris. Sans validation de la probabilité et de l’avantage, décision : PASSER.</p>
