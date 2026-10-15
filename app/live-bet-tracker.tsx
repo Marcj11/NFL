@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 type Bet={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;player?:string;team:string;status:string};
 type Team={abbr:string;name:string;score:number};
 type Game={id:string;date:string;home:Team;away:Team;status:string;state:string;clock:string;period:number;complete:boolean};
@@ -40,11 +40,26 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
  </article>;
 }
 export default function LiveBetTracker({bets}:{bets:Bet[]}){
- const [feed,SET]=useState<Feed|null>(null);
- useEffect(()=>{let active=true;const update=()=>fetch('/api/live-coverage',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(active)SET(d)}).catch(()=>{});update();const timer=setInterval(update,45000);return()=>{active=false;clearInterval(timer)}},[]);
+ const [feed,SET]=useState<Feed|null>(null),[alerts,ALERTS]=useState<string[]>([]);
+ const past=useRef<Record<string,{away:number;home:number}>>({});
+ useEffect(()=>{let active=true;const update=()=>fetch('/api/live-coverage',{cache:'no-store'}).then(r=>r.json()).then((d:Feed)=>{
+  if(!active)return;
+  if(Array.isArray(d.games)){const notices:string[]=[];
+   for(const g of d.games){const before=past.current[g.id];if(before&&g.state==='in'&&(g.away.score!==before.away||g.home.score!==before.home)){
+    const who=g.away.score>before.away?g.away.name:g.home.name;
+    notices.push('⚡ LE SCORE BOUGE : '+who+' — '+g.away.abbr+' '+g.away.score+' / '+g.home.abbr+' '+g.home.score);
+    const oldLeader=Math.sign(before.away-before.home),newLeader=Math.sign(g.away.score-g.home.score);
+    if(oldLeader!==0&&newLeader!==0&&oldLeader!==newLeader)notices.push('🔥 REVIREMENT AU TABLEAU : les meneurs viennent de changer !');
+   }
+   past.current[g.id]={away:g.away.score,home:g.home.score};
+   }if(notices.length)ALERTS(prev=>[...notices,...prev].slice(0,5));
+  }
+  SET(d);
+ }).catch(()=>{});update();const timer=setInterval(update,45000);return()=>{active=false;clearInterval(timer)}},[]);
  if(!bets.length)return null;
  const matches=feed?.games?bets.filter(b=>feed.games.some(g=>match(b.game,g))):[];
  return <section className="studio-live"><div className="studio-live-head"><span>⚡ LIVE TRACKER · ESPN</span><h2>LES PARIS DES BOYS EN DIRECT</h2><p>Scores actualisés automatiquement aux 45 secondes. Progression des Props lorsque la statistique du joueur est disponible.</p></div>
+ {alerts.length>0&&<div className="studio-live-alerts"><strong>🔔 LES NOUVELLES DU SCORE</strong>{alerts.map((alert,i)=><p key={i}>{alert}</p>)}</div>}
  {!feed?<p>On branche les tableaux de matchs…</p>:feed.status!=='ok'?<p>Les scores en direct sont momentanément indisponibles.</p>:matches.length===0?<p>Aucune de tes mises ouvertes ne correspond aux rencontres de la semaine suivie actuellement.</p>:<div className="studio-live-grid">{matches.map(b=><Ticket key={b.id} b={b} feed={feed}/>)}</div>}
  </section>;
 }
