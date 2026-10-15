@@ -75,11 +75,23 @@ export async function GET(req:Request){
   const context=focus?.qb?' Contexte individuel : '+focus.qb.name+' a produit '+focus.qb.passing.toFixed(0)+' verges aériennes par match sur '+focus.qb.sample+' rencontres; '+(focus.rb?focus.rb.name+' a ajouté '+focus.rb.rushing.toFixed(0)+' verges au sol par match.':'le jeu au sol reste à examiner.'):' Statistiques individuelles insuffisantes pour confirmer un avantage.';
   return {...o,baseline,signal,angle:angle+context};
  }).filter(o=>o.baseline!==null&&o.angle&&Math.abs(o.signal)>0.1);
- const best=candidates.sort((a,b)=>Math.abs(b.signal)-Math.abs(a.signal));
- const selected:typeof best=[];const used=new Set<string>();
- for(const o of best){const group=o.market+'|'+(o.market==='h2h'?o.name:o.market==='totals'?o.name:o.name);if(used.has(group))continue;used.add(group);selected.push(o);if(selected.length===5)break}
- const teamSelections=selected.map(({price,...o})=>({...o,decimal:Number(o.decimal.toFixed(2)),signal:Number(o.signal.toFixed(2)),status:'observation_not_recommendation'}));
- const combined=[...bestProps.values(),...teamSelections].sort((a:any,b:any)=>(Number(b.probability)||1/Number(b.decimal))-(Number(a.probability)||1/Number(a.decimal))).slice(0,5);
- return NextResponse.json({game_id:id,stats,model:'recent_player_prop_frequency_and_team_form_v2',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,analysis:combined},{headers:{'Cache-Control':'no-store'}});
+ // Every selection needs a model probability; bookmaker implied chance is not a forecast.
+ const logistic=(z:number)=>1/(1+Math.exp(-1.702*Math.max(-8,Math.min(8,z))));
+ const gamePicks=candidates.flatMap(o=>{
+  let probability:number|null=null;
+  if(o.market==='h2h'&&projectedDiff!==null)probability=logistic(o.signal/13.5);
+  if(o.market==='spreads'&&projectedDiff!==null&&o.point!==undefined)probability=logistic(o.signal/13.5);
+  if(o.market==='totals'&&projectedTotal!==null&&o.point!==undefined)probability=logistic(o.signal/17.5);
+  if(probability===null||!Number.isFinite(probability)||probability<=0||probability>=1)return [];
+  return [{market:o.market,name:o.name,point:o.point,book:o.book,decimal:Number(o.decimal.toFixed(2)),probability,signal:Number(o.signal.toFixed(2)),angle:o.angle,status:'experimental_unvalidated'}];
+ });
+ const playerPicks=[...bestProps.values()].map(p=>({...p,probability:Number(p.probability),status:'experimental_unvalidated'}));
+ const ranked=[...gamePicks,...playerPicks].filter(p=>Number.isFinite(p.probability)&&p.probability>0&&p.probability<1&&Number.isFinite(p.decimal)&&p.decimal>1)
+  .map(p=>({...p,expected_value:p.probability*p.decimal-1}))
+  .sort((a,b)=>b.expected_value-a.expected_value);
+ const heavy=ranked.find(p=>p.decimal>=3&&p.expected_value>0);
+ const chosen=ranked.filter(p=>!heavy||p!==heavy).slice(0,heavy?4:5);
+ const combined=[...chosen,...(heavy?[{...heavy,heavyball:true}]:[])];
+ return NextResponse.json({game_id:id,stats,model:'match_model_probability_ev_v3',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
