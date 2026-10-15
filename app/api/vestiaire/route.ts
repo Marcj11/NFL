@@ -4,47 +4,57 @@ type Game={game_id:string;home_team_id:string;away_team_id:string;kickoff_utc:st
 type Result={game_id:string;home_score:number|null;away_score:number|null};
 type Story={id:string;team:string;opponent:string;game_id:string;headline:string;body:string;punchline:string;metric:string;kind:string;kickoff_utc:string;home_score:number;away_score:number;source:string};
 const labels:Record<string,string>={ARI:'Cardinals',ATL:'Falcons',BAL:'Ravens',BUF:'Bills',CAR:'Panthers',CHI:'Bears',CIN:'Bengals',CLE:'Browns',DAL:'Cowboys',DEN:'Broncos',DET:'Lions',GB:'Packers',HOU:'Texans',IND:'Colts',JAX:'Jaguars',KC:'Chiefs',LV:'Raiders',LAC:'Chargers',LA:'Rams',MIA:'Dolphins',MIN:'Vikings',NE:'Patriots',NO:'Saints',NYG:'Giants',NYJ:'Jets',PHI:'Eagles',PIT:'Steelers',SF:'49ers',SEA:'Seahawks',TB:'Buccaneers',TEN:'Titans',WAS:'Commanders'};
-const teamName=(id:string)=>labels[id]||id;
+const teamName=(id:string)=>'les '+(labels[id]||id);
+const endings=[
+ 'Les boys, ce score-là parle tout seul. On garde les pieds sur terre pis on regarde la prochaine game.',
+ 'Ça, c’est le genre de résultat qui part une bonne discussion autour d’une table de chums.',
+ 'Pas besoin de jouer aux devins : les chiffres sont là, pis le prochain défi s’en vient.',
+ 'Une game de même, ça se jase longtemps après le coup de sifflet.',
+ 'Les partisans vont avoir du stock à débattre; nous autres, on commence par le tableau final.',
+ 'On peut avoir nos favoris, mais le pointage s’en fout pas mal de nos chandails.',
+ 'Les boys, on ressort la calculatrice avant de partir en grandes théories.',
+ 'Le terrain a donné sa réponse. Reste à voir ce que les deux gangs vont faire à leur prochaine sortie.',
+ 'Pas une légende de vestiaire : une vraie différence au tableau, noir sur blanc.',
+ 'Le popcorn était peut-être prêt, mais le résultat, lui, ne se négocie pas.',
+ 'Un autre chapitre dans la saison. On prend des notes avant de prédire la suite.',
+ 'Les chums peuvent argumenter toute la soirée : le score final ne changera pas.'
+];
 function story(game:Game,result:Result,index:number):Story{
- const h=Number(result.home_score),a=Number(result.away_score),homeWins=h>a;
- const winner=homeWins?game.home_team_id:game.away_team_id;
- const loser=homeWins?game.away_team_id:game.home_team_id;
- const margin=Math.abs(h-a),total=h+a,high=Math.max(h,a),low=Math.min(h,a);
- const tie=h===a;
- const topic=tie?'ÉGALITÉ':margin>=21?'DÉMOLITION':margin<=3?'CHAUD CHAUD':total>=65?'FEU D’ARTIFICE':low<=10?'DÉFENSE EN BÉTON':'BILAN DU VESTIAIRE';
- const variations=[
-  'Les boys, on a checké le tableau final, pas les rumeurs de vestiaire.',
-  'Ça, c’est pas une prédiction sortie du cul : le pointage est confirmé dans notre banque.',
-  'On se conte pas de bullshit : voici exactement ce que la feuille de match raconte.',
-  'On sort les chiffres avant de faire les grandes gueules, tabarnak.'
- ];
- let headline='',body='',punchline='';
+ const h=Number(result.home_score),a=Number(result.away_score),tie=h===a;
+ const winner=h>a?game.home_team_id:game.away_team_id;
+ const loser=h>a?game.away_team_id:game.home_team_id;
+ const margin=Math.abs(h-a),total=h+a,low=Math.min(h,a);
+ const away=teamName(game.away_team_id),home=teamName(game.home_team_id);
+ const champs=teamName(winner),defaits=teamName(loser);
+ const score=away+' '+a+' – '+home+' '+h;
+ const kind=tie?'ÉGALITÉ':margin>=21?'DÉMOLITION':margin<=3?'CHAUD CHAUD':total>=65?'FEU D’ARTIFICE':low<=10?'DÉFENSE EN BÉTON':'BILAN DU VESTIAIRE';
+ const where=game.home_team_id===winner?'à domicile':'sur la route';
+ let headline='',reading='';
  if(tie){
-  headline='PERSONNE A FINI LA JOB : '+teamName(game.away_team_id)+' VS '+teamName(game.home_team_id);
-  body='Les deux gangs ont fini à '+h+'–'+a+'. Pas de vainqueur à inventer. '+variations[index%variations.length];
-  punchline='Deux gangs, même pointage. Les boys, personne peut fanfaronner ici, esti.';
+  headline='LES DEUX GANGS SE QUITTENT ÉGALES';
+  reading='Personne ne s’est sauvé avec la victoire. Les deux clubs ont terminé avec '+h+' points chacun. Même après tout ce football-là, impossible de départager les deux équipes au tableau.';
  }else if(margin>=21){
-  headline=teamName(winner).toUpperCase()+' A PASSÉ LE ROULEAU COMPRESSEUR';
-  body=teamName(winner)+' a sacré une volée de '+margin+' points à '+teamName(loser)+', avec un score final de '+a+' à '+h+' (visiteur–domicile). '+variations[index%variations.length];
-  punchline='Ça, c’est pas gagner sur la pointe des pieds : c’est débarquer avec les bottes pleines de bouette, tabarnak !';
+  headline=champs.toUpperCase()+' ONT PASSÉ LE ROULEAU COMPRESSEUR';
+  reading=champs+' ont battu '+defaits+' par '+margin+' points '+where+'. Une différence aussi large, ça saute aux yeux dès qu’on regarde le tableau. '+defaits+' devront trouver une réponse après cette lourde défaite.';
  }else if(margin<=3){
-  headline='LES CORONES ONT TREMBLÉ JUSQU’À LA FIN';
-  body=teamName(winner)+' s’en est tiré avec une avance de seulement '+margin+' point'+(margin>1?'s':'')+'. Score final : '+a+' à '+h+' (visiteur–domicile). Une game serrée en maudit, mais on n’invente pas comment les derniers jeux se sont déroulés.';
-  punchline='Si t’avais misé sur le gagnant, ton divan doit encore avoir les marques de tes corones.';
+  headline=champs.toUpperCase()+' S’EN SONT TIRÉS DE JUSTESSE';
+  reading=champs+' ont gagné par seulement '+margin+' point'+(margin>1?'s':'')+' '+where+'. Un coussin aussi mince, les boys, ça donne pas beaucoup de marge de manœuvre. '+defaits+' sont passés bien près au pointage, sans qu’on puisse prétendre savoir quels jeux ont fait basculer la rencontre.';
  }else if(total>=65){
-  headline='LES TABLEAUX DE POINTS ONT PRIS EN FEU';
-  body=total+' points combinés dans '+teamName(game.away_team_id)+' contre '+teamName(game.home_team_id)+'. '+teamName(winner)+' finit avec '+high+' points, '+teamName(loser)+' avec '+low+'. On parle d’une production offensive au pointage, pas d’un diagnostic sur les QB.';
-  punchline='Osti, le marqueur devait avoir des crampes à force de peser sur son piton !';
+  headline='LES DEUX GANGS ONT FAIT EXPLOSER LE TABLEAU';
+  reading='Les deux équipes ont combiné '+total+' points. '+champs+' ont fini devant '+defaits+', dans une rencontre qui a produit beaucoup de points. Attention : le pointage ne nous dit pas à lui seul quels joueurs ont dominé ni si les points sont venus de l’attaque, de la défense ou des unités spéciales.';
  }else if(low<=10){
-  headline=teamName(loser).toUpperCase()+' : L’ATTAQUE A FAIT DUR EN MAUDIT';
-  body=teamName(loser)+' a inscrit seulement '+low+' points contre '+teamName(winner)+'. Le résultat final est de '+a+' à '+h+' (visiteur–domicile). Sans les stats individuelles, on ne met pas ça sur le dos du QB.';
-  punchline='Avec '+low+' points au tableau, ça prend pas un doctorat pour voir que ça scorait pas fort, sacrament.';
+  headline=defaits.toUpperCase()+' ONT EU DE LA MISÈRE À SCORER';
+  reading=defaits+' ont récolté seulement '+low+' points, pendant que '+champs+' en ont mis '+Math.max(h,a)+'. Côté résultat, ça fait une soirée compliquée pour les perdants. On ne blâme pas un QB ni un entraîneur en particulier sans les statistiques détaillées.';
  }else{
-  headline=teamName(winner).toUpperCase()+' A FAIT SA JOB';
-  body=teamName(winner)+' a battu '+teamName(loser)+' par '+margin+' points ('+a+'–'+h+', visiteur–domicile). '+variations[index%variations.length];
-  punchline='Le score ment pas, les boys. Le reste, c’est du jasage de taverne.';
+  headline=champs.toUpperCase()+' ONT FAIT LA JOB';
+  reading=champs+' ont pris le dessus sur '+defaits+' par '+margin+' points '+where+'. L’écart est assez net pour trancher la rencontre, sans être une démolition. Les deux équipes ont maintenant un résultat concret à analyser avant leur prochaine sortie.';
  }
- return {id:game.game_id,team:winner,opponent:loser,game_id:game.game_id,headline,body,punchline,metric:tie?'ÉGALITÉ':margin+' PTS D’ÉCART',kind:topic,kickoff_utc:game.kickoff_utc,home_score:h,away_score:a,source:'NFL Studio · games + game_results (résultat enregistré)'};
+ const lead='Score final : '+score+'. Les visiteurs ont inscrit '+a+' points, contre '+h+' pour les locaux, pour un total de '+total+' points.';
+ const finish=tie?'Cette égalité laisse les deux clubs au même niveau au tableau final.':margin>=21?'Avec '+margin+' points d’écart, on parle d’une victoire très convaincante au pointage.':margin<=3?'Avec seulement '+margin+' point'+(margin>1?'s':'')+' entre les deux gangs, ça s’est joué serré au tableau.':'Le différentiel de '+margin+' points donne une bonne idée de l’ampleur du résultat.';
+ const body=lead+' '+reading+' '+finish+' Les chiffres ci-dessus sont tirés du résultat enregistré; les séquences de jeu, blessures et performances individuelles ne sont pas déduites du score.';
+ const salt=Array.from(game.game_id).reduce((acc,ch)=>acc+ch.charCodeAt(0),0);
+ const punchline=endings[(salt+index)%endings.length];
+ return {id:game.game_id,team:winner,opponent:loser,game_id:game.game_id,headline,body,punchline,metric:tie?'ÉGALITÉ':margin+' PTS D’ÉCART',kind,kickoff_utc:game.kickoff_utc,home_score:h,away_score:a,source:'NFL Studio · games + game_results (résultat enregistré)'};
 }
 export async function GET(){
  const base=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
