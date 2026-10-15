@@ -1,3 +1,4 @@
+import {extractEspnQBs} from '../../../lib/expert-nfl/espn-qb-parser';
 import {espnTeamId} from '../../../lib/expert-nfl/espn-team-ids';
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
@@ -55,12 +56,11 @@ export async function GET(req:Request){
     const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(5000)});
     if(!response.ok)return {team,status:'espn_http_error',http_status:response.status,projected_qb:null,confirmed:false};
     const data=await response.json();
-    const charts=Array.isArray(data.depthCharts)?data.depthCharts:[];
-    const candidates=charts.flatMap((c:{positions?:Record<string,{athletes?:Array<{rank?:number;athlete?:{displayName?:string;id?:string}}>} >})=>Object.entries(c.positions||{}).filter(([k])=>k.toLowerCase()==='qb'||k.toLowerCase().includes('quarterback')).flatMap(([,v])=>v.athletes||[]));
-    const qbs=candidates.filter((x:{athlete?:{displayName?:string}})=>!!x.athlete?.displayName).sort((a:{rank?:number},b:{rank?:number})=>(a.rank??99)-(b.rank??99));
-    return {team,status:qbs.length?'espn_depth_chart':'espn_qb_missing',projected_qb:qbs[0]?.athlete?.displayName||null,observed_at:new Date().toISOString(),confirmed:false};
+    const parsed=extractEspnQBs(data);
+    const qb=parsed.qbs[0]||null;
+    return {team,status:qb?'espn_depth_chart':'espn_qb_missing',projected_qb:qb?.name||null,espn_id:qb?.espn_id||null,observed_at:new Date().toISOString(),confirmed:false,usable_for_historical_cutoff:false};
    }catch{return {team,status:'espn_unreachable',projected_qb:null,confirmed:false}}
   }));
-  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'data_unavailable',publishable:false},{status:502})}
 }
