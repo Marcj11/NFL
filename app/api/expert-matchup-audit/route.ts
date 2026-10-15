@@ -46,6 +46,17 @@ export async function GET(req:Request){
    }
    results.push({team,ready:stats.every(x=>x.plays>=100&&!x.truncated),historical_games:games.length,stats});
   }
+  const teamStats=results.filter((x):x is {team:string;ready:boolean;historical_games:number;stats:Array<{side:string;plays:number;epa_per_play:number|null;truncated:boolean;duplicate_rows:number}>}=>'stats'in x);
+  const getEpa=(team:string,side:string):number|null=>{
+   const record=teamStats.find(x=>x.team===team);
+   if(!record?.ready)return null;
+   const stat=record.stats.find(x=>x.side===side);
+   return stat&&stat.plays>=100&&!stat.truncated?stat.epa_per_play:null;
+  };
+  const matchup_epa=[
+   {offense:home,defense:away,offense_epa:getEpa(home,'offense_team'),opponent_defense_epa_allowed:getEpa(away,'defense_team')},
+   {offense:away,defense:home,offense_epa:getEpa(away,'offense_team'),opponent_defense_epa_allowed:getEpa(home,'defense_team')}
+  ];
   const qbQuery=new URLSearchParams({select:'game_id,team_id,qb_name,announced_status,source_name,source_published_at,usable_pregame',team_id:'in.('+home+','+away+')',usable_pregame:'eq.true',source_published_at:'lt.'+new Date(before).toISOString(),order:'source_published_at.desc',limit:'20'});
   if(requestedGame&&/^[a-zA-Z0-9_-]{3,80}$/.test(requestedGame))qbQuery.set('game_id','eq.'+requestedGame);
   const qbr=await fetch(base+'/rest/v1/nfl_studio_pregame_qb_sources_v1?'+qbQuery,{headers,cache:'no-store',signal:AbortSignal.timeout(9000)});
@@ -75,6 +86,6 @@ export async function GET(req:Request){
     return {team,status:qb?(source_kind==='depth_chart'?'espn_depth_chart':'espn_roster_qbs_only'):'espn_qb_missing',projected_qb:source_kind==='depth_chart'?qb?.name||null:null,roster_qb_example:source_kind==='roster_only'?qb?.name||null:null,espn_id:qb?.espn_id||null,observed_at:new Date().toISOString(),depth_http_status:response?.status||null,confirmed:false,usable_for_historical_cutoff:false};
    }catch{return {team,status:'espn_unreachable',projected_qb:null,confirmed:false}}
   }));
-  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'historical_matchup_research',home,away,requested_game_id:requestedGame||null,cutoff_utc:new Date(before).toISOString(),teams:results,matchup_epa,epa_model_calibrated:false,qb_coverage:qbCoverage,espn_depth_charts:espnDepthCharts,espn_depth_chart_as_of_match:false,historical_qb_examples:historicalQB,historical_qb_is_pregame_confirmation:false,qb_data_complete:false,model_executed:false,forecast:null,publishable:false,reason:'Le contexte QB, les blessures, les forces adverses et la validation temporelle du modele restent a integrer.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'data_unavailable',publishable:false},{status:502})}
 }
