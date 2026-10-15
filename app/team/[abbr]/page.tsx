@@ -19,6 +19,10 @@ export default function TeamPage(){
  const [chosenPick,CHOOSE_PICK]=useState<{market:string;name:string;player?:string;point?:number;book:string;decimal:number;probability:number}|null>(null);
  const [entryOdds,ENTRY_ODDS]=useState(''),[entryStake,ENTRY_STAKE]=useState('5'),[entryError,ENTRY_ERROR]=useState('');
  const openPick=(pick:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;probability:number})=>{CHOOSE_PICK(pick);ENTRY_ODDS(String(pick.decimal));ENTRY_STAKE('5');ENTRY_ERROR('')};
+
+ const [analysisRequestedAt,setAnalysisRequestedAt]=useState<string|null>(null);
+ const [analysisNonce,setAnalysisNonce]=useState(0);
+ const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;signal:number;angle?:string;probability:number;expected_value:number;heavyball?:boolean;status:string}[]}|null>(null);
  const recordPick=()=>{
   if(!chosenPick||!data?.next)return;
   const price=Number(entryOdds.replace(',','.')),amount=Number(entryStake.replace(',','.'));
@@ -27,9 +31,6 @@ export default function TeamPage(){
   const item={id:'match:'+data.next.game_id+':'+chosenPick.market+':'+chosenPick.name+':'+Date.now(),game:oddsGame,market:chosenPick.market==='h2h'?'moneyline':chosenPick.market==='player_pass_yds'||chosenPick.market==='player_rush_yds'||chosenPick.market==='player_reception_yds'?'props':chosenPick.market==='totals'?'totals':chosenPick.market==='spreads'?'spreads':chosenPick.market,selection:(chosenPick.player?chosenPick.player+' · ':'')+chosenPick.name+(typeof chosenPick.point==='number'?' '+chosenPick.point:''),line:chosenPick.point,book:chosenPick.book,odds:chosenPick.decimal,prob:chosenPick.probability,team:abbr,player:chosenPick.player,stake:amount,chosenOdds:price,placedAt:new Date().toISOString(),status:'open'};
   try{const key='nfl-studio-bets-v1';const existing=JSON.parse(localStorage.getItem(key)||'[]');const records=Array.isArray(existing)?existing:[];localStorage.setItem(key,JSON.stringify([item,...records]));CHOOSE_PICK(null)}catch{ENTRY_ERROR('Impossible d’enregistrer dans ce navigateur.')}
  };
- const [analysisRequestedAt,setAnalysisRequestedAt]=useState<string|null>(null);
- const [analysisNonce,setAnalysisNonce]=useState(0);
- const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;signal:number;angle?:string;probability:number;expected_value:number;heavyball?:boolean;status:string}[]}|null>(null);
  useEffect(()=>{if(!data?.next?.game_id){setAnalysis(null);return}let active=true;setAnalysisRunning(true);fetch('/api/match-player-props?home='+encodeURIComponent(teams[data.next!.home_team_id]?.[0]||'')+'&away='+encodeURIComponent(teams[data.next!.away_team_id]?.[0]||''),{cache:'no-store'}).catch(()=>null).then(()=>fetch('/api/match-top5?game_id='+encodeURIComponent(data.next!.game_id)+'&requested_at='+analysisNonce,{cache:'no-store'})).then(async r=>{const j=await r.json();if(!r.ok)throw Error(j.error||'Erreur serveur '+r.status);return j}).then(j=>{if(active){setAnalysis(j);setAnalysisError('');setAnalysisRequestedAt(new Date().toISOString());setAnalysisRunning(false)}}).catch(e=>{if(active){setAnalysis(null);setAnalysisError(String(e.message));setAnalysisRunning(false)}});return()=>{active=false}},[data?.next?.game_id,analysisNonce]);
  const [error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{if(!data?.next||!data.opponent)return;let active=true;setLiveLoading(true);
@@ -40,7 +41,7 @@ export default function TeamPage(){
  if(!info)return <main style={{padding:40}}><Link href="/">Retour aux équipes</Link><h1>Équipe inconnue</h1></main>;
  const [name,primary,secondary]=info,opp=data?.opponent?teams[data.opponent]:null;const p=data?.probability&&data.next?(data.next.home_team_id===abbr?Number(data.probability.home_win_probability):Number(data.probability.away_win_probability)):null;
  return <main style={{maxWidth:1660,margin:'auto',padding:'24px 24px 90px',color:'#eef5fb'}}>
- <Link href="/" style={{display:'inline-block',marginBottom:22,opacity:.8}}>← Retour au tableau de bord</Link>
+ <Link href="/" style={{display:'inline-block',marginBottom:22,opacity:.8}}>← RETOUR AUX 32 GANGS DE LA NFL</Link>
  <section style={{minHeight:335,borderRadius:24,position:'relative',overflow:'hidden',background:'linear-gradient(125deg,'+primary+' 0%,'+primary+' 64%,'+secondary+' 100%)',padding:'44px 5%',boxShadow:'0 20px 60px #0006'}}>
  <img src={teamLogo(abbr)} alt="" style={{position:'absolute',width:400,height:400,objectFit:'contain',right:-35,top:-30,opacity:.18}}/>
  <div style={{position:'relative',maxWidth:650}}><p style={{fontSize:12,fontWeight:800,letterSpacing:3}}>NFL STUDIO · ANALYSE D'ÉQUIPE</p><h1 style={{fontSize:'clamp(40px,6vw,78px)',lineHeight:1.04,margin:'20px 0'}}>{name}</h1><p style={{fontSize:18,opacity:.9}}>État actuel · Saison 2026</p><p style={{fontSize:14,marginTop:26,opacity:.85}}>Résultats récents et calendrier ci-dessous ↓</p></div></section>
@@ -55,7 +56,7 @@ export default function TeamPage(){
 {loading?<p style={{padding:28}}>Chargement de l’analyse de l’équipe…</p>:error?<p style={{padding:28}}>Données temporairement indisponibles : {error}</p>:data&&<>
  <section style={{padding:'30px 0'}}><h2 style={{fontSize:27}}>Situation actuelle</h2>{data.narrative.map((s,i)=><p key={i} style={{fontSize:17,lineHeight:1.7,maxWidth:1000,color:'#cddbe4'}}>{s}</p>)}</section>
   <section style={{borderRadius:24,overflow:'hidden',background:opp?'linear-gradient(110deg,'+primary+' 0%,#0b1520 50%,'+opp[1]+' 100%)':'#112533',padding:'35px 6%',border:'1px solid #ffffff30'}}>
- <p style={{textAlign:'center',letterSpacing:3,fontWeight:800}}>PROCHAIN AFFRONTEMENT</p>
+ <p style={{textAlign:'center',letterSpacing:3,fontWeight:800}}>LE PROCHAIN DUEL · ÇA VA BRASSER</p>
  {data.next&&data.opponent&&opp?<><div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',gap:16}}>
  <div style={{textAlign:'center'}}><img src={teamLogo(abbr)} alt={name} style={{width:'min(100%,170px)',height:170,objectFit:'contain'}}/><h2>{name}</h2></div><div style={{fontSize:36,fontWeight:900,opacity:.8}}>VS</div><div style={{textAlign:'center'}}><img src={teamLogo(data.opponent)} alt={opp[0]} style={{width:'min(100%,170px)',height:170,objectFit:'contain'}}/><h2>{opp[0]}</h2></div></div>
  <p style={{textAlign:'center',fontSize:16}}>{new Date(data.next.kickoff_utc).toLocaleString('fr-CA',{timeZone:'America/Toronto',dateStyle:'full',timeStyle:'short'})} · {data.next.home_team_id===abbr?'À domicile':'À l’extérieur'}</p>
@@ -63,7 +64,7 @@ export default function TeamPage(){
  <h3 style={{textAlign:'center'}}>Probabilités de victoire · aperçu expérimental</h3>
  {p===null?<p style={{textAlign:'center'}}>Prédictions non disponibles.</p>:<><div style={{display:'flex',justifyContent:'space-between',fontSize:25,fontWeight:800}}><span>{(p*100).toFixed(1)} %</span><span>{((1-p)*100).toFixed(1)} %</span></div><div style={{height:18,borderRadius:12,overflow:'hidden',background:opp[1]}}><div style={{width:p*100+'%',height:'100%',background:secondary}}/></div></>}
  {data.explanation&&<div style={{marginTop:28,paddingTop:22,borderTop:'1px solid #ffffff35',textAlign:'left'}}>
-<h3 style={{fontSize:23,margin:'0 0 14px'}}>L’analyse du prochain affrontement</h3>
+<h3 style={{fontSize:23,margin:'0 0 14px'}}>LE DUEL SOUS LA LOUPE DES BOYS</h3>
 {(()=>{
 const ex=data.explanation;
 const ownSeason=Number(data.next.home_team_id===abbr?ex.home_current_win_rate:ex.away_current_win_rate);
@@ -81,7 +82,7 @@ const own=data.players?.filter(x=>x.team_id===abbr)||[];const other=data.players
 const leader=(list:typeof own,pos:string,metric:'prior_passing_yards'|'prior_rushing_yards'|'prior_receiving_yards')=>list.filter(x=>x.position===pos&&Number(x[metric])>0&&Number(x.history_games)>=2).sort((a,b)=>Number(b[metric])-Number(a[metric]))[0];
 const qb=leader(own,'QB','prior_passing_yards');const rb=leader(own,'RB','prior_rushing_yards');const wr=leader(own,'WR','prior_receiving_yards');const oppQb=leader(other,'QB','prior_passing_yards');
 return <div style={{padding:'15px 19px',background:'#122c40',borderRadius:14,margin:'16px 0'}}>
-<h4 style={{fontSize:17,margin:'0 0 8px'}}>Confrontations individuelles : les joueurs à suivre</h4>
+<h4 style={{fontSize:17,margin:'0 0 8px'}}>LES GARS À SURVEILLER : QUI VA FAIRE SA JOB ?</h4>
 {qb?<p><b>{qb.display_name} ({name}) :</b> {Number(qb.prior_passing_yards).toFixed(0)} verges aériennes par match en moyenne sur {qb.history_games} matchs historiques récents. Son rendement à la passe représente un levier offensif important, mais ne démontre pas à lui seul une faiblesse des cornerbacks de {opp[0]}.</p>:<p>Statistiques récentes du quart-arrière non disponibles ou insuffisantes.</p>}
 {rb&&<p><b>{rb.display_name}, au sol :</b> {Number(rb.prior_rushing_yards).toFixed(0)} verges par match en moyenne sur {rb.history_games} matchs. Sa production offre une alternative au jeu aérien et pourrait modifier l'équilibre défensif recherché par {opp[0]}.</p>}
 {wr&&<p><b>{wr.display_name}, dans les airs :</b> {Number(wr.prior_receiving_yards).toFixed(0)} verges de réception et {Number(wr.prior_targets).toFixed(1)} cibles par match sur la période disponible. Son volume aide à identifier une option privilégiée dans le jeu de passes.</p>}
@@ -95,12 +96,12 @@ return <div style={{padding:'15px 19px',background:'#122c40',borderRadius:14,mar
 <p style={{fontSize:13,color:'#bbcad6'}}>Modèle de forme historique, non calibré pour les paris. Lineups et cotes non validés.</p></div></>:<p style={{textAlign:'center'}}>Prochain match non disponible.</p>}
  </section>
  <section style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,flexWrap:'wrap',border:'1px solid #2766a4',background:'linear-gradient(95deg,#071b32,#123454)',padding:'17px 20px',borderRadius:18,marginTop:27}}>
-<div><strong style={{fontSize:19}}>⚡ Analyse à la demande</strong><p style={{color:'#bcd2e7',fontSize:13,margin:'6px 0 0'}}>Relance les calculs à partir des résultats, des statistiques de joueurs et des cotes en cache disponibles maintenant. {analysisRequestedAt?'Dernier calcul : '+new Date(analysisRequestedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'}):''}</p></div>
-<button onClick={()=>setAnalysisNonce(v=>v+1)} disabled={analysisRunning||!data.next} style={{cursor:analysisRunning?'wait':'pointer',border:0,borderRadius:12,padding:'13px 23px',fontWeight:900,background:analysisRunning?'#45657e':'linear-gradient(110deg,#2079fe,#1bc3e8)',color:'white',boxShadow:'0 0 24px #2079fe55'}}>{analysisRunning?'Analyse en cours…':'▶ Lancer l’analyse'}</button>
+<div><strong style={{fontSize:19}}>⚡ ON RELANCE LA MACHINE, LES BOYS</strong><p style={{color:'#bcd2e7',fontSize:13,margin:'6px 0 0'}}>Relance les calculs à partir des résultats, des statistiques de joueurs et des cotes en cache disponibles maintenant. {analysisRequestedAt?'Dernier calcul : '+new Date(analysisRequestedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'}):''}</p></div>
+<button onClick={()=>setAnalysisNonce(v=>v+1)} disabled={analysisRunning||!data.next} style={{cursor:analysisRunning?'wait':'pointer',border:0,borderRadius:12,padding:'13px 23px',fontWeight:900,background:analysisRunning?'#45657e':'linear-gradient(110deg,#2079fe,#1bc3e8)',color:'white',boxShadow:'0 0 24px #2079fe55'}}>{analysisRunning?'Analyse en cours…':'▶ Relancer les chiffres, esti !'}</button>
 </section>
 <div style={{marginTop:16,fontSize:13,color:'#b7cee1'}}>Rapports officiels NFL : <a href="https://www.nfl.com/injuries/" target="_blank" rel="noreferrer" style={{color:'#7ac9ff',textDecoration:'underline'}}>Vérifier les blessures et joueurs inactifs sur NFL.com ↗</a>. Notre flux automatisé ESPN ne remplace pas la confirmation officielle.</div>
 <section style={{marginTop:22}}>
-<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',marginBottom:14}}><h2 style={{fontSize:25,margin:0}}>🏥 Blessures et effectifs — les deux équipes</h2><span style={{fontSize:12,color:'#adc7d8'}}>ESPN · {pregame?.fetchedAt?new Date(pregame.fetchedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'}):'Données en attente'} · Les inactifs officiels restent à confirmer</span></div>
+<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',marginBottom:14}}><h2 style={{fontSize:25,margin:0}}>🏥 L’INFIRMERIE : QUI EST AMOCHÉ DES DEUX BORDS ?</h2><span style={{fontSize:12,color:'#adc7d8'}}>ESPN · {pregame?.fetchedAt?new Date(pregame.fetchedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'}):'Données en attente'} · Les inactifs officiels restent à confirmer</span></div>
 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,420px),1fr))',gap:18}}>
 {[data.next?.away_team_id,data.next?.home_team_id].filter((t):t is string=>Boolean(t)).map(t=>{
 const r=pregame?.reports?.find(x=>x.team===t);
@@ -122,7 +123,7 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
 </section>
 <section style={{margin:'26px 0',padding:'22px',borderRadius:22,border:'1px solid #327dba',background:'linear-gradient(135deg,#092641,#071321)'}}>
  <span style={{fontSize:11,letterSpacing:3,color:'#89dbff',fontWeight:900}}>NFL STUDIO · PROCHAIN AFFRONTEMENT</span>
- <h2 style={{fontSize:'clamp(24px,3vw,36px)',margin:'9px 0',color:'#fff'}}>🏆 TOP 5 DU MATCH + HEAVYBALL</h2>
+ <h2 style={{fontSize:'clamp(24px,3vw,36px)',margin:'9px 0',color:'#fff'}}>🏆 TOP 5 DES BOYS + LE GROS HEAVYBALL</h2>
  <p style={{color:'#b6d1e4',fontSize:13}}>Les quatre meilleures valeurs espérées disponibles et un Heavyball admissible à cote élevée. Un Heavyball n’est jamais inventé si aucun pari ne satisfait aux critères. Probabilités expérimentales, non calibrées.</p>
  {analysisRunning?<p>Les boys, on sort les chiffres… calcul du prochain match en cours.</p>:analysisError?<p style={{color:'#ffb4b4'}}>Analyse indisponible : {analysisError}</p>:!analysis?<p>Aucun calcul reçu pour cette rencontre.</p>:<>
  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,250px),1fr))',gap:13,marginTop:20}}>
