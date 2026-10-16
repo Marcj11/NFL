@@ -30,6 +30,15 @@ export async function GET(){
   const brier=(get:(x:typeof paired[number])=>number)=>settled.length?settled.reduce((sum,x)=>sum+(get(x)-x.result!)**2,0)/settled.length:null;
   const disagreements=paired.filter(x=>x.disagree);
   const settledDisagreements=disagreements.filter(x=>x.result!==null);
+  const cohorts=[{id:'close',label:'A: confiance faible',min:0,max:0.1},{id:'clear',label:'A: confiance plus forte',min:0.1,max:0.5}].map(group=>{
+    const cases=disagreements.filter(p=>Math.abs(p.motorA-0.5)>=group.min&&Math.abs(p.motorA-0.5)<group.max);
+    const done=cases.filter(p=>p.result!==null);
+    return {id:group.id,label:group.label,forecastCount:cases.length,settledCount:done.length,
+      correctA:done.filter(p=>(p.motorA>=0.5)===(p.result===1)).length,
+      correctB:done.filter(p=>(p.motorB>=0.5)===(p.result===1)).length,
+      brierA:done.length?done.reduce((s,p)=>s+(p.motorA-p.result!)**2,0)/done.length:null,
+      brierB:done.length?done.reduce((s,p)=>s+(p.motorB-p.result!)**2,0)/done.length:null};
+  });
   const summary={
    closeDisagreements:disagreements.filter(x=>Math.abs(x.motorA-.5)<.1).length,
    agreement:paired.length-disagreements.length,
@@ -40,6 +49,6 @@ export async function GET(){
    topFiveInfluence:false,
    caution:'Ces statistiques pré-match ne valident pas une règle de pondération; garder une période de test future intacte.'
   };
-  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired,diagnostics:summary},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired,diagnostics:summary,cohorts},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'unavailable'},{status:503})}
 }
