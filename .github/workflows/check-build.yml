@@ -35,3 +35,26 @@ jobs:
           except Exception as e:
               print(json.dumps({'result':'unavailable','reason':str(e),'db_writes':0}))
               raise
+  nhl_staging_samples:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Collect verified small NHL sample for connector import
+        shell: python
+        run: |
+          import csv,json,urllib.request
+          for season in ('2023','2024','2025'):
+              for dataset in ('skaters','goalies','teams'):
+                  url=f'https://moneypuck.com/moneypuck/playerData/seasonSummary/{season}/regular/{dataset}.csv'
+                  try:
+                      req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+                      with urllib.request.urlopen(req,timeout=50) as response:
+                          reader=csv.DictReader((line.decode('utf-8-sig') for line in response))
+                          rows=[]
+                          for row in reader:
+                              rows.append(row)
+                              if len(rows)==2:break
+                      print('NHL_SAMPLE '+json.dumps({'season':season,'dataset':dataset,'rows':rows},separators=(',',':')),flush=True)
+                  except Exception as e:
+                      print('NHL_SAMPLE_ERROR '+json.dumps({'season':season,'dataset':dataset,'error':str(e)[:200]}),flush=True)
