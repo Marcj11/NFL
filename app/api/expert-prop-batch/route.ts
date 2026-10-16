@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
 export async function GET(request:Request){
  const origin=new URL(request.url).origin;
- const requested=Math.min(40,Math.max(1,Number(new URL(request.url).searchParams.get('limit')||30)));
+ const requested=Math.min(80,Math.max(1,Number(new URL(request.url).searchParams.get('limit')||60)));
  try{
   const res=await fetch(origin+'/api/player-props',{cache:'no-store',signal:AbortSignal.timeout(10000)});
   if(!res.ok)throw Error('offers_unavailable');
@@ -10,7 +10,7 @@ export async function GET(request:Request){
   const seen=new Set<string>();
   const selected=(Array.isArray(data.offers)?data.offers:[]).filter((o:{player?:string;selection?:string;line?:number})=>{
    if(!o.player||!o.selection||!Number.isFinite(Number(o.line)))return false;
-   const k=o.player+'|'+o.selection;if(seen.has(k))return false;seen.add(k);return true;
+   const k=o.player+'|'+String(o.selection).split(' · ').pop();if(seen.has(k))return false;seen.add(k);return true;
   }).slice(0,requested);
   
   const inputs:Array<Record<string,unknown>>=[];
