@@ -100,7 +100,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
    for(const row of data.evaluations||[]){
     if(row.experimental!==true||typeof row.probability!=='number'||row.probability<0||row.probability>1)continue;
     const o=row.offer||{};const market=String(o.selection||'').split(' · ').pop()||'';
-    const direction=/\\bover\\b/i.test(String(o.selection))?'over':/\\bunder\\b/i.test(String(o.selection))?'under':'';
+    const direction=/\bover\b/i.test(String(o.selection))?'over':/\bunder\b/i.test(String(o.selection))?'under':'';
     next[[o.player,market,o.line,direction].join('|').toLowerCase()]={probability:row.probability,explanation:String(row.explanation||'Simulation exploratoire')};
    }
    SET_RESEARCH(previous=>({...previous,...next}));
