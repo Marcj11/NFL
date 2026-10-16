@@ -39,6 +39,16 @@ export async function GET(){
       brierA:done.length?done.reduce((s,p)=>s+(p.motorA-p.result!)**2,0)/done.length:null,
       brierB:done.length?done.reduce((s,p)=>s+(p.motorB-p.result!)**2,0)/done.length:null};
   });
+  const settledAgreements=paired.filter(p=>!p.disagree&&p.result!==null);
+  const sharedErrors=settledAgreements.filter(p=>(p.motorA>=.5)!==(p.result===1));
+  const recurringErrors={
+    agreedAndWrong:sharedErrors.length,
+    agreedAndCorrect:settledAgreements.length-sharedErrors.length,
+    settledAgreements:settledAgreements.length,
+    // Differences between models identify where to investigate, not a proven cause.
+    potentialMissingFactors:['strength_of_schedule','qb_status','injuries','rest_and_travel'],
+    validationStatus:settled.length>=100?'sample_available_for_testing':'insufficient_prospective_sample'
+  };
   const summary={
    closeDisagreements:disagreements.filter(x=>Math.abs(x.motorA-.5)<.1).length,
    agreement:paired.length-disagreements.length,
@@ -49,6 +59,6 @@ export async function GET(){
    topFiveInfluence:false,
    caution:'Ces statistiques pré-match ne valident pas une règle de pondération; garder une période de test future intacte.'
   };
-  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired,diagnostics:summary,cohorts},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired,diagnostics:summary,cohorts,recurringErrors},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'unavailable'},{status:503})}
 }
