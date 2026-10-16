@@ -31,7 +31,7 @@ jobs:
               lines=data.splitlines()[:4]
               rows=list(csv.reader(io.StringIO('\n'.join(lines))))
               cols=rows[0] if rows else []
-              print(json.dumps({'result':'success','http_status':status,'columns':cols,'column_count':len(cols),'sample_rows':max(0,len(rows)-1),'db_writes':0}))
+              print(json.dumps({'result':'success','http_status':status,'column_count':len(cols),'sample_rows':max(0,len(rows)-1),'rows':[dict(zip(cols,row)) for row in rows[1:3] if len(row)==len(cols)],'db_writes':0}))
           except Exception as e:
               print(json.dumps({'result':'unavailable','reason':str(e),'db_writes':0}))
               raise
