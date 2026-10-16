@@ -15,7 +15,7 @@ export async function GET(req:Request){
   if(!res.ok)return NextResponse.json({status:'schedule_unavailable',http:res.status},{status:502});
   const list=(await res.json() as Game[]).filter(g=>Date.parse(g.kickoff_utc)<until.getTime()).slice(0,12);
   const outcomes=[] as Array<{game:string;status:string;audit:string}>;
-  for(let i=0;i<list.length;i+=3){const batch=await Promise.all(list.slice(i,i+3).map(async g=>{
+  for(let i=0;i<list.length;i+=6){const batch=await Promise.all(list.slice(i,i+6).map(async g=>{
    try{
     const p=new URLSearchParams({home:g.home_team_id,away:g.away_team_id,before:g.kickoff_utc});
     const response=await fetch(url.origin+'/api/expert-game-research?'+p,{cache:'no-store',signal:AbortSignal.timeout(25000)});
