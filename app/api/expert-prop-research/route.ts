@@ -5,7 +5,9 @@ type Input={offer?:{player?:string;selection?:string;odds?:number;line?:number;b
 export async function GET(request:Request){
  try{
   const origin=new URL(request.url).origin;
-  const response=await fetch(origin+'/api/expert-prop-batch?limit=60',{cache:'no-store',signal:AbortSignal.timeout(55000)});
+  const params=new URL(request.url).searchParams;
+  const offset=Math.max(0,Math.floor(Number(params.get('offset')||0)));
+  const response=await fetch(origin+'/api/expert-prop-batch?limit=30&offset='+offset,{cache:'no-store',signal:AbortSignal.timeout(55000)});
   if(!response.ok)return NextResponse.json({status:'batch_unavailable',evaluations:[]},{status:502});
   const batch=await response.json();
   const evaluations=(Array.isArray(batch.inputs)?batch.inputs as Input[]:[]).map((item)=>{
@@ -21,6 +23,6 @@ export async function GET(request:Request){
     return {offer,probability,model:'independent-expert-nfl-props-research',expected_value_experimental:ev,push_probability:result.p_push,implied_probability:odds>1?1/odds:null,projection:result.projection,interval_10_90:[result.p10,result.p90],status:'PASSER',explanation:result.explanation,experimental:true};
    }catch{return {offer,status:'PASSER',explanation:'Simulation impossible avec les observations actuellement disponibles.'}}
   });
-  return NextResponse.json({status:'research_only',validated:false,bookmaker_recommendations:false,evaluations},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'research_only',validated:false,bookmaker_recommendations:false,evaluations,total:batch.total||0,offset,nextOffset:batch.nextOffset??null},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'evaluation_unavailable',evaluations:[]},{status:502})}
 }
