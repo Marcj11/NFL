@@ -170,7 +170,21 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   if(seen.has(key))continue;
   seen.add(key);unique.push(o);
  }
- if(category==='heavy')return unique.slice(0,5);
+ if(category==='heavy'){
+  // First take high-risk positive-EV odds 3.00+. Fill with odds 2.50+ if needed.
+  const selected=[...unique];
+  if(selected.length<5){
+   const added=new Set(selected.map(o=>o.id));
+   for(const o of offers){
+    const p=probability(o);
+    if(added.has(o.id)||!p||!Number.isFinite(p)||!(o.odds>=2.5&&o.odds<3)||p*o.odds<=1||!o.kickoff||Date.parse(o.kickoff)<=Date.now())continue;
+    const g=gamesResearch[o.game];
+    if(o.market!=='props'&&g&&!(Number.isFinite(g.spread_sd)&&g.spread_sd>0&&Number.isFinite(g.total_sd)&&g.total_sd>0))continue;
+    selected.push(o);added.add(o.id);
+   }
+  }
+  return selected.sort((a,b)=>edge(b)-edge(a)).slice(0,5);
+ }
  // Evaluate portfolios of five $5 straight bets: P(total payout > $25).
  // Limit to one choice per game to prevent treating correlated markets as independent.
  const pool=unique.slice(0,24),chosen:Offer[]=[];
