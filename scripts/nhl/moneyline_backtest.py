@@ -120,7 +120,12 @@ def backtest(games, season, model="baseline"):
             if len(hh)<10 or len(ah)<10:
                 pending.append(g)
                 continue
-            p=(elo_probability(ratings[home],ratings[away]) if model=="elo" else model_probability(hh,ah,date,model))
+            if model=="elo":
+                p=elo_probability(ratings[home],ratings[away])
+            elif model=="ensemble":
+                p=.5*model_probability(hh,ah,date,"enhanced")+.5*elo_probability(ratings[home],ratings[away])
+            else:
+                p=model_probability(hh,ah,date,model)
             pick=home if p>=.5 else away
             actual=home if g["home_goals"]>g["away_goals"] else away
             rows.append({"season":season,"date":date,"id":g["id"],"home":home,"away":away,
@@ -160,18 +165,20 @@ def main():
         baseline=backtest(games,season,"baseline")
         improved=backtest(games,season,"enhanced")
         elo=backtest(games,season,"elo")
-        if len(baseline)<700 or len(improved)!=len(baseline) or len(elo)!=len(baseline): raise RuntimeError(f"Coverage mismatch {season}")
+        ensemble=backtest(games,season,"ensemble")
+        if len(baseline)<700 or len(improved)!=len(baseline) or len(elo)!=len(baseline) or len(ensemble)!=len(baseline): raise RuntimeError(f"Coverage mismatch {season}")
         old=summarize(baseline,season,"baseline")
         new=summarize(improved,season,"enhanced")
         elo_result=summarize(elo,season,"elo")
+        ensemble_result=summarize(ensemble,season,"ensemble")
         summary.append(new)
-        comparison.append({"baseline":old,"enhanced":new,"elo":elo_result,"delta_percentage_points":round(new["accuracy_pct"]-old["accuracy_pct"],3)})
+        comparison.append({"baseline":old,"enhanced":new,"elo":elo_result,"ensemble":ensemble_result,"delta_percentage_points":round(new["accuracy_pct"]-old["accuracy_pct"],3)})
         all_rows.extend(improved)
         print(json.dumps(comparison[-1]),flush=True)
     with (out/"predictions.csv").open("w",newline="",encoding="utf8") as f:
         w=csv.DictWriter(f,fieldnames=list(all_rows[0]));w.writeheader();w.writerows(all_rows)
     total=len(all_rows)
-    report={"method":"pregame recency + venue + rest score-Poisson model vs baseline; NOT xG or realized betting ROI",
+    report={"method":"Fixed 50/50 probability blend of enhanced score Poisson and Elo; all model results reported separately. Not full xG engine.",
             "seasons":summary,"comparison":comparison,"overall":{"predictions":total,
             "correct":sum(r["correct"] for r in all_rows),
             "accuracy_pct":round(100*sum(r["correct"] for r in all_rows)/total,3)},
