@@ -91,6 +91,9 @@ export function evaluateMarkets(match: Match, markets: Market[], minEv = .03): P
       throw new Error("Invalid decimal odds");
     if ((m.kind === "total" || m.kind === "spread") && !Number.isFinite(m.line))
       throw new Error("Total/spread requires a numeric line");
+    if (m.kind === "total" && m.selection !== "over" && m.selection !== "under") throw new Error("Invalid total selection");
+    if (m.kind === "spread" && m.selection !== "home" && m.selection !== "away") throw new Error("Invalid spread selection");
+    if (m.kind === "regulation" && !["home", "away", "draw"].includes(m.selection)) throw new Error("Invalid regulation selection");
     const v = analysis.probabilities;
     let wins = 0, pushes = 0;
     if (m.kind === "moneyline") {
