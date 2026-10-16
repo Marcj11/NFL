@@ -7,12 +7,18 @@ on:
     paths:
       - '.github/workflows/nhl-moneypuck-validation.yml'
       - 'scripts/nhl/validate_moneypuck.py'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nhl-moneypuck-validation.yml'
+      - 'scripts/nhl/validate_moneypuck.py'
 permissions:
   contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
