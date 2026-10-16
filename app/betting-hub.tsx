@@ -206,8 +206,6 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  }
  // Evaluate portfolios of five $5 straight bets: P(total payout > $25).
  // Limit to one choice per game to prevent treating correlated markets as independent.
- const pool=unique.slice(0,24),chosen:Offer[]=[];
- let winner:Offer[]=[];let bestChance=-1,bestEv=-Infinity;
  const chance=(arr:Offer[])=>{
   let pProfit=0;
   for(let mask=0;mask<(1<<arr.length);mask++){
@@ -221,26 +219,47 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   }
   return pProfit;
  };
- const choose=(start:number)=>{
-  if(chosen.length===5){
-   const likelihood=chance(chosen);
-   const ev=chosen.reduce((s,o)=>s+edge(o),0);
-   if(likelihood>bestChance+1e-9||(Math.abs(likelihood-bestChance)<=1e-9&&ev>bestEv)){
-    winner=[...chosen];bestChance=likelihood;bestEv=ev;
-   }
-   return;
-  }
-  for(let i=start;i<=pool.length-(5-chosen.length);i++){
-   const o=pool[i];
-   if(category==='props'?chosen.some(x=>x.player===o.player):chosen.some(x=>x.game===o.game))continue;
-   chosen.push(o);choose(i+1);chosen.pop();
-  }
+ const identity=(o:Offer)=>category==='props'?(o.player||o.selection):o.game;
+ const distinct=(arr:Offer[])=>new Set(arr.map(identity)).size===arr.length;
+ const seeds=[
+  unique,
+  [...unique].sort((a,b)=>probability(b)!-probability(a)!),
+  [...unique].sort((a,b)=>b.odds-a.odds)
+ ];
+ let winner:Offer[]=[];let bestChance=-1,bestEv=-Infinity;
+ const evaluate=(arr:Offer[])=>{
+  const likelihood=chance(arr),ev=arr.reduce((v,o)=>v+edge(o),0);
+  return {likelihood,ev};
  };
- choose(0);
- // When fewer than five distinct games are offered, keep a smaller portfolio.
+ const better=(x:{likelihood:number;ev:number},y:{likelihood:number;ev:number})=>x.likelihood>y.likelihood+1e-9||(Math.abs(x.likelihood-y.likelihood)<=1e-9&&x.ev>y.ev);
+ for(const seed of seeds){
+  const initial:Offer[]=[];
+  for(const o of seed){if(initial.every(x=>identity(x)!==identity(o)))initial.push(o);if(initial.length===5)break}
+  if(initial.length<5)continue;
+  let chosen=[...initial],score=evaluate(chosen);
+  // Every eligible offer can challenge every position. Bounded local search
+  // avoids combinatorial explosion while removing the arbitrary 24-offer cutoff.
+  for(let round=0;round<5;round++){
+   let next=chosen,nextScore=score;
+   for(let slot=0;slot<chosen.length;slot++){
+    for(const candidate of unique){
+     if(chosen[slot].id===candidate.id)continue;
+     const trial=[...chosen];trial[slot]=candidate;
+     if(!distinct(trial))continue;
+     const trialScore=evaluate(trial);
+     if(better(trialScore,nextScore)){next=trial;nextScore=trialScore}
+    }
+   }
+   if(next===chosen)break;
+   chosen=next;score=nextScore;
+  }
+  if(better(score,{likelihood:bestChance,ev:bestEv})){
+   winner=chosen;bestChance=score.likelihood;bestEv=score.ev;
+  }
+ }
  if(winner.length)return winner.sort((a,b)=>probability(b)!-probability(a)!);
  const fallback:Offer[]=[],games=new Set<string>();
- for(const o of unique){const identity=category==='props'?(o.player||o.selection):o.game;if(games.has(identity))continue;games.add(identity);fallback.push(o);if(fallback.length===5)break}
+ for(const o of unique){const key=identity(o);if(games.has(key))continue;games.add(key);fallback.push(o);if(fallback.length===5)break}
  return fallback;
  },[category,offers,official,research,gamesResearch]);
  const portfolio=useMemo(()=>{
