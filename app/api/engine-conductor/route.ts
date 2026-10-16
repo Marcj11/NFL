@@ -28,6 +28,18 @@ export async function GET(){
   }).sort((x,y)=>Date.parse(x.kickoff)-Date.parse(y.kickoff));
   const settled=paired.filter(x=>x.result!==null);
   const brier=(get:(x:typeof paired[number])=>number)=>settled.length?settled.reduce((sum,x)=>sum+(get(x)-x.result!)**2,0)/settled.length:null;
-  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired},{headers:{'Cache-Control':'no-store'}});
+  const disagreements=paired.filter(x=>x.disagree);
+  const settledDisagreements=disagreements.filter(x=>x.result!==null);
+  const summary={
+   closeDisagreements:disagreements.filter(x=>Math.abs(x.motorA-.5)<.1).length,
+   agreement:paired.length-disagreements.length,
+   disagreementSettled: settledDisagreements.length,
+   correctA: settledDisagreements.filter(x=>(x.motorA>=.5)===(x.result===1)).length,
+   correctB: settledDisagreements.filter(x=>(x.motorB>=.5)===(x.result===1)).length,
+   trialOnly:true,
+   topFiveInfluence:false,
+   caution:'Ces statistiques pré-match ne valident pas une règle de pondération; garder une période de test future intacte.'
+  };
+  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired,diagnostics:summary},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'unavailable'},{status:503})}
 }
