@@ -2,16 +2,19 @@ import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
 export async function GET(request:Request){
  const origin=new URL(request.url).origin;
- const requested=Math.min(80,Math.max(1,Number(new URL(request.url).searchParams.get('limit')||60)));
+ const params=new URL(request.url).searchParams;
+ const requested=Math.min(60,Math.max(1,Number(params.get('limit')||30)));
+ const offset=Math.max(0,Math.floor(Number(params.get('offset')||0)));
  try{
   const res=await fetch(origin+'/api/player-props',{cache:'no-store',signal:AbortSignal.timeout(10000)});
   if(!res.ok)throw Error('offers_unavailable');
   const data=await res.json();
   const seen=new Set<string>();
-  const selected=(Array.isArray(data.offers)?data.offers:[]).filter((o:{player?:string;selection?:string;line?:number})=>{
+  const all=(Array.isArray(data.offers)?data.offers:[]).filter((o:{player?:string;selection?:string;line?:number})=>{
    if(!o.player||!o.selection||!Number.isFinite(Number(o.line)))return false;
    const k=o.player+'|'+String(o.selection).split(' · ').pop();if(seen.has(k))return false;seen.add(k);return true;
-  }).slice(0,requested);
+  });
+  const selected=all.slice(offset,offset+requested);
   
   const inputs:Array<Record<string,unknown>>=[];
   for(let i=0;i<selected.length;i+=10){
@@ -29,6 +32,6 @@ export async function GET(request:Request){
    }));
    inputs.push(...batch);
   }
-  return NextResponse.json({source:'independent_expert_nfl_player_props',status:'research_inputs_only',models_executed:false,recommendations_validated:false,count:inputs.length,inputs},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({source:'independent_expert_nfl_player_props',status:'research_inputs_only',models_executed:false,recommendations_validated:false,count:inputs.length,total:all.length,offset,nextOffset:offset+inputs.length<all.length?offset+inputs.length:null,inputs},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'source_unavailable',models_executed:false},{status:502})}
 }
