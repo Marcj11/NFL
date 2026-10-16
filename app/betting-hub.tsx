@@ -109,7 +109,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const [gameResearchLoading,SET_GAME_RESEARCH_LOADING]=useState(true);
  const [gamesResearch,SET_GAMES_RESEARCH]=useState<Record<string,{home_win_probability:number;away_win_probability:number;projected_margin:number;projected_total:number;spread_sd:number;total_sd:number;explanation:string}>>({});
  useEffect(()=>{let active=true;SET_GAME_RESEARCH_LOADING(true);fetch('/api/odds').then(r=>r.json()).then(async d=>{
-  const events=(d.games||[]).filter((g:{commence_time:string})=>Date.parse(g.commence_time)>Date.now()).slice(0,16);
+  const events=(d.games||[]).filter((g:{commence_time:string})=>Date.parse(g.commence_time)>Date.now());
   // Limit parallel research requests to avoid function saturation on Hobby deployments.
   const data:Array<{key:string;value:any}|null>=[];
   for(let i=0;i<events.length&&active;i+=3){
