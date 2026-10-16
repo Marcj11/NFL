@@ -9,18 +9,20 @@ export async function GET(request:Request){
  if(!url||!key)return NextResponse.json({error:'not_configured',teams:[]},{status:503});
  try{
   const headers={apikey:key,Authorization:'Bearer '+key};
-  const [riskResponse,playersResponse]=await Promise.all([
-   fetch(url+'/rest/v1/nfl_studio_roster_disruption_v1?'+new URLSearchParams({select:'game_id,team_id,roster_week,listed_active,high_usage_missing,high_usage_snaps_at_risk,targets_at_risk_per_game,provenance_status',limit:'100'}),{headers,cache:'no-store',signal:AbortSignal.timeout(8000)}),
-   fetch(url+'/rest/v1/nfl_studio_expected_player_impact_v1?'+new URLSearchParams({select:'game_id,team_id,display_name,position,roster_status,availability_assessment,prior_role,history_games,prior_offensive_snaps,prior_defensive_snaps,prior_targets,prior_passing_yards,prior_receiving_yards,prior_def_sacks',limit:'7000'}),{headers,cache:'no-store',signal:AbortSignal.timeout(8000)})
-  ]);
-  if(!riskResponse.ok||!playersResponse.ok)throw Error('db');
-  const risks=await riskResponse.json() as Risk[],players=await playersResponse.json() as Player[];
+  const riskParams=new URLSearchParams({select:'game_id,team_id,roster_week,listed_active,high_usage_missing,high_usage_snaps_at_risk,targets_at_risk_per_game,provenance_status',limit:'100'});
+  const riskResponse=await fetch(url+'/rest/v1/nfl_studio_roster_disruption_v1?'+riskParams,{headers,cache:'no-store',signal:AbortSignal.timeout(8000)});
+  if(!riskResponse.ok)throw Error('db_risk');
+  const risks=await riskResponse.json() as Risk[];
   const belongs=(gameId:string)=>Number(gameId.split('_')[1])===week;
   const teams=risks.filter(r=>belongs(r.game_id));
-  const eligibleGames=new Set(teams.map(x=>x.game_id));
-  const playerInputs=players.filter(p=>eligibleGames.has(p.game_id)).map(p=>({
-   ...p,officially_confirmed:false,source_type:'retrospective_roster_projection'
+  const ids=[...new Set(teams.map(x=>x.game_id))];
+  const playerBatches=await Promise.all(ids.map(async gameId=>{
+   const params=new URLSearchParams({select:'game_id,team_id,display_name,position,roster_status,availability_assessment,prior_role,history_games,prior_offensive_snaps,prior_defensive_snaps,prior_targets,prior_passing_yards,prior_receiving_yards,prior_def_sacks',game_id:'eq.'+gameId,limit:'500'});
+   const res=await fetch(url+'/rest/v1/nfl_studio_expected_player_impact_v1?'+params,{headers,cache:'no-store',signal:AbortSignal.timeout(8000)});
+   if(!res.ok)throw Error('db_players');
+   return await res.json() as Player[];
   }));
+  const playerInputs=playerBatches.flat().map(p=>({...p,officially_confirmed:false,source_type:'retrospective_roster_projection'}));
   return NextResponse.json({
    status:'unconfirmed_roster_analysis',model_inputs_ready:false,
    source:'Supabase historical roster snapshot',
