@@ -23,10 +23,13 @@ export async function GET(){
    const gap=Math.abs(pa-pb),disagree=(pa-.5)*(pb-.5)<0;
    // Equal-weight benchmark only. Not a calibrated recommendation.
    const experimentalBlend=(pa+pb)/2;
-   const result=a.result_home_win??b.result_home_win;
-   return {game:a.game_id,home:a.home_team,away:a.away_team,kickoff:a.kickoff_at,motorA:pa,motorB:pb,gap,disagree,experimentalBlend,result:result===0||result===1?result:null};
+   const inconsistentResult=a.result_home_win!==null&&b.result_home_win!==null&&a.result_home_win!==b.result_home_win;
+   const result=inconsistentResult?null:(a.result_home_win??b.result_home_win);
+   return {game:a.game_id,home:a.home_team,away:a.away_team,kickoff:a.kickoff_at,motorA:pa,motorB:pb,gap,disagree,experimentalBlend,result:result===0||result===1?result:null,resultConflict:inconsistentResult};
   }).sort((x,y)=>Date.parse(x.kickoff)-Date.parse(y.kickoff));
   const settled=paired.filter(x=>x.result!==null);
+  const resultConflicts=paired.filter(x=>x.resultConflict).length;
+  const accuracy=(get:(x:typeof paired[number])=>number)=>settled.length?settled.filter(x=>(get(x)>=0.5)===(x.result===1)).length/settled.length:null;
   const brier=(get:(x:typeof paired[number])=>number)=>settled.length?settled.reduce((sum,x)=>sum+(get(x)-x.result!)**2,0)/settled.length:null;
   const disagreements=paired.filter(x=>x.disagree);
   const settledDisagreements=disagreements.filter(x=>x.result!==null);
@@ -59,6 +62,6 @@ export async function GET(){
    topFiveInfluence:false,
    caution:'Ces statistiques pré-match ne valident pas une règle de pondération; garder une période de test future intacte.'
   };
-  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired,diagnostics:summary,cohorts,recurringErrors},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'ok',method:'experimental_equal_weight_only',calibrated:false,paired:paired.length,disagreements:paired.filter(x=>x.disagree).length,meanGap:paired.length?paired.reduce((s,x)=>s+x.gap,0)/paired.length:null,settled: settled.length,resultConflicts,accuracyA:accuracy(x=>x.motorA),accuracyB:accuracy(x=>x.motorB),accuracyBlend:accuracy(x=>x.experimentalBlend),brierA:brier(x=>x.motorA),brierB:brier(x=>x.motorB),brierBlend:brier(x=>x.experimentalBlend),matches:paired,diagnostics:summary,cohorts,recurringErrors},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'unavailable'},{status:503})}
 }
