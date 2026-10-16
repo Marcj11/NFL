@@ -48,6 +48,6 @@ export default function NHLHome(){
  <section className="nhl-panel" id="handicaps"><div className="nhl-heading"><div><small>PARIS</small><h2>Handicaps / Totaux</h2></div></div><div className="nhl-empty">Marchés en préparation.</div></section>
  <section className="nhl-panel" id="props"><div className="nhl-heading"><div><small>JOUEURS</small><h2>Props joueurs</h2></div></div><div className="nhl-empty">Buteurs, tirs, points et arrêts : connexion à venir.</div></section>
  </div><div style={{display:activeModule==="Bilan de saison"?undefined:"none"}}><section className="nhl-panel" id="profits"><div className="nhl-heading"><div><small>PORTEFEUILLE</small><h2>Suivi P&L · CAD</h2></div></div><div className="nhl-kpis"><div><small>MISES NHL</small><b>— CAD</b></div><div><small>PROFIT / PERTE</small><b>— CAD</b></div></div><p>Historique NHL distinct de la NFL. Synchronisation à venir.</p></section>
- </div></div><footer className="nhl-footer">NHL Studio · Interface expérimentale · Ne présente aucune recommandation de mise validée.</footer>
+ </div></div></div><footer className="nhl-footer">NHL Studio · Interface expérimentale · Ne présente aucune recommandation de mise validée.</footer>
  </main></div></div>
 }
