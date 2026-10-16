@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-export const revalidate=300;
+export const revalidate=30;
 type Team={abbreviation?:string;displayName?:string;logo?:string};
 type Competitor={homeAway?:string;team?:Team;score?:string};
 type Event={id?:string;date?:string;competitions?:Array<{competitors?:Competitor[]}>;status?:{type?:{name?:string;description?:string;completed?:boolean}}};
@@ -8,7 +8,7 @@ export async function GET(request:Request){
  if(!Number.isInteger(week)||week<1||week>18)return NextResponse.json({error:'Semaine invalide'},{status:400});
  const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week='+week+'&limit=25';
  try{
- const res=await fetch(url,{next:{revalidate:300}});
+ const res=await fetch(url,{next:{revalidate:30}});
  if(!res.ok)throw new Error('ESPN HTTP '+res.status);
  const data=await res.json();
  const games=((data.events||[]) as Event[]).map(event=>{
