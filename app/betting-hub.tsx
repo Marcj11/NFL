@@ -161,7 +161,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
  const probability=(o:Offer)=>officialProbability(o)??(o.market==='props'?researchValue(o)?.probability??null:gameProjection(o));
- const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&(!o.kickoff||(Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now()))&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)&&(o.market==='props'||!g||(Number.isFinite(g.spread_sd)&&g.spread_sd>0&&Number.isFinite(g.total_sd)&&g.total_sd>0))});
+ const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&(!!o.kickoff&&Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now())&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)&&(o.market==='props'||!g||(Number.isFinite(g.spread_sd)&&g.spread_sd>0&&Number.isFinite(g.total_sd)&&g.total_sd>0))});
  const edge=(o:Offer)=>probability(o)!*o.odds-1;
  const ordered=eligible.sort((a,b)=>edge(b)-edge(a));
  const selected:Offer[]=[],seen=new Set<string>();
