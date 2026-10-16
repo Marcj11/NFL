@@ -35,12 +35,17 @@ function validate(t: Team) {
   if (t.injuriesImpact !== undefined && Math.abs(finite(t.injuriesImpact, "injuriesImpact")) > 1)
     throw new Error("injuriesImpact must be -1..1");
 }
-// Return a distribution including a conservative last tail bucket.
-function poisson(lambda: number, maximum = 15): number[] {
+// Retain high-goal outcomes explicitly instead of treating the tail as a single score.
+function poisson(lambda: number): number[] {
   const p = [Math.exp(-lambda)];
-  for (let i = 1; i < maximum; i++) p.push((p[i - 1] * lambda) / i);
-  p.push(Math.max(0, 1 - p.reduce((a, b) => a + b, 0)));
-  return p;
+  let total = p[0];
+  for (let i = 1; i <= 60 && 1 - total > 1e-13; i++) {
+    const next = p[i - 1] * lambda / i;
+    p.push(next);
+    total += next;
+  }
+  // Normalize accumulated roundoff only.
+  return p.map(value => value / total);
 }
 function means(match: Match) {
   validate(match.home); validate(match.away);
@@ -111,7 +116,7 @@ export function evaluateMarkets(match: Match, markets: Market[], minEv = .03): P
         if (Math.abs(result) <= 1e-9) pushes += o.p;
       }
     }
-    if (!Number.isFinite(wins) || wins < 0 || wins > 1 || pushes > 1)
+    if (!Number.isFinite(wins) || wins < 0 || wins > 1 + 1e-9 || pushes > 1 + 1e-9)
       throw new Error("Invalid market selection/probability");
     const loss = Math.max(0, 1 - wins - pushes);
     const ev = wins * (m.decimalOdds - 1) - loss;
