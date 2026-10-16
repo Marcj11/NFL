@@ -44,6 +44,16 @@ export async function GET(req:Request){
    return {...q,sample_games:vals.length,passing_yards_average:average,points_adjustment:adjustment,applied:true};
   }catch{return {...q,sample_games:0,passing_yards_average:null,points_adjustment:0,applied:false}}
  }));
+ // Injury records can be retrospective. No unverified injury penalty is applied.
+ // A depth-chart QB is projected, NOT confirmed as the game starter.
+ const availabilityChecks={
+  home:{team:home,qb_projected:qbEffects[0].projected_qb,qb_status:qbEffects[0].status,qb_confirmed:false},
+  away:{team:away,qb_projected:qbEffects[1].projected_qb,qb_status:qbEffects[1].status,qb_confirmed:false},
+  injury_status:'not_verified_pregame',
+  injuries_applied_to_probability:false,
+  roster_absence_penalty_points:0,
+  note:'Les statuts de blessure historiques ne prouvent pas qu une absence etait connue avant le match. Aucun ajustement sans source horodatee.'
+ };
  const homePoints=(hm.pf+am.pa)/2+1.5+qbEffects[0].points_adjustment;
  const awayPoints=(am.pf+hm.pa)/2+qbEffects[1].points_adjustment;
  const margin=homePoints-awayPoints,total=homePoints+awayPoints;const marginSd=13.5,totalSd=17.5;
@@ -58,6 +68,6 @@ export async function GET(req:Request){
   }catch{auditStatus='database_unreachable'}
  }
 
- return NextResponse.json({status:'experimental_unvalidated',forecast_audit_status:auditStatus,home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbEffects,qb_assumptions_included_in_numeric_forecast:qbEffects.some(q=>q.applied),model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN projetés intégrés par ajustement explicite et plafonné lorsque trois matchs historiques ou plus sont disponibles; sinon ajustement nul signalé. Les titularisations, blessures et météo ne sont pas confirmées; aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
+ return NextResponse.json({status:'experimental_unvalidated',forecast_audit_status:auditStatus,home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbEffects,availability_checks:availabilityChecks,qb_assumptions_included_in_numeric_forecast:qbEffects.some(q=>q.applied),model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN projetés intégrés par ajustement explicite et plafonné lorsque trois matchs historiques ou plus sont disponibles; sinon ajustement nul signalé. Les titularisations, blessures et météo ne sont pas confirmées; aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'history_unavailable',decision:'PASSER'},{status:502})}
 }
