@@ -127,7 +127,7 @@ export function evaluateMarkets(match: Match, markets: Market[], minEv = .03): P
       "Probabilities are uncalibrated; verify lineups, market rules and source timestamps"];
     return {marketId: m.id, kind: m.kind, selection: m.selection, probability: wins,
       fairOdds, decimalOdds: m.decimalOdds, ev, edge,
-      recommendation: ev >= minEv && analysis.warnings.length === 0 ? "BET" : "PASS",
+      recommendation: (ev >= minEv && analysis.warnings.length === 0 ? "BET" : "PASS") as Pick["recommendation"],
       reasons, modelVersion: analysis.version};
   }).sort((a, b) => b.ev - a.ev);
 }
