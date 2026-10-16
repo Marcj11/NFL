@@ -126,10 +126,27 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  }).catch(()=>{if(active)SET_GAME_RESEARCH_LOADING(false)});return()=>{active=false}},[]);
  const gameProjection=(o:Offer):number|null=>{
   const g=gamesResearch[o.game];if(!g)return null;
-  const home=teamSides(o.game)[1],chosen=teamFrom(o.team);
-  if(o.market==='moneyline')return !chosen?null:chosen===home?g.home_win_probability:g.away_win_probability;
-  if(o.market==='spreads'&&Number.isFinite(Number(o.line))&&chosen){const teamMargin=chosen===home?g.projected_margin:-g.projected_margin;const z=(teamMargin+Number(o.line))/g.spread_sd;return Math.max(0,Math.min(1,0.5*(1+Math.tanh(z*0.79788456*(1+0.044715*z*z)))));}
-  if(o.market==='totals'&&Number.isFinite(Number(o.line))){const z=(g.projected_total-Number(o.line))/g.total_sd;const above=Math.max(0,Math.min(1,0.5*(1+Math.tanh(z*0.79788456*(1+0.044715*z*z)))));return /under/i.test(o.selection)?1-above:above;}
+  const sides=teamSides(o.game);if(sides.length!==2)return null;
+  const home=sides[1],chosen=teamFrom(o.team);
+  const safe=(v:unknown)=>typeof v==='number'&&Number.isFinite(v);
+  const cdf=(z:number)=>Math.max(0,Math.min(1,0.5*(1+Math.tanh(z*0.79788456*(1+0.044715*z*z)))));
+  if(o.market==='moneyline'){
+   if(!chosen||!sides.includes(chosen))return null;
+   const p=chosen===home?g.home_win_probability:g.away_win_probability;
+   return safe(p)&&p>0&&p<1?p:null;
+  }
+  if(o.market==='spreads'){
+   if(!chosen||!sides.includes(chosen)||!safe(o.line)||!safe(g.projected_margin)||!safe(g.spread_sd)||g.spread_sd<=0)return null;
+   const margin=chosen===home?g.projected_margin:-g.projected_margin;
+   return cdf((margin+Number(o.line))/g.spread_sd);
+  }
+  if(o.market==='totals'){
+   if(!safe(o.line)||!safe(g.projected_total)||!safe(g.total_sd)||g.total_sd<=0)return null;
+   const over=/^over\b/i.test(o.selection),under=/^under\b/i.test(o.selection);
+   if(over===under)return null;
+   const above=cdf((g.projected_total-Number(o.line))/g.total_sd);
+   return under?1-above:above;
+  }
   return null;
  };
  const officialProbability=(o:Offer):number|null=>{
@@ -139,7 +156,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   if(!row)return null;
   const selected=teamFrom(o.team);
   const prob=selected===row.home_team?row.home_probability:selected===row.away_team?row.away_probability:null;
-  return typeof prob==='number'?prob:null;
+  return typeof prob==='number'&&Number.isFinite(prob)&&prob>0&&prob<1?prob:null;
  };
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
