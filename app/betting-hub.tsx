@@ -2,7 +2,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import LiveBetTracker from './live-bet-tracker';
 import ForecastAudit from './forecast-audit';
-type Offer={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;book:string;odds:number;prob:number;team:string;player?:string;playerImage?:string;playerTeam?:string};
+type Offer={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;book:string;odds:number;prob:number;team:string;player?:string;playerImage?:string;playerTeam?:string;kickoff?:string};
 type Bet=Offer&{stake:number;chosenOdds:number;placedAt:string;status:'open'|'won'|'lost'|'void';resultConfirmedAt?:string};
 const fmt=(n:number)=>n.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const decimal=(n:number)=>n>0?1+n/100:n<0?1+100/Math.abs(n):0;
@@ -79,12 +79,12 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  },[view]);
  useEffect(()=>{let active=true;LOADED(false);fetch('/api/odds').then(r=>r.json()).then(d=>{
  const out:Offer[]=[];
- for(const g of d.games||[]){const game=g.away_team+' vs '+g.home_team;
+ for(const g of d.games||[]){const game=g.away_team+' vs '+g.home_team;if(!Number.isFinite(Date.parse(g.commence_time))||Date.parse(g.commence_time)<=Date.now())continue;
  for(const b of g.bookmakers||[])for(const m of b.markets||[])for(const o of m.outcomes||[]){
  const odds=decimal(Number(o.price));if(odds<=1||!Number.isFinite(odds))continue;
  const market=m.key==='h2h'?'moneyline':m.key==='spreads'?'spreads':m.key==='totals'?'totals':m.key.startsWith('player_')?'props':'';
  if(!market)continue;const selection=market==='props'?String(o.description||o.name)+' · '+m.key+' '+(o.point??''):market==='moneyline'?'Victoire · '+o.name:market==='spreads'?o.name+' '+o.point:o.name+' '+o.point+' points';
- out.push({id:[game,market,o.name,o.point??'',market==='props'?o.description||'':''].join('|'),game,market,marketKey:m.key,selection,line:o.point,odds,prob:1/odds,book:b.title,team:o.name,player:market==='props'?String(o.description||''):undefined,playerImage:typeof o.player_image==='string'?o.player_image:undefined,playerTeam:typeof o.team==='string'?o.team:undefined});
+ out.push({id:[game,market,o.name,o.point??'',market==='props'?o.description||'':''].join('|'),game,market,marketKey:m.key,selection,line:o.point,odds,prob:1/odds,book:b.title,kickoff:g.commence_time,team:o.name,player:market==='props'?String(o.description||''):undefined,playerImage:typeof o.player_image==='string'?o.player_image:undefined,playerTeam:typeof o.team==='string'?o.team:undefined});
  }}
  const best=new Map<string,Offer>();for(const x of out){const older=best.get(x.id);if(!older||x.odds>older.odds)best.set(x.id,x)}
  if(active){setOffers([...best.values()]);LOADED(true)}
@@ -144,7 +144,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
  const probability=(o:Offer)=>officialProbability(o)??(o.market==='props'?researchValue(o)?.probability??null:gameProjection(o));
- const eligible=offers.filter(o=>{const p=probability(o);return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)});
+ const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&(!o.kickoff||(Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now()))&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)&&(o.market==='props'||!g||(Number.isFinite(g.spread_sd)&&g.spread_sd>0&&Number.isFinite(g.total_sd)&&g.total_sd>0))});
  const edge=(o:Offer)=>probability(o)!*o.odds-1;
  const ordered=eligible.sort((a,b)=>edge(b)-edge(a));
  const selected:Offer[]=[],seen=new Set<string>();
@@ -157,6 +157,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  }
  return selected;
  },[category,offers,official,research,gamesResearch]);
+ const marketCoverage=useMemo(()=>({moneyline:ranking.filter(o=>o.market==='moneyline').length,spreads:ranking.filter(o=>o.market==='spreads').length,totals:ranking.filter(o=>o.market==='totals').length,props:ranking.filter(o=>o.market==='props').length}),[ranking]);
  const pickVariation=(o:Offer,rank:number,n:number)=>{
   // Stable per-offer wording: it does not jump around when the user navigates.
   const key=o.id+'|'+o.market+'|'+rank;let h=0;
