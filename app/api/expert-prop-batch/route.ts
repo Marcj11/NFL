@@ -12,7 +12,7 @@ export async function GET(request:Request){
   const seen=new Set<string>();
   const all=(Array.isArray(data.offers)?data.offers:[]).filter((o:{player?:string;selection?:string;line?:number})=>{
    if(!o.player||!o.selection||!Number.isFinite(Number(o.line)))return false;
-   const k=o.player+'|'+String(o.selection).split(' · ').pop();if(seen.has(k))return false;seen.add(k);return true;
+   const k=[o.player,o.selection,o.line].join('|');if(seen.has(k))return false;seen.add(k);return true;
   });
   const selected=all.slice(offset,offset+requested);
   
