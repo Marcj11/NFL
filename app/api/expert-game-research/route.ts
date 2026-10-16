@@ -2,6 +2,7 @@ import {extractEspnQBs} from '../../../lib/expert-nfl/espn-qb-parser';
 import {espnTeamId} from '../../../lib/expert-nfl/espn-team-ids';
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
+export const maxDuration=60;
 type Game={game_id:string;kickoff_utc:string;home_team_id:string;away_team_id:string;game_results:{home_score:number;away_score:number}|{home_score:number;away_score:number}[]|null};
 type Market={market:string;selection:string;line:number|null;odds:number;book:string};
 const normal=(x:number)=>0.5*(1+erf(x/Math.sqrt(2)));
