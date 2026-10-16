@@ -696,3 +696,15 @@ nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(1
 .heavy-home-statstrip small{color:#83c1e7;font-size:9px;font-weight:800;letter-spacing:1px;text-align:center}
 @media(max-width:1140px){.heavy-home-stage{grid-template-columns:1fr}.heavy-home-feature{max-width:570px}.heavy-home-copy h1{font-size:clamp(42px,6vw,65px)}}
 @media(max-width:700px){.heavy-home-hero{padding:17px 13px 14px;border-radius:17px}.heavy-home-topline{font-size:8px;letter-spacing:1px;flex-wrap:wrap}.heavy-home-stage{gap:17px;padding:20px 0}.heavy-home-copy h1{font-size:clamp(39px,10vw,58px)}.heavy-home-copy p{font-size:13px}.heavy-home-actions button{width:100%}.heavy-feature-teams img{width:63px;height:63px}.heavy-home-statstrip{grid-template-columns:repeat(2,minmax(0,1fr))}.heavy-home-statstrip>div{min-height:72px}}
+
+/* HOME STAGE TWO: sections below the approved stadium hero */
+.studio-weekly-spotlight,.studio-quick-access,.nfl-expert-showcase,.nfl-home-franchises{scroll-margin-top:24px}
+.studio-weekly-spotlight{padding:25px!important;background:linear-gradient(145deg,#041021,#0b2546 60%,#030b1c)!important;border:1px solid #04cafa!important;border-radius:22px!important;box-shadow:inset 0 0 30px #0064bd36,0 0 25px #008fff42!important;margin-bottom:22px!important}
+.studio-spotlight-header h2,.studio-quick-heading strong,.nfl-expert-showcase-head h2{font-family:Impact,'Arial Narrow',Arial,sans-serif;font-style:italic;letter-spacing:1.2px;color:#fff!important;text-shadow:0 0 17px #00bfff84}
+.studio-spotlight-header button{border:1px solid #00deff!important;background:#06385a!important;color:#e4fcff!important;border-radius:10px!important;box-shadow:0 0 13px #00bfff50}
+.studio-quick-access{padding:22px!important;border-radius:21px!important;border:1px solid #137fb8!important;background:linear-gradient(135deg,#040d20,#0b2442)!important;box-shadow:0 0 23px #007fff32!important;margin-bottom:23px!important}
+.studio-quick-grid{gap:13px!important}
+.studio-quick-card{min-height:112px;border-radius:14px!important}
+.nfl-expert-showcase{margin-top:0!important}
+.nfl-home-franchises{background:radial-gradient(ellipse at 90% 0%,#063c7766,transparent 65%),linear-gradient(145deg,#041022,#071a32)!important;border:1px solid #147dad!important;box-shadow:inset 0 0 22px #0067b82c!important}
+@media(max-width:700px){.studio-weekly-spotlight,.studio-quick-access{padding:15px!important;border-radius:16px!important}.studio-quick-grid{gap:9px!important}.studio-spotlight-header h2{font-size:24px!important}}
