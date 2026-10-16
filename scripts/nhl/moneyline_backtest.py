@@ -81,7 +81,30 @@ def shrink(history, field):
     n=len(history)
     return (sum(row[field] for row in history)+15*2.9)/(n+15)
 
-def backtest(games, season):
+def weighted_rate(history, field, venue=None):
+    rows = history if venue is None else [r for r in history if r["venue"] == venue]
+    # Exponential weighting emphasizes recent form; prior prevents early extremes.
+    weights = [0.95**(len(rows)-1-i) for i in range(len(rows))]
+    return (sum(w*r[field] for w,r in zip(weights,rows)) + 12*2.9) / (sum(weights)+12)
+
+def model_probability(hh, ah, date, model):
+    if model == "baseline":
+        return win_chance(max(.25,(shrink(hh,"for")+shrink(ah,"against"))/2+.12),
+                          max(.25,(shrink(ah,"for")+shrink(hh,"against"))/2-.12))
+    # All features derive from games played before this calendar date.
+    h_for=.55*weighted_rate(hh,"for")+.45*weighted_rate(hh,"for","home")
+    h_against=.55*weighted_rate(hh,"against")+.45*weighted_rate(hh,"against","home")
+    a_for=.55*weighted_rate(ah,"for")+.45*weighted_rate(ah,"for","away")
+    a_against=.55*weighted_rate(ah,"against")+.45*weighted_rate(ah,"against","away")
+    def fatigue(history):
+        if not history: return 0
+        days=(datetime.fromisoformat(date)-datetime.fromisoformat(history[-1]["date"])).days
+        return -.16 if days<=1 else .05 if days>=3 else 0
+    h_rate=(h_for+a_against)/2+.12+fatigue(hh)-fatigue(ah)
+    a_rate=(a_for+h_against)/2-.12+fatigue(ah)-fatigue(hh)
+    return win_chance(max(.25,h_rate),max(.25,a_rate))
+
+def backtest(games, season, model="baseline"):
     histories=defaultdict(list)
     rows=[]
     for date in sorted(set(g["date"] for g in games)):
@@ -93,9 +116,7 @@ def backtest(games, season):
             if len(hh)<10 or len(ah)<10:
                 pending.append(g)
                 continue
-            h_rate=(shrink(hh,"for")+shrink(ah,"against"))/2+.12
-            a_rate=(shrink(ah,"for")+shrink(hh,"against"))/2-.12
-            p=win_chance(max(.25,h_rate),max(.25,a_rate))
+            p=model_probability(hh,ah,date,model)
             pick=home if p>=.5 else away
             actual=home if g["home_goals"]>g["away_goals"] else away
             rows.append({"season":season,"date":date,"id":g["id"],"home":home,"away":away,
@@ -106,33 +127,41 @@ def backtest(games, season):
             pending.append(g)
         # No same-day information leakage
         for g in pending:
-            histories[g["home"]].append({"for":g["home_goals"],"against":g["away_goals"]})
-            histories[g["away"]].append({"for":g["away_goals"],"against":g["home_goals"]})
+            histories[g["home"]].append({"for":g["home_goals"],"against":g["away_goals"],"venue":"home","date":date})
+            histories[g["away"]].append({"for":g["away_goals"],"against":g["home_goals"],"venue":"away","date":date})
     return rows
+
+def summarize(rows, season, model):
+    n=len(rows)
+    hit=sum(r["correct"] for r in rows)
+    brier=sum((r["home_win_probability"]-(1 if r["actual_winner"]==r["home"] else 0))**2 for r in rows)/n
+    return {"season":season,"model":model,"predictions":n,"correct":hit,"accuracy_pct":round(100*hit/n,3),"brier":round(brier,5)}
 
 def main():
     out=Path("artifacts/nhl-moneyline-backtest")
     out.mkdir(parents=True,exist_ok=True)
     all_rows=[]
     summary=[]
+    comparison=[]
     for season in SEASONS:
         games=download(season)
         # Check substantial coverage; never claim a complete season otherwise.
         if len(games)<1000:
             raise RuntimeError(f"Insufficient historical season {season}: only {len(games)} games")
-        predictions=backtest(games,season)
-        if len(predictions)<700: raise RuntimeError(f"Too few predictions for {season}")
-        hit=sum(r["correct"] for r in predictions)
-        brier=sum((r["home_win_probability"]-(1 if r["actual_winner"]==r["home"] else 0))**2 for r in predictions)/len(predictions)
-        summary.append({"season":season,"downloaded_games":len(games),"predictions":len(predictions),
-                        "correct":hit,"accuracy_pct":round(100*hit/len(predictions),3),"brier":round(brier,5)})
-        all_rows.extend(predictions)
-        print(summary[-1],flush=True)
+        baseline=backtest(games,season,"baseline")
+        improved=backtest(games,season,"enhanced")
+        if len(baseline)<700 or len(improved)!=len(baseline): raise RuntimeError(f"Coverage mismatch {season}")
+        old=summarize(baseline,season,"baseline")
+        new=summarize(improved,season,"enhanced")
+        summary.append(new)
+        comparison.append({"baseline":old,"enhanced":new,"delta_percentage_points":round(new["accuracy_pct"]-old["accuracy_pct"],3)})
+        all_rows.extend(improved)
+        print(json.dumps(comparison[-1]),flush=True)
     with (out/"predictions.csv").open("w",newline="",encoding="utf8") as f:
         w=csv.DictWriter(f,fieldnames=list(all_rows[0]));w.writeheader();w.writerows(all_rows)
     total=len(all_rows)
-    report={"method":"pregame prior-score Poisson baseline; NOT full xG engine or actual betting ROI",
-            "seasons":summary,"overall":{"predictions":total,
+    report={"method":"pregame recency + venue + rest score-Poisson model vs baseline; NOT xG or realized betting ROI",
+            "seasons":summary,"comparison":comparison,"overall":{"predictions":total,
             "correct":sum(r["correct"] for r in all_rows),
             "accuracy_pct":round(100*sum(r["correct"] for r in all_rows)/total,3)},
             "limitations":"No pregame xG, goaltender/injury confirmations or historical odds. Win accuracy is not profitability."}
