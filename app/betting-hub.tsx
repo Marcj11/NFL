@@ -225,7 +225,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   return opening+' '+source+matchup+numbers+' '+closing+(officialP===null?' Modèle expérimental : prudence avec ce pourcentage.':'');
  };
  const choose=(v:Offer)=>{SELECT(v);SHOW_BET_FORM(false);ODD(fmt(v.odds).replace(',','.'));STAKE('5')};
- const add=()=>{if(!selected)return;const d=Number(odd.replace(',','.')),s=Number(stake.replace(',','.'));if(!Number.isFinite(d)||d<=1||!Number.isFinite(s)||s<=0)return;save([{...selected,chosenOdds:d,stake:s,placedAt:new Date().toISOString(),status:'open'},...bets]);SELECT(null)};
+ const add=()=>{if(!selected)return;const d=Number(odd.replace(',','.')),s=Number(stake.replace(',','.'));if(!Number.isFinite(d)||d<=1||!Number.isFinite(s)||s<=0)return;save([{...selected,id:selected.id+'|ticket|'+crypto.randomUUID(),chosenOdds:d,stake:s,placedAt:new Date().toISOString(),status:'open'},...bets]);SELECT(null)};
  const update=(idx:number,status:Bet['status'])=>{const next=bets.map((x,i)=>i===idx?{...x,status,resultConfirmedAt:new Date().toISOString()}:x);save(next)};
  const wins=bets.filter(x=>x.status==='won').reduce((s,b)=>s+b.stake*(b.chosenOdds-1),0);
  const losses=bets.filter(x=>x.status==='lost').reduce((s,b)=>s+b.stake,0);
