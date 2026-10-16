@@ -45,12 +45,18 @@ export async function GET(req:Request){
   const market=String(x.market),field=market==='player_pass_yds'?'passing_yards':market==='player_rush_yds'?'rushing_yards':market==='player_reception_yds'?'receiving_yards':null;
   const name=String(x.player||''),side=String(x.side||'').toLowerCase(),line=Number(x.point),decimal=Number(x.decimal);
   if(!field||!Number.isFinite(line)||decimal<=1||!['over','under'].includes(side))return [];
-  const games=recentByName.get(name.toLowerCase())||[];
-  if(games.length<4)return [];
-  const hits=games.filter(g=>side==='over'?Number(g[field])>line:Number(g[field])<line).length;
-  const observed=hits/games.length;
-  const probability=(hits+1)/(games.length+2);
-  return [{market,player:name,name,point:line,decimal,book:String(x.book),signal:observed*100,probability,probability_kind:'five_game_smoothed_frequency',status:'exploratory_not_calibrated',angle:name+' a '+(side==='over'?'dépassé':'terminé sous')+' '+line+' verges lors de '+hits+' de ses '+games.length+' derniers matchs. Fréquence historique lissée : '+Math.round(probability*100)+' %. Échantillon réduit, sans garantie ni confirmation de disponibilité.',side}];
+  const games=(recentByName.get(name.toLowerCase())||[]).filter(g=>Date.parse(String(g.kickoff_utc))<Date.parse(target.kickoff_utc)).sort((a,b)=>Date.parse(String(b.kickoff_utc))-Date.parse(String(a.kickoff_utc))).slice(0,5);
+  if(games.length<3)return [];
+  const values=games.map(g=>Number(g[field])).filter(Number.isFinite);
+  if(values.length<3)return [];
+  const mean=values.reduce((a,b)=>a+b,0)/values.length;
+  const minimum=field==='passing_yards'?150:25;
+  if(mean<minimum)return [];
+  const hits=values.filter(v=>side==='over'?v>line:v<line).length;
+  const observed=hits/values.length;
+  // Shrink very small samples toward 50%; historical fixed-threshold accuracy is NOT a calibrated market probability.
+  const probability=(hits+2)/(values.length+4);
+  return [{market,player:name,name,point:line,decimal,book:String(x.book),signal:observed*100,probability,probability_kind:'five_game_smoothed_frequency',status:'research_v2_unvalidated',angle:name+' a '+(side==='over'?'dépassé':'terminé sous')+' '+line+' verges lors de '+hits+' de ses '+games.length+' derniers matchs. Fréquence historique lissée : '+Math.round(probability*100)+' %. Échantillon réduit, sans garantie ni confirmation de disponibilité.',side}];
  });
  const bestProps=new Map<string,(typeof propCandidates)[number]>();
  for(const x of propCandidates){const k=x.market+'|'+x.player+'|'+x.side+'|'+x.point;const old=bestProps.get(k);if(!old||x.decimal>old.decimal)bestProps.set(k,x)}
@@ -65,11 +71,11 @@ export async function GET(req:Request){
  const projectedHome=ready&&home.points!==null&&away.allowed!==null?(home.points+away.allowed)/2:null;
  const projectedAway=ready&&away.points!==null&&home.allowed!==null?(away.points+home.allowed)/2:null;
  const projectedTotal=projectedHome!==null&&projectedAway!==null?projectedHome+projectedAway:null;
- const projectedDiff=projectedHome!==null&&projectedAway!==null?projectedHome-projectedAway:null;
+ const projectedDiff=home.margin!==null&&away.margin!==null?home.margin-away.margin+3:null;
  const candidates=[...offers.values()].map(o=>{
   let baseline:number|null=null,angle='',signal=0;
   if(o.market==='totals'&&projectedTotal!==null&&o.point!==undefined){baseline=projectedTotal;signal=(o.name.toLowerCase()==='over'?projectedTotal-o.point:o.point-projectedTotal);angle='Projection indicative basée sur les points marqués et encaissés lors des cinq derniers matchs de chaque équipe.'}
-  if(o.market==='spreads'&&projectedDiff!==null&&o.point!==undefined){const side=o.name===names[target.home_team_id]?projectedDiff:-projectedDiff;baseline=side;signal=side+o.point;angle='Comparaison entre les marges de points récentes et le handicap proposé.'}
+  if(o.market==='spreads'&&projectedDiff!==null&&o.point!==undefined){const side=o.name===names[target.home_team_id]?projectedDiff:-projectedDiff;baseline=side;signal=side+o.point;angle='Comparaison entre les marges de points des cinq matchs précédents, avec avantage domicile de trois points (modèle expérimental de spreads).'}
   if(o.market==='h2h'&&projectedDiff!==null){const side=o.name===names[target.home_team_id]?projectedDiff:-projectedDiff;baseline=side;signal=side;angle='Différentiel de points attendu à partir des attaques et défenses récentes, sans estimation calibrée de probabilité.'}
   const focus=playerInsights.find(p=>names[p.team]===o.name)||playerInsights[0];
   const context=focus?.qb?' Contexte individuel : '+focus.qb.name+' a produit '+focus.qb.passing.toFixed(0)+' verges aériennes par match sur '+focus.qb.sample+' rencontres; '+(focus.rb?focus.rb.name+' a ajouté '+focus.rb.rushing.toFixed(0)+' verges au sol par match.':'le jeu au sol reste à examiner.'):' Statistiques individuelles insuffisantes pour confirmer un avantage.';
@@ -92,6 +98,6 @@ export async function GET(req:Request){
  const heavy=ranked.find(p=>p.decimal>=3&&p.expected_value>0);
  const chosen=ranked.filter(p=>!heavy||p!==heavy).slice(0,heavy?4:5);
  const combined=[...chosen,...(heavy?[{...heavy,heavyball:true}]:[])];
- return NextResponse.json({game_id:id,stats,model:'match_model_probability_ev_v3',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined},{headers:{'Cache-Control':'no-store'}});
+ return NextResponse.json({game_id:id,stats,model:'historical_market_research_v4',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
