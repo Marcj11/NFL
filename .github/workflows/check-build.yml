@@ -35,21 +35,3 @@ jobs:
           except Exception as e:
               print(json.dumps({'result':'unavailable','reason':str(e),'db_writes':0}))
               raise
-  nhl_staging_import:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    env:
-      SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
-      NHL_MAX_ROWS_PER_FILE: '30'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install supabase
-      - name: Import bounded NHL historical sample independently
-        run: python scripts/import_nhl_moneypuck.py
