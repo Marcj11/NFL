@@ -89,7 +89,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const best=new Map<string,Offer>();for(const x of out){const older=best.get(x.id);if(!older||x.odds>older.odds)best.set(x.id,x)}
  if(active){setOffers([...best.values()]);LOADED(true)}
  }).catch(()=>{if(active)LOADED(true)});return()=>{active=false}},[]);
- useEffect(()=>{let active=true;fetch('/api/player-props').then(r=>r.json()).then(data=>{if(!active||!Array.isArray(data.offers))return;setOffers(previous=>{const map=new Map(previous.map(o=>[o.id,o]));for(const prop of data.offers){if(prop.market==='props'&&Number(prop.odds)>1)map.set(prop.id,prop as Offer)}return [...map.values()]})}).catch(()=>{});return()=>{active=false}},[]);
+ useEffect(()=>{let active=true;fetch('/api/player-props').then(r=>r.json()).then(data=>{if(!active||!Array.isArray(data.offers))return;setOffers(previous=>{const map=new Map(previous.map(o=>[o.id,o]));for(const prop of data.offers){if(prop.market==='props'&&Number.isFinite(Number(prop.odds))&&Number(prop.odds)>1&&typeof prop.id==='string'&&typeof prop.selection==='string'&&typeof prop.game==='string'&&(!prop.kickoff||(Number.isFinite(Date.parse(prop.kickoff))&&Date.parse(prop.kickoff)>Date.now())))map.set(prop.id,prop as Offer)}return [...map.values()]})}).catch(()=>{});return()=>{active=false}},[]);
  const [official,SET_OFFICIAL]=useState<Array<{away_team?:string;home_team?:string;home_probability?:number|null;away_probability?:number|null}>>([]);
  useEffect(()=>{let active=true;fetch('/api/expert-independent',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(active)SET_OFFICIAL(Array.isArray(d.report?.rows)?d.report.rows:[])}).catch(()=>{});return()=>{active=false}},[]);
  const [research,SET_RESEARCH]=useState<Record<string,{probability:number;explanation:string}>>({});
@@ -152,7 +152,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const officialProbability=(o:Offer):number|null=>{
   if(o.market!=='moneyline')return null;
   const sides=teamSides(o.game);
-  const row=official.find(g=>sides.includes(String(g.home_team))&&sides.includes(String(g.away_team)));
+  const row=official.find(g=>sides.length===2&&sides[1]===String(g.home_team)&&sides[0]===String(g.away_team));
   if(!row)return null;
   const selected=teamFrom(o.team);
   const prob=selected===row.home_team?row.home_probability:selected===row.away_team?row.away_probability:null;
@@ -166,7 +166,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const ordered=eligible.sort((a,b)=>edge(b)-edge(a));
  const selected:Offer[]=[],seen=new Set<string>();
  for(const o of ordered){
-  const key=[o.game,o.market,o.selection].join('|');
+  const key=[o.game,o.market,o.marketKey||'',o.selection,o.line??''].join('|');
   if(seen.has(key))continue;
   
   seen.add(key);selected.push(o);
