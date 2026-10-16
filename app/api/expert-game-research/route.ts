@@ -73,7 +73,7 @@ export async function GET(req:Request){
 
  const confirmedQbs=await Promise.all([home,away].map(async team=>{
   try{
-   const params=new URLSearchParams({select:'qb_name,announced_status,source_name,source_published_at,first_observed_at',team_id:'eq.'+team,game_id:'eq.'+away+'-'+home+'-'+new Date(before).toISOString(),usable_pregame:'eq.true',order:'source_published_at.desc',limit:'1'});
+   const params=new URLSearchParams({select:'qb_name,announced_status,source_name,source_published_at,first_observed_at',team_id:'eq.'+team,kickoff_utc:'eq.'+new Date(before).toISOString(),usable_pregame:'eq.true',order:'source_published_at.desc',limit:'1'});
    const r=await fetch(base+'/rest/v1/nfl_studio_pregame_qb_sources_v1?'+params,{headers,cache:'no-store',signal:AbortSignal.timeout(3500)});
    if(!r.ok)return null;
    const rows=await r.json() as Array<{qb_name:string;announced_status:string;source_name:string;source_published_at:string;first_observed_at:string}>;
