@@ -1,0 +1,23 @@
+name: Spread and props historical research
+on:
+  push:
+    paths:
+      - 'scripts/spread_props_research.py'
+      - '.github/workflows/spread-props-research.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/spread_props_research.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spread-props-research
+          path: diagnostics/spread-props-backtest.json
