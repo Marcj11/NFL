@@ -82,7 +82,23 @@ export async function GET(req:Request){
   }catch{return null}
  }));
  const confirmedQbCount=confirmedQbs.filter(q=>q&&/starter|starting|confirmed/i.test(q.status)).length;
- const pregameAvailability={qb_start_confirmed:confirmedQbCount===2,qb_confirmed_count:confirmedQbCount,qb_verified_sources:confirmedQbs,qb_source:historicalBacktest?'no historical pregame snapshot':'ESPN depth chart (projection, not a confirmed starter)',verified_injury_report:false,injury_adjustment_applied:false,roster_disruption_applied:false,historical_injury_leakage_guard:true,limitations:['Pregame QB announcement archive is empty','Historical injury and roster snapshots are retrospective and cannot be used as confirmed pregame signals']};
+ const liveInjuryChecks=await Promise.all([home,away].map(async team=>{
+  if(historicalBacktest)return {team,status:'historical_snapshot_unavailable',report:null,usable_for_historical_backtest:false};
+  const id=espnTeamId(team);
+  if(!id)return {team,status:'team_not_mapped',report:null,usable_for_historical_backtest:false};
+  try{
+   const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/'+id+'/injuries',{cache:'no-store',signal:AbortSignal.timeout(3500)});
+   if(!r.ok)return {team,status:'espn_injury_endpoint_unavailable',report:null,usable_for_historical_backtest:false};
+   const raw=await r.json() as Record<string,unknown>;
+   const rows=Array.isArray(raw.injuries)?raw.injuries:[];
+   const named=rows.filter((x:unknown)=>x&&typeof x==='object').slice(0,40).map((x:unknown)=>{
+    const obj=x as Record<string,unknown>,athlete=(obj.athlete&&typeof obj.athlete==='object'?obj.athlete:{}) as Record<string,unknown>;
+    return {player:String(athlete.displayName||obj.displayName||'unknown'),status:String(obj.status||obj.type||'unverified'),position:String((athlete.position&&typeof athlete.position==='object'?(athlete.position as Record<string,unknown>).abbreviation:null)||'unknown')};
+   });
+   return {team,status:rows.length?'current_espn_unverified':'no_usable_injury_list',report:named,observed_at:new Date().toISOString(),usable_for_historical_backtest:false};
+  }catch{return {team,status:'espn_injury_fetch_failed',report:null,usable_for_historical_backtest:false}}
+ }));
+ const pregameAvailability={qb_start_confirmed:confirmedQbCount===2,qb_confirmed_count:confirmedQbCount,qb_verified_sources:confirmedQbs,injury_live_checks:liveInjuryChecks,qb_source:historicalBacktest?'no historical pregame snapshot':'ESPN depth chart (projection, not a confirmed starter)',verified_injury_report:false,injury_adjustment_applied:false,roster_disruption_applied:false,historical_injury_leakage_guard:true,limitations:['Pregame QB announcement archive is empty','Historical injury and roster snapshots are retrospective and cannot be used as confirmed pregame signals']};
  return NextResponse.json({status:'experimental_unvalidated',forecast_audit_status:auditStatus,pregame_availability:pregameAvailability,home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbEffects,availability_checks:availabilityChecks,qb_assumptions_included_in_numeric_forecast:qbEffects.some(q=>q.applied),historical_lookahead_prevented:historicalBacktest,model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN projetés intégrés par ajustement explicite et plafonné lorsque trois matchs historiques ou plus sont disponibles; sinon ajustement nul signalé. Les titularisations, blessures et météo ne sont pas confirmées; aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'history_unavailable',decision:'PASSER'},{status:502})}
 }
