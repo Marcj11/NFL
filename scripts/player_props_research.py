@@ -4,7 +4,7 @@ Predefined hypothetical thresholds; forecast based only on PREVIOUS completed we
 """
 import csv,io,json,urllib.request
 from collections import defaultdict,deque
-BASE="https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_reg_{}.csv"
+BASE="https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_{}.csv"
 THRESHOLDS={"passing_yards":224.5,"rushing_yards":49.5,"receiving_yards":49.5}
 history=defaultdict(lambda:deque(maxlen=5))
 summary=defaultdict(lambda:{"decided":0,"correct":0,"over_calls":0,"wins_over":0})
