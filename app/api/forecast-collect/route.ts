@@ -23,6 +23,8 @@ export async function GET(req:Request){
     return {game:g.away_team_id+'-'+g.home_team_id,status:String(data.status||'unavailable'),audit:String(data.forecast_audit_status||'not_recorded')};
    }catch{return {game:g.away_team_id+'-'+g.home_team_id,status:'unavailable',audit:'request_failed'}}
   }));outcomes.push(...batch)}
-  return NextResponse.json({status:'completed',checked:outcomes.length,outcomes},{headers:{'Cache-Control':'no-store'}});
+  let independent:{status:string;created?:number;error?:string}={status:'not_started'};
+  try{const response=await fetch(url.origin+'/api/independent-collect',{headers:{authorization:'Bearer '+secret},cache:'no-store',signal:AbortSignal.timeout(25000)});independent=await response.json()}catch(e){independent={status:'unavailable',error:String(e)}}
+  return NextResponse.json({status:'completed',checked:outcomes.length,outcomes,independent},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'collection_failed'},{status:502})}
 }
