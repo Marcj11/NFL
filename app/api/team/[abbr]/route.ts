@@ -15,10 +15,14 @@ export async function GET(_request:Request,context:{params:Promise<{abbr:string}
  }
  try{
   const [schedule,history]=await Promise.all([
-   query('games',{or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'gt.'+new Date().toISOString(),order:'kickoff_utc.asc',limit:'5'}),
+   query('games',{or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'gt.'+new Date(Date.now()-6*3600000).toISOString(),order:'kickoff_utc.asc',limit:'8'}),
    query('games',{or:'(home_team_id.eq.'+team+',away_team_id.eq.'+team+')',kickoff_utc:'lt.'+new Date().toISOString(),order:'kickoff_utc.desc',limit:'5'})
   ]);
-  const next=schedule[0]||null;const opponent=next?(next.home_team_id===team?next.away_team_id:next.home_team_id):null;
+  // Keep today's matchup visible after kickoff until a final score is recorded.
+  const started=schedule.filter((g:{kickoff_utc:string})=>Date.parse(g.kickoff_utc)<=Date.now());
+  const completed=started.length?await query('game_results',{game_id:'in.('+started.map((g:{game_id:string})=>g.game_id).join(',')+')',limit:'8'}).catch(()=>[]):[];
+  const eligible=schedule.filter((g:{game_id:string;kickoff_utc:string})=>Date.parse(g.kickoff_utc)>Date.now()||!completed.some((r:{game_id:string;home_score:number|null;away_score:number|null})=>r.game_id===g.game_id&&r.home_score!==null&&r.away_score!==null));
+  const next=eligible[0]||null;const opponent=next?(next.home_team_id===team?next.away_team_id:next.home_team_id):null;
   const [results,probability,risk,explanation,replacements,players]=await Promise.all([
    history.length?query('game_results',{game_id:'in.('+history.map((x:{game_id:string})=>x.game_id).join(',')+')',limit:'5'}).catch(()=>[]):Promise.resolve([]),
    next?query('nfl_studio_upcoming_moneyline_preview_v1',{game_id:'eq.'+next.game_id,limit:'1'}).catch(()=>[]):Promise.resolve([]),
