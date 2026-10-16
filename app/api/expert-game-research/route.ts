@@ -48,7 +48,7 @@ export async function GET(req:Request){
  const margin=homePoints-awayPoints,total=homePoints+awayPoints;const marginSd=13.5,totalSd=17.5;
  const forecastProbability=normal(margin/marginSd);
  const snapshotHour=new Date(Math.floor(Date.now()/3600000)*3600000).toISOString();
- const auditRecord={game_id:away+'-'+home+'-'+new Date(before).toISOString(),model_name:'simple-historical-scores-v0',away_team:away,home_team:home,home_probability:forecastProbability,forecast_at:snapshotHour,kickoff_at:new Date(before).toISOString()};
+ const auditRecord={game_id:new Date(before).getUTCFullYear()+'_'+String(new Date(before).getUTCMonth()+1).padStart(2,'0')+'_'+away+'_'+home,model_name:'simple-historical-scores-v0',away_team:away,home_team:home,home_probability:forecastProbability,forecast_at:snapshotHour,kickoff_at:new Date(before).toISOString()};
  let auditStatus='not_eligible';
  if(Date.parse(before)>Date.now()&&Number.isFinite(forecastProbability)&&forecastProbability>0&&forecastProbability<1){
   try{
