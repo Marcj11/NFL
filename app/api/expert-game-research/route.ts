@@ -31,7 +31,19 @@ export async function GET(req:Request){
  // ESPN projected starters are matched against their own pre-kickoff passing history.
  // A small, capped conversion translates QB yardage relative to a neutral
  // 230-yard baseline into points. No stats means no fabricated QB adjustment.
- const qbEffects=await Promise.all(qbContext.map(async q=>{
+ const confirmedQbs=await Promise.all([home,away].map(async team=>{
+  try{
+   const params=new URLSearchParams({select:'qb_name,announced_status,source_name,source_published_at,first_observed_at',team_id:'eq.'+team,kickoff_utc:'eq.'+new Date(before).toISOString(),usable_pregame:'eq.true',order:'source_published_at.desc',limit:'1'});
+   const r=await fetch(base+'/rest/v1/nfl_studio_pregame_qb_sources_v1?'+params,{headers,cache:'no-store',signal:AbortSignal.timeout(3500)});
+   if(!r.ok)return null;
+   const rows=await r.json() as Array<{qb_name:string;announced_status:string;source_name:string;source_published_at:string;first_observed_at:string}>;
+   const v=rows[0];if(!v||!v.qb_name||!v.source_published_at||!v.first_observed_at||Date.parse(v.source_published_at)>=Date.parse(before)||Date.parse(v.first_observed_at)>=Date.parse(before))return null;
+   return {team,player:v.qb_name,status:v.announced_status,source:v.source_name,published_at:v.source_published_at};
+  }catch{return null}
+ }));
+ const confirmedStarters=new Map(confirmedQbs.filter((q):q is NonNullable<typeof q>=>!!q&&/starter|starting|confirmed/i.test(q.status)).map(q=>[q.team,q.player]));
+ const effectiveQbContext=qbContext.map(q=>confirmedStarters.has(q.team)?{...q,projected_qb:confirmedStarters.get(q.team)!,status:'confirmed_pregame_source'}:q);
+ const qbEffects=await Promise.all(effectiveQbContext.map(async q=>{
   if(!q.projected_qb)return {...q,sample_games:0,passing_yards_average:null,points_adjustment:0,applied:false};
   try{
    const p=new URLSearchParams({select:'game_id,passing_yards,kickoff_utc',display_name:'eq.'+q.projected_qb,kickoff_utc:'lt.'+new Date(before).toISOString(),order:'kickoff_utc.desc',limit:'12'});
@@ -71,16 +83,6 @@ export async function GET(req:Request){
   }catch{auditStatus='database_unreachable'}
  }
 
- const confirmedQbs=await Promise.all([home,away].map(async team=>{
-  try{
-   const params=new URLSearchParams({select:'qb_name,announced_status,source_name,source_published_at,first_observed_at',team_id:'eq.'+team,kickoff_utc:'eq.'+new Date(before).toISOString(),usable_pregame:'eq.true',order:'source_published_at.desc',limit:'1'});
-   const r=await fetch(base+'/rest/v1/nfl_studio_pregame_qb_sources_v1?'+params,{headers,cache:'no-store',signal:AbortSignal.timeout(3500)});
-   if(!r.ok)return null;
-   const rows=await r.json() as Array<{qb_name:string;announced_status:string;source_name:string;source_published_at:string;first_observed_at:string}>;
-   const v=rows[0];if(!v||!v.qb_name||!v.source_published_at||!v.first_observed_at||Date.parse(v.source_published_at)>=Date.parse(before)||Date.parse(v.first_observed_at)>=Date.parse(before))return null;
-   return {team,player:v.qb_name,status:v.announced_status,source:v.source_name,published_at:v.source_published_at};
-  }catch{return null}
- }));
  const confirmedQbCount=confirmedQbs.filter(q=>q&&/starter|starting|confirmed/i.test(q.status)).length;
  const liveInjuryChecks=await Promise.all([home,away].map(async team=>{
   if(historicalBacktest)return {team,status:'historical_snapshot_unavailable',report:null,usable_for_historical_backtest:false};
@@ -98,7 +100,7 @@ export async function GET(req:Request){
    return {team,status:rows.length?'current_espn_unverified':'no_usable_injury_list',report:named,observed_at:new Date().toISOString(),usable_for_historical_backtest:false};
   }catch{return {team,status:'espn_injury_fetch_failed',report:null,usable_for_historical_backtest:false}}
  }));
- const pregameAvailability={qb_start_confirmed:confirmedQbCount===2,qb_confirmed_count:confirmedQbCount,qb_verified_sources:confirmedQbs,injury_live_checks:liveInjuryChecks,qb_source:historicalBacktest?'no historical pregame snapshot':'ESPN depth chart (projection, not a confirmed starter)',verified_injury_report:false,injury_adjustment_applied:false,roster_disruption_applied:false,historical_injury_leakage_guard:true,limitations:['Pregame QB announcement archive is empty','Historical injury and roster snapshots are retrospective and cannot be used as confirmed pregame signals']};
+ const pregameAvailability={qb_start_confirmed:confirmedQbCount===2,qb_confirmed_count:confirmedQbCount,qb_verified_sources:confirmedQbs,injury_live_checks:liveInjuryChecks,qb_source:historicalBacktest?'no historical pregame snapshot':'ESPN depth chart (projection, not a confirmed starter)',verified_injury_report:false,injury_adjustment_applied:false,roster_disruption_applied:false,historical_injury_leakage_guard:true,limitations:['Confirmed QB sources only when timestamped records exist','Historical injury and roster snapshots are retrospective and cannot be used as confirmed pregame signals']};
  return NextResponse.json({status:'experimental_unvalidated',forecast_audit_status:auditStatus,pregame_availability:pregameAvailability,home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbEffects,availability_checks:availabilityChecks,qb_assumptions_included_in_numeric_forecast:qbEffects.some(q=>q.applied),historical_lookahead_prevented:historicalBacktest,model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN projetés intégrés par ajustement explicite et plafonné lorsque trois matchs historiques ou plus sont disponibles; sinon ajustement nul signalé. Les titularisations, blessures et météo ne sont pas confirmées; aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'history_unavailable',decision:'PASSER'},{status:502})}
 }
