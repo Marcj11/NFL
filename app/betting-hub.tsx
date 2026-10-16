@@ -93,13 +93,32 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  useEffect(()=>{let active=true;fetch('/api/expert-independent',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(active)SET_OFFICIAL(Array.isArray(d.report?.rows)?d.report.rows:[])}).catch(()=>{});return()=>{active=false}},[]);
  const [research,SET_RESEARCH]=useState<Record<string,{probability:number;explanation:string}>>({});
  const [researchStatus,SET_RESEARCH_STATUS]=useState('chargement');
- useEffect(()=>{let alive=true;fetch('/api/expert-prop-research',{cache:'no-store'}).then(r=>r.json()).then(data=>{
-  if(!alive)return;SET_RESEARCH_STATUS(String(data.status||'inconnu'));const map:Record<string,{probability:number;explanation:string}>={};
-  for(const row of data.evaluations||[]){if(row.experimental===true&&typeof row.probability==='number'&&row.probability>=0&&row.probability<=1){
-   const o=row.offer||{};const market=String(o.selection||'').split(' · ').pop()||'';const direction=/\bover\b/i.test(String(o.selection))?'over':/\bunder\b/i.test(String(o.selection))?'under':'';const key=[o.player,market,o.line,direction].join('|').toLowerCase();
-   map[key]={probability:row.probability,explanation:String(row.explanation||'Simulation experimentale non validee')};
-  }}SET_RESEARCH(map);
- }).catch(()=>{if(alive)SET_RESEARCH_STATUS('indisponible')});return()=>{alive=false}},[]);
+ useEffect(()=>{let alive=true;let completed=0;let total=0;
+  const apply=(data:any)=>{
+   if(!alive)return;
+   const next:Record<string,{probability:number;explanation:string}>={};
+   for(const row of data.evaluations||[]){
+    if(row.experimental!==true||typeof row.probability!=='number'||row.probability<0||row.probability>1)continue;
+    const o=row.offer||{};const market=String(o.selection||'').split(' · ').pop()||'';
+    const direction=/\\bover\\b/i.test(String(o.selection))?'over':/\\bunder\\b/i.test(String(o.selection))?'under':'';
+    next[[o.player,market,o.line,direction].join('|').toLowerCase()]={probability:row.probability,explanation:String(row.explanation||'Simulation exploratoire')};
+   }
+   SET_RESEARCH(previous=>({...previous,...next}));
+   completed+=(data.evaluations||[]).length;
+   total=Number(data.total)||total;
+   SET_RESEARCH_STATUS(total?'Analyse props '+Math.min(completed,total)+'/'+total:'chargement');
+  };
+  const page=async(offset:number)=>{const res=await fetch('/api/expert-prop-research?offset='+offset,{cache:'no-store'});if(!res.ok)throw Error('research_page');return res.json()};
+  (async()=>{try{
+   const first=await page(0);apply(first);if(!alive)return;
+   const count=Number(first.total)||0;
+   let cursor=30;
+   const worker=async()=>{while(alive&&cursor<count){const offset=cursor;cursor+=30;try{apply(await page(offset))}catch{if(alive)SET_RESEARCH_STATUS('Couverture props partielle '+completed+'/'+count)}}};
+   await Promise.all([worker(),worker(),worker()]);
+   if(alive&&completed>=count)SET_RESEARCH_STATUS('Analyse props terminée '+completed+'/'+count);
+  }catch{if(alive)SET_RESEARCH_STATUS('indisponible')}})();
+  return()=>{alive=false};
+ },[]);
  const researchValue=(o:Offer)=>{
   const parts=o.selection.split(' · ');
   const market=parts[parts.length-1]||'';
