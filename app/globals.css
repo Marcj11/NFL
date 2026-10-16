@@ -570,3 +570,31 @@ button:not(:disabled):active { transform:scale(.985); }
 @media(prefers-reduced-motion:reduce){
   button,.studio-pick-card,.nfl-expert-ticket{transition:none!important;}
 }
+
+/* HARD NEON V2 - high contrast visual layer, no business logic changes */
+:root{--neon-bg:#030816;--neon-surface:#071427;--neon-surface-raised:#0b1d36;--neon-cyan:#00d9ff;--neon-mint:#28ffc6;--neon-blue:#1f6bff;--neon-border:#00d9ff9c;--neon-glow:0 0 0 1px #00d9ff80,0 0 22px #00d9ff46,0 18px 38px #000a}
+html{background:#030816}
+body{background:radial-gradient(ellipse 65% 32% at 52% -5%,#1150be77,transparent 80%),radial-gradient(ellipse 50% 40% at 100% 40%,#003d7942,transparent 70%),#030816!important;color:#f1fbff}
+.shell aside,aside{background:linear-gradient(180deg,#020612,#06172d 60%,#020612)!important;border-right:1px solid #00d9ff80!important;box-shadow:5px 0 32px #007fff33}
+.logo,.studio-hero-title{color:#f4fdff!important;text-shadow:0 0 16px #00d9ffb3,0 0 38px #1763ff99}
+nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(110deg,#06284d,#064b72)!important;color:#fff!important;box-shadow:inset 3px 0 #00e5ff,0 0 19px #00d9ff77!important;border-color:#00e5ff!important}
+.studio-hero,.hero,.heavy-hero,.locker-hero{background:radial-gradient(ellipse at 85% 0%,#145cff9a,transparent 52%),radial-gradient(ellipse at 10% 90%,#00b6dd48,transparent 46%),linear-gradient(130deg,#020918,#091d3a 54%,#030b1c)!important;border:1px solid #00d9ffbd!important;box-shadow:inset 0 0 36px #008cff37,0 0 32px #008cff61,0 18px 50px #000d!important}
+.studio-pick-card,.nfl-expert-ticket,.studio-quick-card,.nfl-fixture,.studio-spotlight-match,.studio-live-ticket,.season-market-row,.premium-player-game{
+ background:radial-gradient(ellipse at 100% 0%,#0d40804a,transparent 55%),linear-gradient(150deg,#0b2140,#030c1c)!important;
+ border:1px solid #00d9ffb3!important;
+ box-shadow:inset 0 0 22px #008cff27,0 0 20px #00cfff48,0 14px 35px #000b!important;
+}
+.studio-pick-card:hover,.nfl-expert-ticket:hover,.studio-quick-card:hover,.nfl-fixture:hover{
+ border-color:#35f5ff!important;box-shadow:inset 0 0 32px #00aaff49,0 0 36px #00e1ff9c,0 19px 40px #000c!important;transform:translateY(-2px)
+}
+.studio-bet-kpis>div,.kpis>div{background:linear-gradient(145deg,#061329,#0a2851)!important;border:1px solid #00bdfcb0!important;box-shadow:inset 0 0 24px #006dff38,0 0 20px #008dff50!important}
+.studio-bet-kpis strong,.kpis strong,.pick-metrics strong{color:#ffffff!important;text-shadow:0 0 14px #00cfffaa!important}
+.market-tabs button{background:#051429!important;color:#cceeff!important;border:1px solid #195a89!important}
+.market-tabs button[aria-selected="true"],.market-tabs button.active{background:linear-gradient(120deg,#004d7a,#0668aa)!important;color:#fff!important;border:1px solid #20f3ff!important;box-shadow:inset 0 0 14px #00d9ff66,0 0 24px #00d9ff91!important;text-shadow:0 0 9px #bffaff}
+.pick-action,.studio-pick-card button,.studio-quick-card button{filter:saturate(1.32);box-shadow:0 0 17px #00baff60}
+.studio-kicker,.studio-view-eyebrow,.nfl-expert-kicker{color:#29efff!important;text-shadow:0 0 14px #00baffaa}
+.studio-live-progress>div,.nfl-expert-probbar>div{box-shadow:0 0 18px #19e8ffae}
+.mobile-bottom-nav{background:linear-gradient(180deg,#07172afa,#020713fc)!important;border-top:1px solid #00d9ff90!important;box-shadow:0 -7px 26px #008cff55!important}
+.mobile-bottom-nav a[aria-current="page"],.mobile-bottom-nav button[aria-selected="true"]{color:#28ffc6!important;text-shadow:0 0 13px #00ffcf}
+@media(max-width:700px){.studio-pick-card,.nfl-expert-ticket{box-shadow:inset 0 0 16px #008cff2a,0 0 14px #00cfff56,0 10px 28px #000b!important}}
+@media(prefers-reduced-motion:reduce){.studio-pick-card:hover,.nfl-expert-ticket:hover,.studio-quick-card:hover,.nfl-fixture:hover{transform:none}}
