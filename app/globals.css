@@ -598,3 +598,26 @@ nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(1
 .mobile-bottom-nav a[aria-current="page"],.mobile-bottom-nav button[aria-selected="true"]{color:#28ffc6!important;text-shadow:0 0 13px #00ffcf}
 @media(max-width:700px){.studio-pick-card,.nfl-expert-ticket{box-shadow:inset 0 0 16px #008cff2a,0 0 14px #00cfff56,0 10px 28px #000b!important}}
 @media(prefers-reduced-motion:reduce){.studio-pick-card:hover,.nfl-expert-ticket:hover,.studio-quick-card:hover,.nfl-fixture:hover{transform:none}}
+
+/* NFL STUDIO / SIDEBAR SIGNATURE NEON */
+.shell{grid-template-columns:258px minmax(0,1fr)}
+.studio-sidebar{width:258px!important;min-width:258px;padding:20px 14px!important;background:linear-gradient(175deg,#020611 0%,#06172f 55%,#020815 100%)!important;border-right:1px solid #05dafa8c!important;box-shadow:7px 0 38px #008cff2e!important}
+.studio-brand{display:flex;align-items:center;gap:11px;margin:0 0 25px;padding:16px 10px 19px;border-bottom:1px solid #1687bd80;background:radial-gradient(ellipse at 35% 15%,#10429c73,transparent 70%)}
+.studio-brand-icon{width:59px;height:65px;display:flex;align-items:center;filter:drop-shadow(0 0 10px #02d9ffab)}
+.studio-brand-type{display:flex;flex-direction:column;line-height:.99;min-width:0}
+.studio-brand-nfl{font-size:30px;font-weight:1000;letter-spacing:3px;color:white;text-shadow:0 0 16px #00d9ffc4}
+.studio-brand-studio{font-size:21px;font-weight:1000;letter-spacing:2.8px;color:#15e7ff;text-shadow:0 0 13px #00aaff,0 0 25px #005fff}
+.studio-brand-type small{margin-top:11px;font-size:7px;font-weight:900;letter-spacing:1.3px;color:#a7d9ff;white-space:nowrap}
+.studio-sidebar-section{padding:0 12px;margin:0 0 13px;color:#4abef2;font-size:10px;letter-spacing:2.7px;font-weight:900}
+.studio-sidebar-nav{display:flex!important;flex-direction:column!important;gap:9px!important}
+.studio-sidebar .studio-sidebar-link{width:100%;display:flex;align-items:center;gap:13px;text-align:left;color:#d1e8ff!important;background:linear-gradient(120deg,#081b33,#061225)!important;border:1px solid #17436c!important;border-radius:13px;padding:14px 11px!important;font-weight:750!important;font-size:13px;letter-spacing:.2px;min-height:53px;box-shadow:inset 0 1px #3bb9ff14}
+.studio-sidebar .studio-sidebar-link[aria-current="page"]{background:linear-gradient(105deg,#063b67,#075c9b 70%,#0c377c)!important;color:white!important;border-color:#05e8ff!important;box-shadow:inset 3px 0 #28ffc6,inset 0 0 19px #039fff6b,0 0 24px #00cfff8a!important;text-shadow:0 0 9px #a4eaff}
+.studio-sidebar .studio-sidebar-link:hover{border-color:#00d9ff!important;box-shadow:0 0 19px #00a9ff76!important;transform:translateX(2px)}
+.studio-sidebar-glyph{width:31px;height:31px;flex:none;display:grid;place-items:center;border-radius:9px;background:#0c3155;border:1px solid #1778a8;color:#21e8ff;font-size:20px;line-height:1}
+.studio-sidebar-link[aria-current="page"] .studio-sidebar-glyph{background:#005b97;border-color:#32e5ff;color:#fff;box-shadow:0 0 12px #00bfff9c}
+.studio-sidebar-chevron{margin-left:auto;color:#3a9ac7;font-size:22px}
+.studio-sidebar-foot{margin-top:auto!important;padding:17px 10px 8px;color:#bcf1ff;font-weight:850;letter-spacing:1px;font-size:11px;border-top:1px solid #1e6890}
+.studio-sidebar-foot small{display:block;margin:8px 0 0 13px;color:#5688ae;font-size:9px;letter-spacing:.9px}
+.studio-sidebar-led{display:inline-block;width:7px;height:7px;margin-right:7px;background:#28ffc6;border-radius:100%;box-shadow:0 0 12px #28ffc6}
+@media(max-width:1050px){.shell{grid-template-columns:minmax(0,1fr)}.studio-sidebar{display:none!important}}
+@media(prefers-reduced-motion:reduce){.studio-sidebar .studio-sidebar-link:hover{transform:none}}
