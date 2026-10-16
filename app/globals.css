@@ -528,3 +528,45 @@ body{background:#020a16;color:#f1f7ff}aside{background:linear-gradient(180deg,#0
 .premium-player-page .premium-player-game p strong{color:#76f5d0;font-size:16px}
 .premium-player-page input{box-shadow:inset 0 0 11px #0008;border:1px solid #72bce2}
 @media(max-width:700px){.premium-player-page{padding:14px 12px 100px!important}.premium-player-page section{padding:15px!important}.premium-player-page .premium-player-game{padding:14px!important}.premium-player-page h1{overflow-wrap:anywhere}.premium-player-page .premium-player-panel h2{font-size:21px}}
+
+/* NFL STUDIO NEON — Foundation / sprint 1: non-destructive visual tokens */
+:root {
+  color-scheme:dark;
+  --neon-bg:#061121;
+  --neon-surface:#0a2038;
+  --neon-surface-raised:#102c4a;
+  --neon-cyan:#4cdbff;
+  --neon-mint:#55e8bf;
+  --neon-border:rgba(76,219,255,.34);
+  --neon-glow:0 0 0 1px rgba(76,219,255,.13),0 12px 36px rgba(0,0,0,.33);
+  --neon-radius:16px;
+}
+body {
+  background:radial-gradient(ellipse 90% 55% at 78% 0%,rgba(17,92,159,.20),transparent 75%),var(--neon-bg);
+  color:#eaf6ff;
+}
+button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {
+  outline:2px solid var(--neon-cyan);outline-offset:3px;
+}
+button { transition:transform .16s ease,filter .16s ease,box-shadow .16s ease; }
+button:not(:disabled):active { transform:scale(.985); }
+.studio-pick-card,.studio-live,.nfl-expert-ticket,.premium-player-panel,.premium-player-game {
+  box-shadow:var(--neon-glow);
+}
+.studio-pick-card:hover,.nfl-expert-ticket:hover {
+  border-color:rgba(76,219,255,.72);
+  box-shadow:0 0 22px rgba(46,179,255,.20),0 18px 40px rgba(0,0,0,.38);
+}
+.market-tabs button[aria-selected="true"] {
+  box-shadow:inset 0 -2px 0 var(--neon-mint),0 0 19px rgba(76,219,255,.20);
+}
+.studio-bet-kpis strong {font-variant-numeric:tabular-nums;}
+@media(max-width:700px){
+  .studio-picks-grid{scroll-margin-bottom:88px;}
+  .studio-pick-card{border-radius:var(--neon-radius);}
+  button{touch-action:manipulation;}
+}
+@media(prefers-reduced-motion:reduce){
+  button,.studio-pick-card,.nfl-expert-ticket{transition:none!important;}
+}
