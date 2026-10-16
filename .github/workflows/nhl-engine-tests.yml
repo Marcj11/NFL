@@ -25,4 +25,4 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
       - name: Execute regression tests
-        run: node --experimental-strip-types --test tests/nhl/engine.test.ts
+        run: npx --yes tsx tests/nhl/engine.test.ts
