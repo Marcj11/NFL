@@ -46,6 +46,13 @@ export async function GET(req:Request){
  const homePoints=(hm.pf+am.pa)/2+1.5+qbEffects[0].points_adjustment;
  const awayPoints=(am.pf+hm.pa)/2+qbEffects[1].points_adjustment;
  const margin=homePoints-awayPoints,total=homePoints+awayPoints;const marginSd=13.5,totalSd=17.5;
+ const forecastProbability=normal(margin/marginSd);
+ const snapshotHour=new Date(Math.floor(Date.now()/3600000)*3600000).toISOString();
+ const auditRecord={game_id:away+'-'+home+'-'+new Date(before).toISOString(),model_name:'simple-historical-scores-v0',away_team:away,home_team:home,home_probability:forecastProbability,forecast_at:snapshotHour,kickoff_at:new Date(before).toISOString()};
+ if(Date.parse(before)>Date.now()&&Number.isFinite(forecastProbability)){
+  fetch(base+'/rest/v1/nfl_studio_forecast_audit?on_conflict=game_id,model_name,forecast_at',{method:'POST',headers:{...headers,'Content-Type':'application/json',Prefer:'resolution=ignore-duplicates'},body:JSON.stringify(auditRecord),cache:'no-store',signal:AbortSignal.timeout(4500)}).catch(()=>{});
+ }
+
  return NextResponse.json({status:'experimental_unvalidated',home,away,home_win_probability:normal(margin/marginSd),away_win_probability:1-normal(margin/marginSd),projected_margin:margin,projected_total:total,spread_sd:marginSd,total_sd:totalSd,sample_home:hm.n,sample_away:am.n,espn_qb_context:qbEffects,qb_assumptions_included_in_numeric_forecast:qbEffects.some(q=>q.applied),model:'simple-historical-scores-v0',decision:'PASSER',explanation:'Projection exploratoire sur les scores historiques récents. QB ESPN projetés intégrés par ajustement explicite et plafonné lorsque trois matchs historiques ou plus sont disponibles; sinon ajustement nul signalé. Les titularisations, blessures et météo ne sont pas confirmées; aucune validation hors échantillon. Aucune mise conseillée.'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'history_unavailable',decision:'PASSER'},{status:502})}
 }
