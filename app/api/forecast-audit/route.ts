@@ -14,6 +14,6 @@ export async function GET(){
    const buckets=[0,1,2,3,4].map(i=>{const subset=settled.filter(r=>Math.min(4,Math.floor(Number(r.home_probability)*5))===i);return {range:(i*20)+'-'+((i+1)*20)+'%',n:subset.length,predicted:subset.length?subset.reduce((s,r)=>s+Number(r.home_probability),0)/subset.length:null,observed:subset.length?subset.reduce((s,r)=>s+Number(r.result_home_win),0)/subset.length:null}});
    return {name,forecastCount:records.filter(r=>r.model_name===name).length,settledCount:settled.length,brier,calibration:buckets};
   });
-  return NextResponse.json({status:'ok',models,verifiedForecasts:valid.length,method:'Brier = moyenne (probabilité enregistrée avant le début du match - résultat binaire)^2',note:'Seules les prévisions pré-match horodatées avec résultats confirmés sont comptées'},{headers:{'Cache-Control':'no-store'}});
+  return NextResponse.json({status:'ok',storedForecasts:records.length,pendingForecasts:records.filter(r=>r.result_home_win===null).length,models,verifiedForecasts:valid.length,method:'Brier = moyenne (probabilité enregistrée avant le début du match - résultat binaire)^2',note:'Seules les prévisions pré-match horodatées avec résultats confirmés sont comptées'},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'unavailable',models:[],verifiedForecasts:0},{status:503})}
 }
