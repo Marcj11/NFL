@@ -14,3 +14,24 @@ jobs:
           node-version: '24'
       - run: npm install --no-audit --no-fund
       - run: npm run build
+  nhl_source_audit:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 4
+    steps:
+      - name: Probe NHL MoneyPuck CSV header
+        shell: python
+        run: |
+          import csv,io,json,urllib.request
+          u='https://moneypuck.com/moneypuck/playerData/seasonSummary/2024/regular/skaters.csv'
+          try:
+              q=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0','Range':'bytes=0-16383'})
+              with urllib.request.urlopen(q,timeout=20) as r: data=r.read(16384).decode('utf-8-sig','replace');status=r.status
+              lines=data.splitlines()[:4]
+              rows=list(csv.reader(io.StringIO('\n'.join(lines))))
+              cols=rows[0] if rows else []
+              print(json.dumps({'result':'success','http_status':status,'columns':cols,'column_count':len(cols),'sample_rows':max(0,len(rows)-1),'db_writes':0}))
+          except Exception as e:
+              print(json.dumps({'result':'unavailable','reason':str(e),'db_writes':0}))
+              raise
