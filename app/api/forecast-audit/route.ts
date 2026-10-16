@@ -14,7 +14,7 @@ export async function GET(){
   const valid=records.filter(v=>(v.result_home_win===0||v.result_home_win===1)&&Number.isFinite(Number(v.home_probability))&&Number(v.home_probability)>=0&&Number(v.home_probability)<=1&&Number.isFinite(Date.parse(v.forecast_at))&&Number.isFinite(Date.parse(v.kickoff_at))&&Date.parse(v.forecast_at)<Date.parse(v.kickoff_at));
   // One forecast per match and model: use the latest valid pre-kickoff snapshot.
   const latest=new Map<string,(typeof valid)[number]>();
-  for(const v of valid){const k=v.model_name+'|'+v.game_id;const old=latest.get(k);if(!old||Date.parse(v.forecast_at)>Date.parse(old.forecast_at))latest.set(k,v)}
+  for(const v of valid){const k=v.model_name+'|'+v.game_id+'|'+v.kickoff_at;const old=latest.get(k);if(!old||Date.parse(v.forecast_at)>Date.parse(old.forecast_at))latest.set(k,v)}
   const evaluated=[...latest.values()];
   const models=[...new Set(records.map(r=>r.model_name))].map(name=>{
    const settled=evaluated.filter(r=>r.model_name===name);
