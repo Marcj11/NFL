@@ -708,3 +708,26 @@ nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(1
 .nfl-expert-showcase{margin-top:0!important}
 .nfl-home-franchises{background:radial-gradient(ellipse at 90% 0%,#063c7766,transparent 65%),linear-gradient(145deg,#041022,#071a32)!important;border:1px solid #147dad!important;box-shadow:inset 0 0 22px #0067b82c!important}
 @media(max-width:700px){.studio-weekly-spotlight,.studio-quick-access{padding:15px!important;border-radius:16px!important}.studio-quick-grid{gap:9px!important}.studio-spotlight-header h2{font-size:24px!important}}
+
+/* HEAVYBALLS TOP 5 / PREMIUM CARDS STAGE 1 */
+.studio-picks-grid{gap:20px!important;align-items:stretch}
+.studio-pick-card{position:relative;isolation:isolate;overflow:hidden;border:1.5px solid #00cfff!important;border-radius:21px!important;background:radial-gradient(ellipse at 85% 2%,#1551a47a,transparent 52%),linear-gradient(150deg,#0b2346,#020816 85%)!important;box-shadow:inset 0 0 27px #0070d64d,0 0 26px #008bff74,0 22px 46px #000c!important;transition:transform .22s ease,box-shadow .22s ease!important}
+.studio-pick-card:before{content:"";position:absolute;pointer-events:none;z-index:0;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#00eeff,#176dff,#28ffc6);box-shadow:0 0 15px #00dfff}
+.studio-pick-card:hover{transform:translateY(-5px);box-shadow:inset 0 0 32px #1283e867,0 0 37px #00cfff9b,0 25px 51px #000e!important}
+.studio-pick-card .pick-rank{background:linear-gradient(120deg,#00f4ff,#357aff)!important;color:#00101f!important;text-shadow:none!important;font-weight:1000!important;box-shadow:0 0 18px #00d9ff9e!important}
+.studio-pick-card .pick-market{color:#42ffe1!important;text-shadow:0 0 10px #00e8ff95;font-weight:900!important;letter-spacing:1.25px!important}
+.pick-premium-label{display:block;margin:13px 0 5px;text-align:center;color:#67bbef;font-weight:900;letter-spacing:1.8px;font-size:9px}
+.studio-pick-card .pick-art{border-radius:13px!important;overflow:hidden;background:radial-gradient(ellipse at center,#0e559d,#020817 80%)!important;border:1px solid #135a9e!important;box-shadow:inset 0 0 28px #0660c262}
+.studio-pick-card .pick-game{color:#93d9ff!important;font-size:12px!important;font-weight:900!important;letter-spacing:.7px!important}
+.studio-pick-card h3{font-size:clamp(21px,2vw,28px)!important;line-height:1.13!important;color:#fff!important;text-shadow:0 0 13px #089dff87}
+.studio-pick-card .pick-metrics{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px!important}
+.studio-pick-card .pick-metrics>div{padding:15px 12px!important;border:1px solid #137ed2!important;border-radius:13px!important;background:linear-gradient(145deg,#06172f,#0d315c)!important;box-shadow:inset 0 0 18px #0356b542}
+.studio-pick-card .pick-metrics small{display:block!important;color:#75cfff!important;font-size:10px!important;font-weight:900!important;letter-spacing:1.2px!important}
+.studio-pick-card .pick-metrics strong{display:block!important;margin-top:5px;font-size:clamp(25px,2.5vw,34px)!important;font-weight:1000!important;color:#f1fcff!important;text-shadow:0 0 16px #0dcbffb1!important}
+.studio-pick-card .pick-action{width:100%;min-height:49px;border:1px solid #6effeb!important;border-radius:11px!important;background:linear-gradient(105deg,#00c8ee,#28ffd0)!important;color:#031627!important;font-weight:1000!important;letter-spacing:1.1px!important;box-shadow:0 0 23px #00bfff9a!important}
+.studio-pick-card .pick-action span{font-size:18px;margin-left:7px}
+.studio-pick-card.heavy-pick{border-color:#ff4eaf!important;box-shadow:0 0 28px #ee3aaf74,inset 0 0 24px #6521af36!important}
+.studio-pick-card.heavy-pick:before{background:linear-gradient(90deg,#ff388a,#842cff,#00d9ff)}
+.studio-pick-card.heavy-pick .pick-market{color:#ff82cb!important}
+@media(max-width:700px){.studio-picks-grid{gap:14px!important}.studio-pick-card{border-radius:17px!important}.studio-pick-card:hover{transform:none}.studio-pick-card .pick-metrics strong{font-size:27px!important}}
+@media(prefers-reduced-motion:reduce){.studio-pick-card:hover{transform:none!important}}
