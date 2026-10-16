@@ -621,3 +621,33 @@ nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(1
 .studio-sidebar-led{display:inline-block;width:7px;height:7px;margin-right:7px;background:#28ffc6;border-radius:100%;box-shadow:0 0 12px #28ffc6}
 @media(max-width:1050px){.shell{grid-template-columns:minmax(0,1fr)}.studio-sidebar{display:none!important}}
 @media(prefers-reduced-motion:reduce){.studio-sidebar .studio-sidebar-link:hover{transform:none}}
+
+/* Sidebar usability fix: independent vertical scroll on desktop / short screens */
+@media(min-width:1051px){
+ .studio-sidebar{
+  position:sticky!important;
+  top:0!important;
+  height:100vh!important;
+  height:100dvh!important;
+  max-height:100dvh!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#00cbf1 #061427;
+  display:flex!important;
+  flex-direction:column!important;
+ }
+ .studio-sidebar::-webkit-scrollbar{width:7px}
+ .studio-sidebar::-webkit-scrollbar-thumb{background:#008fbd;border-radius:8px}
+ .studio-sidebar::-webkit-scrollbar-track{background:#061427}
+ .studio-sidebar .studio-brand{flex-shrink:0}
+ .studio-sidebar .studio-sidebar-section{flex-shrink:0}
+ .studio-sidebar .studio-sidebar-nav{flex-shrink:0}
+ .studio-sidebar .studio-sidebar-foot{flex-shrink:0;margin-top:24px!important}
+}
+@media(max-height:700px) and (min-width:1051px){
+ .studio-brand{padding-top:8px!important;padding-bottom:12px!important;margin-bottom:14px!important}
+ .studio-sidebar .studio-sidebar-link{min-height:45px;padding:9px 11px!important}
+ .studio-sidebar-nav{gap:6px!important}
+}
