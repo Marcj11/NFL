@@ -104,8 +104,12 @@ def model_probability(hh, ah, date, model):
     a_rate=(a_for+h_against)/2-.12+fatigue(ah)-fatigue(hh)
     return win_chance(max(.25,h_rate),max(.25,a_rate))
 
+def elo_probability(home_rating, away_rating, home_advantage=55):
+    return 1/(1+10**((away_rating-home_rating-home_advantage)/400))
+
 def backtest(games, season, model="baseline"):
     histories=defaultdict(list)
+    ratings=defaultdict(lambda:1500.0)
     rows=[]
     for date in sorted(set(g["date"] for g in games)):
         today=[g for g in games if g["date"]==date]
@@ -116,7 +120,7 @@ def backtest(games, season, model="baseline"):
             if len(hh)<10 or len(ah)<10:
                 pending.append(g)
                 continue
-            p=model_probability(hh,ah,date,model)
+            p=(elo_probability(ratings[home],ratings[away]) if model=="elo" else model_probability(hh,ah,date,model))
             pick=home if p>=.5 else away
             actual=home if g["home_goals"]>g["away_goals"] else away
             rows.append({"season":season,"date":date,"id":g["id"],"home":home,"away":away,
@@ -127,6 +131,11 @@ def backtest(games, season, model="baseline"):
             pending.append(g)
         # No same-day information leakage
         for g in pending:
+            outcome=1.0 if g["home_goals"]>g["away_goals"] else 0.0
+            expected=elo_probability(ratings[g["home"]],ratings[g["away"]])
+            shift=22*(outcome-expected)
+            ratings[g["home"]]+=shift
+            ratings[g["away"]]-=shift
             histories[g["home"]].append({"for":g["home_goals"],"against":g["away_goals"],"venue":"home","date":date})
             histories[g["away"]].append({"for":g["away_goals"],"against":g["home_goals"],"venue":"away","date":date})
     return rows
@@ -150,11 +159,13 @@ def main():
             raise RuntimeError(f"Insufficient historical season {season}: only {len(games)} games")
         baseline=backtest(games,season,"baseline")
         improved=backtest(games,season,"enhanced")
-        if len(baseline)<700 or len(improved)!=len(baseline): raise RuntimeError(f"Coverage mismatch {season}")
+        elo=backtest(games,season,"elo")
+        if len(baseline)<700 or len(improved)!=len(baseline) or len(elo)!=len(baseline): raise RuntimeError(f"Coverage mismatch {season}")
         old=summarize(baseline,season,"baseline")
         new=summarize(improved,season,"enhanced")
+        elo_result=summarize(elo,season,"elo")
         summary.append(new)
-        comparison.append({"baseline":old,"enhanced":new,"delta_percentage_points":round(new["accuracy_pct"]-old["accuracy_pct"],3)})
+        comparison.append({"baseline":old,"enhanced":new,"elo":elo_result,"delta_percentage_points":round(new["accuracy_pct"]-old["accuracy_pct"],3)})
         all_rows.extend(improved)
         print(json.dumps(comparison[-1]),flush=True)
     with (out/"predictions.csv").open("w",newline="",encoding="utf8") as f:
