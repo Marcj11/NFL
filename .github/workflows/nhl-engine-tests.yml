@@ -26,3 +26,12 @@ jobs:
         run: npx tsc --noEmit
       - name: Execute regression tests
         run: npx --yes tsx tests/nhl/engine.test.ts
+      - name: Backtest 3 NHL seasons
+        run: python3 scripts/nhl/moneyline_backtest.py
+      - name: Upload historical backtest results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nhl-moneyline-history
+          path: artifacts/nhl-moneyline-backtest/
+          if-no-files-found: warn
