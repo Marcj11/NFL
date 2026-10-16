@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
+export const maxDuration=60;
 type Game={home_team_id:string;away_team_id:string;kickoff_utc:string};
 export async function GET(req:Request){
  const url=new URL(req.url);
