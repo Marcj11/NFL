@@ -1,0 +1,38 @@
+
+/* NHL: scoped parity styling; existing NFL selectors stay unchanged. */
+.nhl-studio .hero{background:radial-gradient(circle at 80% 30%,#284ba67d,transparent 42%),radial-gradient(circle at 15% 80%,#661ba84d,transparent 45%),linear-gradient(135deg,#080e20,#0c1933 68%,#0b0920);border-color:#315dcc;box-shadow:0 0 28px #244edb30}
+.nhl-studio .panel{border-color:#2e416b;box-shadow:0 0 18px #132b7a20}
+.nhl-studio .logo em,.nhl-studio .eyebrow{color:#65cdff}
+.nhl-studio .team.selected{outline-color:#72bdff;box-shadow:0 0 12px #3366ff55}
+.nhl-studio .team{border-left-color:#4d5bba;background:linear-gradient(120deg,#0f2437,#131d36)}
+.nhl-studio .tabs button.active{background:#4d78ec;color:white;border-color:#72bdff}
+.nhl-market-tabs{flex-wrap:wrap}
+.nhl-day{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;text-transform:capitalize}
+.nhl-day button{color:#e1edff;background:#14253e;border:1px solid #385b9b;border-radius:8px;padding:9px 15px}
+.nhl-match{background:linear-gradient(120deg,#142840,#0d182e);border-color:#294a83}
+.nhl-match .match-team img{width:36px;height:36px;max-width:36px;max-height:36px;object-fit:contain;flex-shrink:0}
+.nhl-studio .team-logo{width:39px;height:35px;max-width:39px;max-height:35px;object-fit:contain}
+.nhl-uncalculated{font-size:11px;color:#9fb5df;margin-top:9px}
+.nhl-empty{border-color:#3b4d83}
+@media(max-width:700px){.nhl-studio .match-team img{width:30px;height:30px;max-width:30px;max-height:30px}.nhl-studio .match-team span{font-size:12px}.nhl-day strong{font-size:12px;text-align:center}.nhl-market-tabs{display:flex;overflow-x:auto;flex-wrap:nowrap}.nhl-market-tabs button{white-space:nowrap}}
+
+.nhl-team-page{min-height:100vh;padding:24px max(16px,5vw);background:#081015;color:#e9f1f3}
+.nhl-team-page .nhl-team-hero{margin-top:20px}
+.nhl-team-feature-logo{max-height:180px;max-width:180px;width:100%;object-fit:contain;filter:drop-shadow(0 0 20px #6486ff66);margin:auto}
+.nhl-team-page .nhl-team-hero h1{font-size:clamp(28px,5vw,52px)}
+.nhl-studio .studio-spotlight-teams img{width:54px;height:54px;max-width:54px;max-height:54px;object-fit:contain}
+.nhl-studio .heavy-feature-teams img{width:68px;height:68px;max-width:68px;max-height:68px;object-fit:contain}
+.nhl-studio .nfl-franchise-link img{width:52px;height:52px;max-width:52px;max-height:52px;object-fit:contain}
+@media(max-width:700px){.nhl-team-page{padding:14px}.nhl-team-feature-logo{max-height:110px;max-width:110px}.nhl-studio .studio-spotlight-teams img{width:42px;height:42px;max-width:42px;max-height:42px}}
+
+/* NHL team view: override the oversized NFL feature art on every breakpoint */
+.nhl-team-page .heavy-home-feature{display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden}
+.nhl-team-page .heavy-home-feature img.nhl-team-feature-logo{display:block;width:96px!important;height:96px!important;max-width:96px!important;max-height:96px!important;min-width:0!important;min-height:0!important;object-fit:contain!important;margin:0 auto}
+.nhl-team-page .heavy-home-stage{min-width:0}
+.nhl-team-page .match-team img{width:34px;height:34px;max-width:34px;max-height:34px;object-fit:contain;flex:none}
+.nhl-team-page .nhl-market-label{display:inline-flex;padding:9px 12px;border:1px solid #32518d;border-radius:8px;background:#13243d;color:#d8e6ff;white-space:nowrap}
+.nhl-team-page .nhl-market-tabs{gap:7px;overflow-x:auto}
+@media(max-width:700px){.nhl-team-page .heavy-home-feature img.nhl-team-feature-logo{width:64px!important;height:64px!important;max-width:64px!important;max-height:64px!important}.nhl-team-page .heavy-home-stage{display:grid;grid-template-columns:minmax(0,1fr) 80px;align-items:center}.nhl-team-page .match-team img{width:28px;height:28px;max-width:28px;max-height:28px}}
+
+.nhl-injury-card{display:flex;align-items:center;gap:14px}.nhl-injury-photo,.nhl-injury-placeholder{width:62px;height:62px;max-width:62px;max-height:62px;border-radius:12px;object-fit:cover;flex:none;background:#152339}.nhl-injury-placeholder{display:grid;place-items:center}.nhl-injury-card p{margin:6px 0 0;color:#9fb2c6}
+.nhl-odds-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:16px}.nhl-odds-ticket{border:1px solid #31558e;border-radius:14px;background:linear-gradient(145deg,#10243d,#091c2a);padding:16px;box-shadow:0 0 16px #1452bf18}.nhl-ticket-meta{font-size:11px;color:#9fb7ca;margin-bottom:14px}.nhl-odds-ticket>strong{font-size:18px;display:block}.nhl-ticket-price{margin:13px 0;display:flex;align-items:center;gap:12px}.nhl-ticket-price span{font-size:28px;font-weight:900;color:#69d6ff}.nhl-ticket-price small{font-size:11px;color:#abc1d4}.nhl-ticket-foot{font-size:11px;color:#a6bad0;border-top:1px solid #294467;padding-top:10px}.nhl-heavyball{margin-top:16px;border:1px solid #b79237;background:radial-gradient(circle at 90% 0%,#b2802138,transparent 45%),linear-gradient(135deg,#25190e,#12192b);border-radius:18px;padding:24px}.nhl-heavyball>span{color:#ffd071;letter-spacing:2px;font-size:12px}.nhl-heavyball h3{font-size:22px;color:#ffe09b}.nhl-heavyball p{color:#d0bfa3}
