@@ -1,5 +1,6 @@
 'use client';
 import {useParams} from 'next/navigation';
+import '../../nhl-style.css';
 import Link from 'next/link';
 import {useEffect,useState} from 'react';
 const teams:Record<string,string>={ANA:'Anaheim Ducks',BOS:'Boston Bruins',BUF:'Buffalo Sabres',CGY:'Calgary Flames',CAR:'Carolina Hurricanes',CHI:'Chicago Blackhawks',COL:'Colorado Avalanche',CBJ:'Columbus Blue Jackets',DAL:'Dallas Stars',DET:'Detroit Red Wings',EDM:'Edmonton Oilers',FLA:'Florida Panthers',LA:'Los Angeles Kings',MIN:'Minnesota Wild',MTL:'Montréal Canadiens',NSH:'Nashville Predators',NJ:'New Jersey Devils',NYI:'New York Islanders',NYR:'New York Rangers',OTT:'Ottawa Senators',PHI:'Philadelphia Flyers',PIT:'Pittsburgh Penguins',SEA:'Seattle Kraken',SJ:'San Jose Sharks',STL:'St. Louis Blues',TB:'Tampa Bay Lightning',TOR:'Toronto Maple Leafs',UTA:'Utah Mammoth',VAN:'Vancouver Canucks',VGK:'Vegas Golden Knights',WSH:'Washington Capitals',WPG:'Winnipeg Jets'};
