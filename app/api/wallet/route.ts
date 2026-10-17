@@ -16,7 +16,7 @@ export async function POST(req:Request){
  if(body.action==='save'){
   const bets=body.bets;
   if(!Array.isArray(bets)||bets.length>500||JSON.stringify(bets).length>150000)return NextResponse.json({error:'invalid_bets'},{status:400});
-  const startingBalance=Number(body.startingBalance||0);if(!Number.isFinite(startingBalance)||startingBalance<0||startingBalance>100000000)return NextResponse.json({error:'invalid_balance'},{status:400});
+  const hasStartingBalance=Object.prototype.hasOwnProperty.call(body,'startingBalance');const startingBalance=hasStartingBalance?Number(body.startingBalance):0;if(!Number.isFinite(startingBalance)||startingBalance<0||startingBalance>100000000)return NextResponse.json({error:'invalid_balance'},{status:400});
   const before=await fetch(base+'?wallet_id=eq.'+id+'&select=bets,starting_balance',{headers:headers(),cache:'no-store'});if(!before.ok)throw Error('wallet_read_before_save');
   const stored=(await before.json())[0];
   const merged=new Map<string,Record<string,unknown>>();
@@ -34,7 +34,7 @@ export async function POST(req:Request){
   for(const bet of bets){if(!bet||typeof bet.id!=='string')continue;merged.set(bet.id,choose(merged.get(bet.id),bet))}
   const currentBets=Array.from(merged.values());
   if(currentBets.length>500)return NextResponse.json({error:'wallet_full'},{status:400});
-  const effectiveBalance=Object.prototype.hasOwnProperty.call(body,'startingBalance')?startingBalance:Number(stored?.starting_balance||0);
+  const effectiveBalance=hasStartingBalance?startingBalance:Number(stored?.starting_balance||0);
   const r=await fetch(base+'?on_conflict=wallet_id',{method:'POST',headers:{...headers(),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({wallet_id:id,bets:currentBets,starting_balance:effectiveBalance,updated_at:new Date().toISOString()})});
   if(!r.ok)throw Error('wallet_write');return NextResponse.json({ok:true,bets:currentBets,startingBalance:effectiveBalance});
  }
