@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import "./nhl.css";
 import NhlErrorBoundary from "./error-boundary";
+import BettingHub from "../betting-hub";
 type Club={abbr:string;name:string;division:string};
 type Game={id:string;date:string;state:string;statusText:string;period:number;clock:string;home:{abbr:string;name:string;score:string|null;logo:string|null};away:{abbr:string;name:string;score:string|null;logo:string|null}};
 const clubs:Club[]=[
@@ -61,7 +62,7 @@ export default function NHLHome(){
  <section className="nhl-panel" id="cotes"><div className="nhl-heading"><div><small>MARCHÉ</small><h2>Cotes NHL · décimales</h2></div><span>The Odds API • lecture seule</span></div>{nhlOdds.games.length===0?<div className="nhl-empty">{nhlOdds.status==="not_configured"?"Clé The Odds API absente.":nhlOdds.status==="loading"?"Chargement des cotes…":"Aucune cote disponible pour le moment."}</div>:<div className="nhl-odds-list">{nhlOdds.games.slice(0,16).map(g=><article key={g.id} className="nhl-odds-game"><b>{g.away} @ {g.home}</b><small>{new Date(g.date).toLocaleString("fr-CA",{timeZone:"America/Toronto",weekday:"short",hour:"2-digit",minute:"2-digit"})}</small>{g.bookmakers.slice(0,2).map(book=><div key={book.name}><small>{book.name}</small><div className="nhl-odds-prices">{book.markets.filter(m=>m.key==="h2h").flatMap(m=>m.outcomes).map(o=><span key={o.name}>{o.name}: <strong>{Number(o.price).toFixed(2)}</strong></span>)}</div></div>)}</article>)}</div>}</section>
  <section className="nhl-panel" id="handicaps"><div className="nhl-heading"><div><small>PARIS</small><h2>Handicaps / Totaux</h2></div></div><div className="nhl-empty">Marchés en préparation.</div></section>
  <section className="nhl-panel" id="props"><div className="nhl-heading"><div><small>JOUEURS</small><h2>Props joueurs</h2></div></div><div className="nhl-empty">Buteurs, tirs, points et arrêts : connexion à venir.</div></section>
- </div><div style={{display:activeModule==="Bilan de saison"?undefined:"none"}}><section className="nhl-panel" id="profits"><div className="nhl-heading"><div><small>PORTEFEUILLE</small><h2>Suivi P&L · CAD</h2></div></div><div className="nhl-kpis"><div><small>MISES NHL</small><b>— CAD</b></div><div><small>PROFIT / PERTE</small><b>— CAD</b></div></div><p>Historique NHL distinct de la NFL. Synchronisation à venir.</p></section>
+ </div><div style={{display:activeModule==="Bilan de saison"?undefined:"none"}}><BettingHub view="history"/>
  </div></div></div><footer className="nhl-footer">NHL Studio · Interface expérimentale · Ne présente aucune recommandation de mise validée.</footer>
  </main></div></div></NhlErrorBoundary>
 }
