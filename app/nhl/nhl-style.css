@@ -1,0 +1,17 @@
+
+/* NHL: scoped parity styling; existing NFL selectors stay unchanged. */
+.nhl-studio .hero{background:radial-gradient(circle at 80% 30%,#284ba67d,transparent 42%),radial-gradient(circle at 15% 80%,#661ba84d,transparent 45%),linear-gradient(135deg,#080e20,#0c1933 68%,#0b0920);border-color:#315dcc;box-shadow:0 0 28px #244edb30}
+.nhl-studio .panel{border-color:#2e416b;box-shadow:0 0 18px #132b7a20}
+.nhl-studio .logo em,.nhl-studio .eyebrow{color:#65cdff}
+.nhl-studio .team.selected{outline-color:#72bdff;box-shadow:0 0 12px #3366ff55}
+.nhl-studio .team{border-left-color:#4d5bba;background:linear-gradient(120deg,#0f2437,#131d36)}
+.nhl-studio .tabs button.active{background:#4d78ec;color:white;border-color:#72bdff}
+.nhl-market-tabs{flex-wrap:wrap}
+.nhl-day{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;text-transform:capitalize}
+.nhl-day button{color:#e1edff;background:#14253e;border:1px solid #385b9b;border-radius:8px;padding:9px 15px}
+.nhl-match{background:linear-gradient(120deg,#142840,#0d182e);border-color:#294a83}
+.nhl-match .match-team img{width:36px;height:36px;max-width:36px;max-height:36px;object-fit:contain;flex-shrink:0}
+.nhl-studio .team-logo{width:39px;height:35px;max-width:39px;max-height:35px;object-fit:contain}
+.nhl-uncalculated{font-size:11px;color:#9fb5df;margin-top:9px}
+.nhl-empty{border-color:#3b4d83}
+@media(max-width:700px){.nhl-studio .match-team img{width:30px;height:30px;max-width:30px;max-height:30px}.nhl-studio .match-team span{font-size:12px}.nhl-day strong{font-size:12px;text-align:center}.nhl-market-tabs{display:flex;overflow-x:auto;flex-wrap:nowrap}.nhl-market-tabs button{white-space:nowrap}}
