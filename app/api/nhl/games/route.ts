@@ -3,7 +3,7 @@ export const dynamic='force-dynamic';
 type EspnEvent={id:string;date:string;name?:string;status?:{type?:{description?:string;completed?:boolean;state?:string}};competitions?:Array<{competitors?:Array<{homeAway?:string;score?:string;team?:{displayName?:string;abbreviation?:string;logo?:string}}>} >};
 export async function GET(request:Request){
  const date=new URL(request.url).searchParams.get('date')||new Date().toISOString().slice(0,10);
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))return NextResponse.json({error:'Date invalide'},{status:400});
+ if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date))return NextResponse.json({error:'Date invalide'},{status:400});
  const dateKey=date.replaceAll('-','');
  try{
   const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates='+dateKey,{next:{revalidate:120}});
