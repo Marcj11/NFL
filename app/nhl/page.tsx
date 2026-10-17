@@ -1,3 +1,4 @@
+import './nhl-style.css';
 'use client';
 import {useEffect,useState} from 'react';
 type Team={name:string;abbr:string;logo:string;score:string|null};
