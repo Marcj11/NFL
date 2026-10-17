@@ -19,7 +19,7 @@ function bestOffers(games:OddsGame[],category:string){
   if(!prior)unique.set(key,{game,offer,books:1});
   else {prior.books++;if(offer.odds>prior.offer.odds)prior.offer=offer}
  }}
- const values=[...unique.values()].sort((a,b)=>a.game.date.localeCompare(b.game.date)||b.offer.odds-a.offer.odds);
+ const values=[...unique.values()].sort((a,b)=>a.game.id.localeCompare(b.game.id)||b.offer.odds-a.offer.odds);
  const market=category==='Moneyline'?'h2h':category==='Handicaps'?'spreads':category==='Totaux'?'totals':category==='Top 5 général'?'h2h':null;
  return market?values.filter(x=>x.offer.market===market).slice(0,30):[];
 }
