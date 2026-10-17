@@ -17,3 +17,15 @@
 .nhl-root .studio-quick-symbol{filter:grayscale(.3)}
 .nhl-root .studio-quick-arrow{color:#bbd4e5!important}
 @media(max-width:700px){.nhl-root .nhl-command-hero{min-height:0;padding:17px!important}.nhl-root .heavy-home-stage{gap:14px}.nhl-root .heavy-home-copy h1{font-size:clamp(34px,10vw,48px)}.nhl-root .heavy-home-feature{min-width:0}.nhl-root .studio-spotlight-grid,.nhl-root .studio-quick-grid{grid-template-columns:1fr 1fr!important}.nhl-root .studio-quick-card{min-width:0}.nhl-root .studio-weekly-spotlight,.nhl-root .studio-quick-access{padding:14px!important}}
+
+/* Readable NHL bookmaker odds on narrow phones */
+.nhl-root .nhl-odds-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;width:100%;min-width:0}
+.nhl-root .nhl-odds-game{min-width:0;overflow:hidden;background:linear-gradient(145deg,#293e50,#1d2e3c);border:1px solid #4c6376;border-radius:13px;padding:17px;display:flex;flex-direction:column;gap:13px}
+.nhl-root .nhl-odds-game>b{font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.nhl-root .nhl-odds-game>small{display:block;color:#b9cbd8;font-size:12px;margin-top:-7px}
+.nhl-root .nhl-odds-game>div{display:grid;gap:8px;border-top:1px solid #42586a;padding-top:11px;min-width:0}
+.nhl-root .nhl-odds-game>div>small{font-size:11px;letter-spacing:.08em;color:#bbcedb;text-transform:uppercase}
+.nhl-root .nhl-odds-prices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0}
+.nhl-root .nhl-odds-prices>span{display:flex;flex-direction:column;gap:7px;min-width:0;padding:11px;background:#142635;border:1px solid #3e576b;border-radius:9px;color:#c8d6e1;font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.nhl-root .nhl-odds-prices strong{display:block;font-size:23px;line-height:1;color:#f0f5f8;font-variant-numeric:tabular-nums}
+@media(max-width:700px){.nhl-root .nhl-odds-list{grid-template-columns:minmax(0,1fr);gap:11px}.nhl-root .nhl-odds-game{padding:13px}.nhl-root .nhl-odds-prices strong{font-size:21px}}
