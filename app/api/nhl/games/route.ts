@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
-type EspnEvent={id:string;date:string;name?:string;status?:{type?:{description?:string;completed?:boolean;state?:string}};competitions?:Array<{competitors?:Array<{homeAway?:string;score?:string;team?:{displayName?:string;abbreviation?:string;logo?:string}}>} >};
+type EspnEvent={id:string;date:string;status?:{type?:{description?:string;completed?:boolean;state?:string}};competitions?:Array<{competitors?:Array<{homeAway?:string;score?:string;team?:{displayName?:string;abbreviation?:string;logo?:string}}>}>};
 export async function GET(request:Request){
  const date=new URL(request.url).searchParams.get('date')||new Date().toISOString().slice(0,10);
  if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date))return NextResponse.json({error:'Date invalide'},{status:400});
