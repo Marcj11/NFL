@@ -1,6 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 export const dynamic="force-dynamic";
 const base="https://site.api.espn.com/apis/site/v2/sports/hockey/nhl";
+const scalar=(x:any):string|null=>x==null?null:typeof x==="string"||typeof x==="number"?String(x):typeof x==="object"?scalar(x.displayValue??x.value??null):null;
 export async function GET(req:NextRequest){
  const kind=req.nextUrl.searchParams.get("kind")||"scoreboard";
  const day=req.nextUrl.searchParams.get("date")||new Date().toISOString().slice(0,10);
@@ -24,8 +25,8 @@ export async function GET(req:NextRequest){
  }
  const games=(data.events||[]).map((e:any)=>{
  const comp=e.competitions?.[0];const home=comp?.competitors?.find((t:any)=>t.homeAway==="home");const away=comp?.competitors?.find((t:any)=>t.homeAway==="away");
- const team=(t:any)=>({name:t?.team?.displayName||"",abbr:t?.team?.abbreviation||"",logo:t?.team?.logo||null,score:t?.score??null});
- return {id:String(e.id),date:e.date,status:e.status?.type?.name||"",statusText:e.status?.type?.shortDetail||"",period:e.status?.period||0,clock:e.status?.displayClock||"",home:team(home),away:team(away)};
+ const team=(t:any)=>({name:scalar(t?.team?.displayName)||"",abbr:t?.team?.abbreviation||"",logo:t?.team?.logo||null,score:scalar(t?.score)});
+ return {id:String(e.id),date:e.date,status:e.status?.type?.name||"",statusText:scalar(e.status?.type?.shortDetail)||"",period:e.status?.period||0,clock:e.status?.displayClock||"",home:team(home),away:team(away)};
  }).filter((g:any)=>g.home.abbr&&g.away.abbr);
  return NextResponse.json({source:"ESPN",updatedAt:new Date().toISOString(),games});
  }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"ESPN unavailable"},{status:502})}
