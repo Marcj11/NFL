@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import "./nhl.css";
+import NhlErrorBoundary from "./error-boundary";
 type Club={abbr:string;name:string;division:string};
 type Game={id:string;date:string;state:string;statusText:string;period:number;clock:string;home:{abbr:string;name:string;score:string|null;logo:string|null};away:{abbr:string;name:string;score:string|null;logo:string|null}};
 const clubs:Club[]=[
@@ -23,7 +24,7 @@ export default function NHLHome(){
  const filtered=useMemo(()=>clubs.filter(t=>(division==="Toutes"||t.division===division)&&
  (t.name+" "+t.abbr).toLowerCase().includes(search.toLowerCase())),[division,search]);
  const club=clubs.find(t=>t.abbr===selected)||clubs[0];
- return <div className="nhl-root"><div className="nhl-shell">
+ return <NhlErrorBoundary><div className="nhl-root"><div className="nhl-shell">
  <nav className="nhl-bottom-nav mobile-bottom-nav" aria-label="Navigation mobile NHL Studio">{["Accueil","Matchs","Top paris","Paris en cours","Bilan de saison","Le Vestiaire"].map((name)=><button type="button" key={name} aria-current={activeModule===name?"page":undefined} onClick={()=>{ACTIVE(name);window.scrollTo({top:0,behavior:"smooth"})}}>{name}</button>)}</nav><aside className={mobileMenu?"nhl-side studio-sidebar open":"nhl-side studio-sidebar"}>
  <div className="studio-brand studio-heavyballs-brand"><span className="studio-heavyballs-kicker">NATIONAL HOCKEY LEAGUE</span><div className="studio-heavyballs-wordmark"><strong className="studio-heavyballs-heavy">NHL</strong><strong className="studio-heavyballs-bet">STUDIO<span className="studio-heavyballs-line"/></strong></div><div className="studio-heavyballs-motto">LE HOCKEY. <b>LES CHIFFRES.</b></div></div><div className="studio-sidebar-section">COMMAND CENTER</div>
  <nav aria-label="Navigation NHL Studio">{["Accueil","Matchs","Top paris","Paris en cours","Bilan de saison","Le Vestiaire"].map(name=><button type="button" key={name} className={activeModule===name?"studio-sidebar-link current":"studio-sidebar-link"} onClick={()=>{ACTIVE(name);setMobileMenu(false);window.scrollTo({top:0,behavior:"smooth"})}}>{name}<span>›</span></button>)}</nav>
@@ -48,5 +49,5 @@ export default function NHLHome(){
  <section className="nhl-panel" id="props"><div className="nhl-heading"><div><small>JOUEURS</small><h2>Props joueurs</h2></div></div><div className="nhl-empty">Buteurs, tirs, points et arrêts : connexion à venir.</div></section>
  </div><div style={{display:activeModule==="Bilan de saison"?undefined:"none"}}><section className="nhl-panel" id="profits"><div className="nhl-heading"><div><small>PORTEFEUILLE</small><h2>Suivi P&L · CAD</h2></div></div><div className="nhl-kpis"><div><small>MISES NHL</small><b>— CAD</b></div><div><small>PROFIT / PERTE</small><b>— CAD</b></div></div><p>Historique NHL distinct de la NFL. Synchronisation à venir.</p></section>
  </div></div></div><footer className="nhl-footer">NHL Studio · Interface expérimentale · Ne présente aucune recommandation de mise validée.</footer>
- </main></div></div>
+ </main></div></div></NhlErrorBoundary>
 }
