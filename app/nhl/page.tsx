@@ -1,5 +1,5 @@
-import './nhl-style.css';
 'use client';
+import './nhl-style.css';
 import {useEffect,useState} from 'react';
 type Team={name:string;abbr:string;logo:string;score:string|null};
 type Game={id:string;date:string;status:string;statusText:string;completed:boolean;home:Team;away:Team};
