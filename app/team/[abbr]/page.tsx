@@ -137,7 +137,7 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
  <h2 style={{color:'#fff',fontSize:'clamp(23px,3vw,34px)',margin:'9px 0'}}>Les meilleurs paris individuels de chaque côté</h2>
  <p style={{color:'#b6d1e4',fontSize:13}}>Valeur espérée théorique positive, cotes disponibles et tendances historiques. Estimations exploratoires non calibrées : aucune proposition inventée pour atteindre cinq.</p>
  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,350px),1fr))',gap:18}}>
- {[data.next.away_team_id,data.next.home_team_id].map(team=><div key={team} style={{background:'#081d32',border:'1px solid '+(teams[team]?.[1]||'#3f83b9'),borderRadius:19,padding:15}}>
+ {[data.next!.away_team_id,data.next!.home_team_id].map(team=><div key={team} style={{background:'#081d32',border:'1px solid '+(teams[team]?.[1]||'#3f83b9'),borderRadius:19,padding:15}}>
  <h3 style={{color:'#fff',fontSize:21,margin:'0 0 14px'}}>🏈 {teams[team]?.[0]||team}</h3>
  {(analysis.propsByTeam?.[team]||[]).length?(analysis.propsByTeam?.[team]||[]).map((pick,i)=><article key={pick.player+pick.market+pick.point+pick.side+i} style={{border:'1px solid #387bad',background:'linear-gradient(135deg,#174161,#0b1b30)',padding:15,borderRadius:15,marginBottom:12}}>
  <div style={{color:'#88dfff',fontSize:12,fontWeight:900}}>#{i+1} · {pick.player}</div>
@@ -145,7 +145,7 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
  <div style={{display:'flex',justifyContent:'space-between',gap:6,color:'#d6e8f5',fontSize:13}}><span>Cote <b>{pick.decimal.toFixed(2)}</b></span><span>Modèle <b>{(pick.probability*100).toFixed(1)} %</b></span></div>
  <div style={{color:'#69f5bf',fontSize:17,fontWeight:900,marginTop:10}}>EV théorique +{(pick.expected_value*100).toFixed(1)} %</div>
  <p style={{fontSize:12,color:'#bbd6ea'}}>{pick.angle}</p>
- <MatchBetEntry pick={{...pick,status:'experimental_unvalidated',signal:0}} gameId={data.next.game_id} game={(teams[data.next.away_team_id]?.[0]||'Visiteurs')+' vs '+(teams[data.next.home_team_id]?.[0]||'Domicile')} team={team}/>
+ <MatchBetEntry pick={{...pick,status:'experimental_unvalidated',signal:0}} gameId={data.next!.game_id} game={(teams[data.next!.away_team_id]?.[0]||'Visiteurs')+' vs '+(teams[data.next!.home_team_id]?.[0]||'Domicile')} team={team}/>
  </article>):<p style={{color:'#bcd4e4',fontSize:13}}>Aucun prop de cette équipe avec données historiques, cote et EV positive vérifiables pour l'instant.</p>}
  </div>)}
  </div></section>}
