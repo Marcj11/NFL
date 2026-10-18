@@ -50,8 +50,8 @@ const betGoal=(b:Bet):number|null=>{
  const fallback=label.match(/(?:over|plus de)\s*(\d+(?:[.,]\d+)?)/i);
  return fallback?Math.floor(Number(fallback[1].replace(',','.')))+1:null;
 };
-type Mood='good'|'neutral'|'bad';
-const moodTheme=(m:Mood)=>m==='good'?{background:'linear-gradient(145deg,#225f49,#163f37 70%,#112f34)',border:'1px solid #57efa8',boxShadow:'inset 0 0 35px #44ff981e,0 0 16px #4cff9a24'}:m==='bad'?{background:'linear-gradient(145deg,#713444,#4a2938 70%,#302633)',border:'1px solid #ff8596',boxShadow:'inset 0 0 35px #ff648c1a,0 0 16px #ff648c26'}:{background:'linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)',border:'1px solid #ffc477',boxShadow:'inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920'};
+type Mood='won'|'good'|'neutral'|'bad';
+const moodTheme=(m:Mood)=>m==='won'?{background:'linear-gradient(135deg,#563800,#ae7900 35%,#f6d25b 65%,#654400)',border:'2px solid #ffe88a',boxShadow:'0 0 24px #ffd54a99,0 0 48px #ffbf0080,inset 0 0 34px #fff2a84c'}:m==='good'?{background:'linear-gradient(145deg,#225f49,#163f37 70%,#112f34)',border:'1px solid #57efa8',boxShadow:'inset 0 0 35px #44ff981e,0 0 16px #4cff9a24'}:m==='bad'?{background:'linear-gradient(145deg,#713444,#4a2938 70%,#302633)',border:'1px solid #ff8596',boxShadow:'inset 0 0 35px #ff648c1a,0 0 16px #ff648c26'}:{background:'linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)',border:'1px solid #ffc477',boxShadow:'inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920'};
 function ticketMood(b:Bet,feed:Feed):Mood{
  if(b.market==='parlay'&&b.legs?.length){
   const states=b.legs.map(leg=>{
@@ -66,25 +66,25 @@ function ticketMood(b:Bet,feed:Feed):Mood{
   });
   return states.some(s=>s<0)?'bad':states.some(s=>s>0)?'good':'neutral';
  }
- const g=feed.games.find(g=>match(b.game,g));if(!g||g.state!=='in')return 'neutral';
+ const g=feed.games.find(g=>match(b.game,g));if(!g||g.state==='pre')return 'neutral';
  const actual=measure(b,feed.players[g.id]||[]);
  const line=Number(b.line),hasLine=b.line!==undefined&&b.line!==null&&Number.isFinite(line)&&line>=0;
  if(b.market==='props'){
   const goal=betGoal(b);
   if(!actual||!goal)return 'neutral';
   const progress=100*actual.value/goal;
-  return actual.value>=goal||progress>=65?'good':progress<25?'bad':'neutral';
+  return actual.value>=goal?'won':g.complete?'bad':progress>=65?'good':progress<25?'bad':'neutral';
  }
  if(b.market==='moneyline'||b.market==='spreads'){
   const home=sideMatch(b.team,g.home),away=sideMatch(b.team,g.away);
   if(!home&&!away)return 'neutral';
   const margin=home?g.home.score-g.away.score:g.away.score-g.home.score;
   const adjusted=margin+(b.market==='spreads'&&hasLine?line:0);
-  return adjusted>0?'good':adjusted<0?'bad':'neutral';
+  return adjusted>0?(g.complete?'won':'good'):adjusted<0?'bad':'neutral';
  }
  return 'neutral';
 }
-const moodLabel=(m:Mood)=>m==='good'?'🟢 FAVORABLE':m==='bad'?'🔴 DÉFAVORABLE':'🟠 À SURVEILLER';
+const moodLabel=(m:Mood)=>m==='won'?'🏆 JACKPOT · PARI GAGNÉ':m==='good'?'🟢 FAVORABLE':m==='bad'?'🔴 DÉFAVORABLE':'🟠 À SURVEILLER';
 function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const game=feed.games.find(g=>match(b.game,g));
  const [portrait,SET_PORTRAIT]=useState<string|null>(null);
@@ -113,10 +113,11 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const cover=b.market==='spreads'&&diff!==null&&hasLine?diff+line:null;
  const money=b.market==='moneyline'&&diff!==null?diff:null;
  const scoreRelevant=b.market==='spreads'||b.market==='moneyline'||b.market==='totals';
- const mood:Mood=game.state!=='in'?'neutral':isProp?(reached?'good':progress!==null&&progress>=65?'good':progress!==null&&progress<25?'bad':'neutral'):cover!==null?(cover>0?'good':cover<0?'bad':'neutral'):money!==null?(money>0?'good':money<0?'bad':'neutral'):'neutral';
+ const mood:Mood=ticketMood(b,feed);
  const barColor=reached?'linear-gradient(90deg,#18e7bd,#83ffe4)':'linear-gradient(90deg,#00c9ff,#38a5ff,#7e6eff)';
  const label=actual?.label==='rush yds'?'verges au sol':actual?.label==='reception yds'?'verges en réception':actual?.label==='pass yds'?'verges à la passe':actual?.label==='receptions'?'réceptions':actual?.label||'statistique';
- return <article className="studio-live-ticket" data-mood={mood} style={{padding:'22px 19px',borderRadius:22,...moodTheme(mood),overflow:'hidden'}}>
+ return <article className="studio-live-ticket" data-mood={mood} style={{padding:'22px 19px',borderRadius:22,...moodTheme(mood),overflow:'hidden',position:'relative'}}>
+  {mood==='won'&&<><style>{`@keyframes smGoldSweep{0%{transform:translateX(-170%) skewX(-20deg)}100%{transform:translateX(370%) skewX(-20deg)}}@keyframes smGoldPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.22)}}@media(prefers-reduced-motion:reduce){.sm-gold-shine,.sm-gold-badge{animation:none!important}}`}</style><div className="sm-gold-shine" aria-hidden="true" style={{position:'absolute',inset:0,pointerEvents:'none',background:'linear-gradient(95deg,transparent 25%,#fff9cb88 46%,transparent 65%)',width:'55%',animation:'smGoldSweep 2.6s linear infinite',zIndex:1}}/><div className="sm-gold-badge" style={{position:'relative',zIndex:2,background:'linear-gradient(110deg,#fff7aa,#ffd24a,#fff1ab)',color:'#573800',fontSize:19,fontWeight:1000,textAlign:'center',padding:'12px',marginBottom:12,borderRadius:14,letterSpacing:1,boxShadow:'0 0 24px #ffe168',animation:'smGoldPulse 1.8s ease-in-out infinite'}}>✨🏆 CASH IT! PARI ATTEINT! 💰✨</div></>}
   <div style={{fontSize:12,fontWeight:950,letterSpacing:1.1,color:'#ffffff',marginBottom:7}}>{moodLabel(mood)}</div>
   <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status}{game.clock&&game.state==='in'?' · '+game.clock:''}</span></div><div className="studio-live-matchup"><TeamLogo abbr={game.away.abbr} size={37}/><span>{game.away.abbr}</span><b>VS</b><span>{game.home.abbr}</span><TeamLogo abbr={game.home.abbr} size={37}/></div>
   {isProp?<div style={{display:'flex',alignItems:'center',gap:16,margin:'18px 0'}}>
@@ -219,7 +220,7 @@ export default function LiveBetTracker({bets,allBets}:{bets:Bet[];allBets:Bet[]}
  };
  const visible=matches.filter(b=>statusOf(b)===order).filter(b=>marketFilter==='all'||marketFilter==='parlay'&&b.market==='parlay'||marketFilter==='props'&&b.market==='props'||marketFilter==='game'&&b.market!=='props'&&b.market!=='parlay').sort((a,b)=>{
   const time=(bet:Bet)=>{const first=bet.market==='parlay'&&bet.legs?.length?bet.legs[0].game:bet.game;return Date.parse(feed?.games.find(g=>match(first,g))?.date||'')||0};
-  if(feed){const rank:Record<Mood,number>={good:0,neutral:1,bad:2};const difference=rank[ticketMood(a,feed)]-rank[ticketMood(b,feed)];if(difference!==0)return difference;}
+  if(feed){const rank:Record<Mood,number>={won:0,good:1,neutral:2,bad:3};const difference=rank[ticketMood(a,feed)]-rank[ticketMood(b,feed)];if(difference!==0)return difference;}
   return order==='upcoming'?time(a)-time(b):time(b)-time(a);
  });
  if(!bets.length)return <section className="studio-live"><div className="studio-live-grid"><DailyBetsTicket bets={allBets}/></div></section>;
