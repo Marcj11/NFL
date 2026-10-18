@@ -11,7 +11,7 @@ type Feed={status:string;games:Game[];players:Record<string,Player[]>;updatedAt:
 const logoUrl=(abbr:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+(({LA:'lar',WSH:'wsh'} as Record<string,string>)[abbr]||abbr).toLowerCase()+'.png';
 const TeamLogo=({abbr,size=36}:{abbr:string;size?:number})=><img src={logoUrl(abbr)} alt={'Logo '+abbr} loading="lazy" style={{width:size,height:size,objectFit:'contain',filter:'drop-shadow(0 0 8px #42caff55)',flexShrink:0}}/>;
 const tidy=(s:string)=>s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
-const playerKey=(s:string)=>tidy(s).replace(/\s+/g,'');
+const playerKey=(s:string)=>tidy(s).replace(/\b(jr|sr|ii|iii|iv|v)\b/g,'').replace(/\s+/g,'');
 const sideMatch=(raw:string,t:Team)=>{const part=tidy(raw),name=tidy(t.name),short=tidy(t.abbr==='LAR'?'LA':t.abbr==='WSH'?'WAS':t.abbr);return part===name||part===short||part===name.split(' ').slice(-1)[0]};
 const match=(name:string,g:Game)=>{const sides=name.split(/\s+vs\s+/i);return sides.length===2&&sideMatch(sides[0],g.away)&&sideMatch(sides[1],g.home)};
 function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
