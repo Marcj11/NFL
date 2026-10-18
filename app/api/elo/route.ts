@@ -26,7 +26,7 @@ export async function GET(request:Request){
   }
   // Capture both victory and defeat probabilities BEFORE kickoff; never overwrite snapshots.
   // The history replay is reproducible from recorded model_version and timestamp.
-  const recordedAt=new Date().toISOString();
+  const recordedAt=new Date(Math.floor(Date.now()/3600000)*3600000).toISOString();
   const snapshots=output.filter(g=>Date.parse(g.kickoff_utc)>Date.now()).flatMap(g=>
     [{selection:g.home_team_id,probability:g.home_win_probability},{selection:g.away_team_id,probability:g.away_win_probability}].map(side=>{
       const record={model_version:'elo-recovery-v1',game_id:g.game_id,kickoff_utc:g.kickoff_utc,category:'moneyline',market:'h2h',selection:side.selection,selection_key:g.game_id+'|'+side.selection,estimated_probability:side.probability,recommendation:'non_evalue',scope:'all_games',scope_key:'week:'+week,inputs_asof:recordedAt,reasoning:{algorithm:'Elo ratings replay; initial 1500, K=24, home advantage=55; not independently calibrated'},prediction_context:{opponent:side.selection===g.home_team_id?g.away_team_id:g.home_team_id,recorded_at:recordedAt},data_quality:{historical_accuracy_verified:false,betting_recommendations:false}};
