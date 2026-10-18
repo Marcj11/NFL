@@ -9,10 +9,16 @@ export async function GET(request:Request){
  const base=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!base||!key)return NextResponse.json({error:'elo_unavailable',games:[]},{status:503});
  try{
-  const q=new URLSearchParams({select:'game_id,week,season,kickoff_utc,home_team_id,away_team_id,status,game_results(home_score,away_score)',season:'gte.2022',order:'kickoff_utc.asc',limit:'10000'});
-  const response=await fetch(base+'/rest/v1/games?'+q,{headers:{apikey:key,Authorization:'Bearer '+key},cache:'no-store',signal:AbortSignal.timeout(15000)});
-  if(!response.ok)throw Error('games_'+response.status);
-  const all=await response.json() as Game[];
+  // PostgREST enforces a server row cap. Page explicitly to avoid dropping newer games.
+  const all:Game[]=[];
+  for(let offset=0;offset<10000;offset+=500){
+   const q=new URLSearchParams({select:'game_id,week,season,kickoff_utc,home_team_id,away_team_id,status,game_results(home_score,away_score)',season:'gte.2022',order:'kickoff_utc.asc',limit:'500',offset:String(offset)});
+   const response=await fetch(base+'/rest/v1/games?'+q,{headers:{apikey:key,Authorization:'Bearer '+key},cache:'no-store',signal:AbortSignal.timeout(15000)});
+   if(!response.ok)throw Error('games_'+response.status);
+   const page=await response.json() as Game[];
+   all.push(...page);
+   if(page.length<500)break;
+  }
   const ratings=new Map<string,number>();const output:any[]=[];let settled=0;
   for(const g of all){
    const h=ratings.get(g.home_team_id)??1500,a=ratings.get(g.away_team_id)??1500;
