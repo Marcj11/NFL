@@ -27,6 +27,9 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
  const num=choice[0]==='player_pass_completions'?Number(val.split('/')[0]):Number(val);
  return Number.isFinite(num)?{value:num,label:choice[0].replaceAll('player_','').replaceAll('_',' ')}:null;
 }
+type Mood='good'|'neutral'|'bad';
+const moodTheme=(m:Mood)=>m==='good'?{background:'linear-gradient(145deg,#225f49,#163f37 70%,#112f34)',border:'1px solid #57efa8',boxShadow:'inset 0 0 35px #44ff981e,0 0 16px #4cff9a24'}:m==='bad'?{background:'linear-gradient(145deg,#713444,#4a2938 70%,#302633)',border:'1px solid #ff8596',boxShadow:'inset 0 0 35px #ff648c1a,0 0 16px #ff648c26'}:{background:'linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)',border:'1px solid #ffc477',boxShadow:'inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920'};
+const moodLabel=(m:Mood)=>m==='good'?'🟢 FAVORABLE':m==='bad'?'🔴 DÉFAVORABLE':'🟠 À SURVEILLER';
 function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const game=feed.games.find(g=>match(b.game,g));
  const [portrait,SET_PORTRAIT]=useState<string|null>(null);
@@ -55,9 +58,11 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const cover=b.market==='spreads'&&diff!==null&&hasLine?diff+line:null;
  const money=b.market==='moneyline'&&diff!==null?diff:null;
  const scoreRelevant=b.market==='spreads'||b.market==='moneyline'||b.market==='totals';
+ const mood:Mood=game.state!=='in'?'neutral':isProp?(reached?'good':progress!==null&&progress>=65?'good':progress!==null&&progress<25?'bad':'neutral'):cover!==null?(cover>0?'good':cover<0?'bad':'neutral'):money!==null?(money>0?'good':money<0?'bad':'neutral'):'neutral';
  const barColor=reached?'linear-gradient(90deg,#18e7bd,#83ffe4)':'linear-gradient(90deg,#00c9ff,#38a5ff,#7e6eff)';
  const label=actual?.label==='rush yds'?'verges au sol':actual?.label==='reception yds'?'verges en réception':actual?.label==='pass yds'?'verges à la passe':actual?.label==='receptions'?'réceptions':actual?.label||'statistique';
- return <article className="studio-live-ticket" style={{padding:'22px 19px',borderRadius:22,background:'linear-gradient(155deg,#0d2546,#081429 82%)',border:'1px solid rgba(0,220,255,.65)',boxShadow:'0 0 26px rgba(0,210,255,.12)',overflow:'hidden'}}>
+ return <article className="studio-live-ticket" style={{padding:'22px 19px',borderRadius:22,...moodTheme(mood),overflow:'hidden'}}>
+  <div style={{fontSize:12,fontWeight:950,letterSpacing:1.1,color:'#ffffff',marginBottom:7}}>{moodLabel(mood)}</div>
   <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status}{game.clock&&game.state==='in'?' · '+game.clock:''}</span></div><div className="studio-live-matchup"><TeamLogo abbr={game.away.abbr} size={37}/><span>{game.away.abbr}</span><b>VS</b><span>{game.home.abbr}</span><TeamLogo abbr={game.home.abbr} size={37}/></div>
   {isProp?<div style={{display:'flex',alignItems:'center',gap:16,margin:'18px 0'}}>
     <div style={{width:100,height:122,border:'1px solid #299dc7',borderRadius:14,background:'linear-gradient(155deg,#154568,#08182e)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
@@ -114,9 +119,11 @@ function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
   return {leg,status,detail:game.away.abbr+' '+game.away.score+' – '+game.home.abbr+' '+game.home.score+(game.complete?' · FINAL':game.state==='in'?' · LIVE':' · À venir')};
  });
  const won=states.filter(x=>x.status==='won').length,lost=states.filter(x=>x.status==='lost').length,active=states.filter(x=>x.status==='leading').length;
+ const parlayMood:Mood=states.some(x=>x.status==='lost'||x.status==='trailing')?'bad':states.some(x=>x.status==='leading'||x.status==='won')?'good':'neutral';
  const overall=lost?'UNE BRANCHE PERDUE':won===states.length?'TOUTES LES BRANCHES GAGNÉES':active?'DES BRANCHES EN BONNE POSITION':'EN ATTENTE';
- return <article className="studio-live-ticket" style={{padding:22,border:'1px solid #be75ff',borderRadius:22,background:'linear-gradient(145deg,#161331,#09243d)',boxShadow:'0 0 24px #ae74ff24'}}>
+ return <article className="studio-live-ticket" style={{padding:22,borderRadius:22,...moodTheme(parlayMood)}}>
   <div style={{color:'#ebb4ff',fontWeight:900,letterSpacing:1}}>💥 {b.selection.startsWith('Heavyball')?'HEAVYBALL PARLAY':'PARLAY'} · {legs.length} BRANCHES</div>
+  <div style={{fontSize:12,fontWeight:950,color:'#fff',marginTop:8}}>{moodLabel(parlayMood)}</div>
   <h3 style={{fontSize:22,margin:'12px 0'}}>{overall}</h3>
   <div style={{height:14,borderRadius:20,background:'#25334e',overflow:'hidden'}}><div style={{height:'100%',width:(legs.length?100*won/legs.length:0)+'%',background:'linear-gradient(90deg,#8a4fff,#27efc7)',boxShadow:'0 0 16px #a47fff',transition:'width 700ms'}}/></div>
   <p style={{color:'#c9d4ed',margin:'8px 0 15px'}}>{won} / {legs.length} branches officiellement gagnées · {active} favorable(s) en direct</p>
