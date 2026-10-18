@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-type Bet={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;player?:string;team:string;status:string;stake?:number;chosenOdds?:number};
+type Bet={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;player?:string;team:string;status:string;stake?:number;chosenOdds?:number;legs?:Array<{game:string;selection:string;market:string;odds:number;probability:number}>};
 type Team={abbr:string;name:string;score:number};
 type Game={id:string;date:string;home:Team;away:Team;status:string;state:string;clock:string;period:number;complete:boolean};
 type Player={name:string;category:string;values:Record<string,string>};
@@ -94,6 +94,38 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
   <small>ESPN · Mise à jour {new Date(feed.updatedAt).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto',hour:'2-digit',minute:'2-digit'})}. {game.state==='pre'?'Match à venir.':isProp&&!actual?'Statistiques individuelles non encore disponibles.':'Résultat à confirmer selon le bookmaker.'}</small>
  </article>;
 }
+function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
+ const legs=b.legs||[];
+ const states=legs.map(leg=>{
+  const game=feed.games.find(g=>match(leg.game,g));
+  if(!game)return {leg,status:'unknown' as const,detail:'Match non disponible'};
+  const sides=leg.game.split(/\\s+vs\\s+/i);
+  const chosen=leg.selection.toLowerCase();
+  const homeSelected=chosen.includes(game.home.name.toLowerCase());
+  const awaySelected=chosen.includes(game.away.name.toLowerCase());
+  const side=homeSelected?game.home:awaySelected?game.away:null;
+  const other=homeSelected?game.away:awaySelected?game.home:null;
+  const handicap=leg.market==='spreads'?Number(leg.selection.match(/([+-]\\d+(?:\\.\\d+)?)/)?.[1]):0;
+  if(!side||!other)return {leg,status:'unknown' as const,detail:'Sélection non reconnue'};
+  const margin=side.score-other.score+(Number.isFinite(handicap)?handicap:0);
+  const status=game.complete?(margin>0?'won' as const:margin<0?'lost' as const:'push' as const):game.state==='in'?(margin>0?'leading' as const:'trailing' as const):'pending' as const;
+  return {leg,status,detail:game.away.abbr+' '+game.away.score+' – '+game.home.abbr+' '+game.home.score+(game.complete?' · FINAL':game.state==='in'?' · LIVE':' · À venir')};
+ });
+ const won=states.filter(x=>x.status==='won').length,lost=states.filter(x=>x.status==='lost').length,active=states.filter(x=>x.status==='leading').length;
+ const overall=lost?'UNE BRANCHE PERDUE':won===states.length?'TOUTES LES BRANCHES GAGNÉES':active?'DES BRANCHES EN BONNE POSITION':'EN ATTENTE';
+ return <article className="studio-live-ticket" style={{padding:22,border:'1px solid #be75ff',borderRadius:22,background:'linear-gradient(145deg,#161331,#09243d)',boxShadow:'0 0 24px #ae74ff24'}}>
+  <div style={{color:'#ebb4ff',fontWeight:900,letterSpacing:1}}>💥 {b.selection.startsWith('Heavyball')?'HEAVYBALL PARLAY':'PARLAY'} · {legs.length} BRANCHES</div>
+  <h3 style={{fontSize:22,margin:'12px 0'}}>{overall}</h3>
+  <div style={{height:14,borderRadius:20,background:'#25334e',overflow:'hidden'}}><div style={{height:'100%',width:(legs.length?100*won/legs.length:0)+'%',background:'linear-gradient(90deg,#8a4fff,#27efc7)',boxShadow:'0 0 16px #a47fff',transition:'width 700ms'}}/></div>
+  <p style={{color:'#c9d4ed',margin:'8px 0 15px'}}>{won} / {legs.length} branches officiellement gagnées · {active} favorable(s) en direct</p>
+  {states.map((x,i)=><div key={i} style={{padding:'12px 0',borderTop:'1px solid #3c416b'}}>
+   <div style={{display:'flex',justifyContent:'space-between',gap:12}}><strong>{i+1}. {x.leg.selection}</strong><b style={{color:x.status==='won'?'#58ffd1':x.status==='lost'?'#ff829d':x.status==='leading'?'#8bf0df':'#d2baff'}}>{x.status==='won'?'✓ GAGNÉ':x.status==='lost'?'✕ PERDU':x.status==='leading'?'● FAVORABLE':x.status==='trailing'?'● DÉFAVORABLE':'EN ATTENTE'}</b></div>
+   <div style={{fontSize:13,color:'#b6cce5',marginTop:5}}>{x.detail} · cote {x.leg.odds.toFixed(2)}</div>
+  </div>)}
+  <p style={{fontWeight:800,color:'#aef9e4'}}>Mise {Number(b.stake||0).toFixed(2)} $ · Cote {Number(b.chosenOdds||0).toFixed(2)} · Retour possible {(Number(b.stake||0)*Number(b.chosenOdds||0)).toFixed(2)} $</p>
+  <small>ESPN actualisé {new Date(feed.updatedAt).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto'})} · Suivi indicatif; confirmation finale selon le bookmaker.</small>
+ </article>;
+}
 export default function LiveBetTracker({bets}:{bets:Bet[]}){
  const [feed,SET]=useState<Feed|null>(null),[alerts,ALERTS]=useState<string[]>([]);
  const past=useRef<Record<string,{away:number;home:number}>>({});
@@ -112,9 +144,9 @@ export default function LiveBetTracker({bets}:{bets:Bet[]}){
   SET(d);
  }).catch(()=>{});update();const timer=setInterval(update,45000);return()=>{active=false;clearInterval(timer)}},[]);
  if(!bets.length)return null;
- const matches=feed?.games?bets.filter(b=>feed.games.some(g=>match(b.game,g))):[];
+ const matches=feed?.games?bets.filter(b=>b.market==='parlay'&&b.legs?.length||feed.games.some(g=>match(b.game,g))):[];
  return <section className="studio-live"><div className="studio-live-head"><span>⚡ LIVE TRACKER · ESPN</span><h2>LES PARIS DES BOYS EN DIRECT</h2><p>Scores actualisés automatiquement aux 45 secondes. Progression des Props lorsque la statistique du joueur est disponible.</p></div>
  {alerts.length>0&&<div className="studio-live-alerts"><strong>🔔 LES NOUVELLES DU SCORE</strong>{alerts.map((alert,i)=><p key={i}>{alert}</p>)}</div>}
- {!feed?<p>On branche les tableaux de matchs…</p>:feed.status!=='ok'?<p>Les scores en direct sont momentanément indisponibles.</p>:matches.length===0?<p>Aucune de tes mises ouvertes ne correspond aux rencontres de la semaine suivie actuellement.</p>:<div className="studio-live-grid">{matches.map(b=><Ticket key={b.id} b={b} feed={feed}/>)}</div>}
+ {!feed?<p>On branche les tableaux de matchs…</p>:feed.status!=='ok'?<p>Les scores en direct sont momentanément indisponibles.</p>:matches.length===0?<p>Aucune de tes mises ouvertes ne correspond aux rencontres de la semaine suivie actuellement.</p>:<div className="studio-live-grid">{matches.map(b=>b.market==='parlay'&&b.legs?.length?<ParlayTicket key={b.id} b={b} feed={feed}/>:<Ticket key={b.id} b={b} feed={feed}/>)}</div>}
  </section>;
 }
