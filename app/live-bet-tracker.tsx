@@ -100,7 +100,7 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
   <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status}{game.clock&&game.state==='in'?' · '+game.clock:''}</span></div><div className="studio-live-matchup"><TeamLogo abbr={game.away.abbr} size={37}/><span>{game.away.abbr}</span><b>VS</b><span>{game.home.abbr}</span><TeamLogo abbr={game.home.abbr} size={37}/></div>
   {isProp?<div style={{display:'flex',alignItems:'center',gap:16,margin:'18px 0'}}>
     <div style={{width:100,height:122,border:'1px solid #299dc7',borderRadius:14,background:'linear-gradient(155deg,#154568,#08182e)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
-     {portrait?<img src={portrait} alt={'Portrait de '+b.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={()=>SET_PORTRAIT(null)}/>:<span style={{fontSize:40}}>🏈</span>}
+     {(/\bjames\s+cook\b/i.test([b.player,b.selection].filter(Boolean).join(' ')))?<span role="img" aria-label="Tas de merde" style={{fontSize:88,lineHeight:1}}>💩</span>:portrait?<img src={portrait} alt={'Portrait de '+b.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={()=>SET_PORTRAIT(null)}/>:<span style={{fontSize:40}}>🏈</span>}
     </div>
     <div style={{minWidth:0,flex:1}}>
       <div style={{fontSize:12,color:'#81dafa',letterSpacing:1.2,fontWeight:800}}>PROP JOUEUR · {game.away.abbr} vs {game.home.abbr}</div>
