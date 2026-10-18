@@ -3,7 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import LiveHighlights from './live-highlights';
 import HighlightTicket from './highlight-ticket';
 import DailyBetsTicket from './daily-bets-ticket';
-type Bet={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;player?:string;team:string;status:string;stake?:number;chosenOdds?:number;legs?:Array<{game:string;selection:string;market:string;odds:number;probability:number}>};
+type Bet={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;player?:string;team:string;status:string;stake?:number;chosenOdds?:number;legs?:Array<{game:string;selection:string;market:string;odds?:number;probability?:number;player?:string;marketKey?:string;line?:number}>};
 type Team={abbr:string;name:string;score:number};
 type Game={id:string;date:string;home:Team;away:Team;status:string;state:string;clock:string;period:number;complete:boolean};
 type Player={name:string;category:string;values:Record<string,string>};
@@ -162,7 +162,13 @@ function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
  const states=legs.map(leg=>{
   const game=feed.games.find(g=>match(leg.game,g));
   if(!game)return {leg,status:'unknown' as const,detail:'Match non disponible'};
-  const sides=leg.game.split(/\\s+vs\\s+/i);
+  if(leg.market==='props'){
+   const value=measure({id:'',game:leg.game,selection:leg.selection,market:'props',marketKey:leg.marketKey,player:leg.player,team:'',line:leg.line,status:'open'},feed.players[game.id]||[]);
+   const goal=betGoal({id:'',game:leg.game,selection:leg.selection,market:'props',line:leg.line,team:'',status:'open'});
+   if(!value||!goal)return {leg,status:'unknown' as const,detail:'Statistique individuelle indisponible'};
+   const met=value.value>=goal;
+   return {leg,status:met?'won' as const:game.complete?'lost' as const:game.state==='in'?'trailing' as const:'pending' as const,detail:value.value+' / '+goal+' · '+value.label};
+  }
   const chosen=leg.selection.toLowerCase();
   const homeSelected=chosen.includes(game.home.name.toLowerCase());
   const awaySelected=chosen.includes(game.away.name.toLowerCase());
@@ -185,7 +191,7 @@ function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
   <p style={{color:'#c9d4ed',margin:'8px 0 15px'}}>{won} / {legs.length} branches officiellement gagnées · {active} favorable(s) en direct</p>
   {states.map((x,i)=><div key={i} style={{padding:'12px 0',borderTop:'1px solid #3c416b'}}>
    <div style={{display:'flex',justifyContent:'space-between',gap:12}}><strong>{i+1}. {x.leg.selection}</strong><b style={{color:x.status==='won'?'#58ffd1':x.status==='lost'?'#ff829d':x.status==='leading'?'#8bf0df':'#d2baff'}}>{x.status==='won'?'✓ GAGNÉ':x.status==='lost'?'✕ PERDU':x.status==='leading'?'● FAVORABLE':x.status==='trailing'?'● DÉFAVORABLE':'EN ATTENTE'}</b></div>
-   <div style={{display:'flex',alignItems:'center',gap:7,marginTop:5}}>{(()=>{const g=feed.games.find(g=>match(x.leg.game,g));return g?<><TeamLogo abbr={g.away.abbr} size={24}/><TeamLogo abbr={g.home.abbr} size={24}/></>:null})()}<span style={{fontSize:12,color:'#b6cce5'}}>{x.detail} · cote {x.leg.odds.toFixed(2)}</span></div>
+   <div style={{display:'flex',alignItems:'center',gap:7,marginTop:5}}>{(()=>{const g=feed.games.find(g=>match(x.leg.game,g));return g?<><TeamLogo abbr={g.away.abbr} size={24}/><TeamLogo abbr={g.home.abbr} size={24}/></>:null})()}<span style={{fontSize:12,color:'#b6cce5'}}>{x.detail}{typeof x.leg.odds==='number'&&x.leg.odds>1?' · cote '+x.leg.odds.toFixed(2):''}</span></div>
   </div>)}
   <p style={{fontWeight:800,color:'#aef9e4'}}>Mise {Number(b.stake||0).toFixed(2)} $ · Cote {Number(b.chosenOdds||0).toFixed(2)} · Retour possible {(Number(b.stake||0)*Number(b.chosenOdds||0)).toFixed(2)} $</p>
   <small>ESPN actualisé {new Date(feed.updatedAt).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto'})} · Suivi indicatif; confirmation finale selon le bookmaker.</small>
