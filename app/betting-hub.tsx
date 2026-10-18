@@ -23,6 +23,9 @@ const teamCodes:Record<string,string>={'Buffalo Bills':'BUF','Las Vegas Raiders'
 const teamFrom=(s:string)=>Object.entries(teamCodes).find(([name])=>s.includes(name))?.[1];
 const teamSides=(s:string)=>s.split(' vs ').map(teamFrom).filter((v):v is string=>Boolean(v));
 function PlayerPortrait({player,game}:{player:string;game:string}){
+ const isCookPrank=/^james\s+cook(?:\s+(?:ii|iii|jr\.?))?$/i.test(player.trim());
+ const prankPhoto='https://p.turbosquid.com/ts-thumb/Qa/jCAexo/vXUfn4aF/0001/jpg/1583931806/600x600/fit_q87/26b93bda759b316959e6368b0864af9a783f6772/0001.jpg';
+ const [prankFailed,SET_PRANK_FAILED]=useState(false);
  const [source,SET_SOURCE]=useState<string|null>(null),[status,SET_STATUS]=useState('loading');
  useEffect(()=>{
   let alive=true;SET_SOURCE(null);SET_STATUS('loading');
@@ -35,7 +38,7 @@ function PlayerPortrait({player,game}:{player:string;game:string}){
   return()=>{alive=false};
  },[player,game]);
  return <div className="player-feature"><div className="player-electric" aria-hidden="true"/>
-  {source&&status==='ready'?<img className="player-action-image" src={source} alt={'Portrait ESPN de '+player} onError={()=>{SET_SOURCE(null);SET_STATUS('missing')}}/>:<div className="player-photo-unavailable">{status==='loading'?'PHOTO ESPN EN CHARGEMENT':'PORTRAIT NON DISPONIBLE'}</div>}
+  {isCookPrank?(prankFailed?<div className="player-photo-unavailable" style={{fontSize:110}}>💩</div>:<img className="player-action-image" src={prankPhoto} alt="Surprise pour James Cook" onError={()=>SET_PRANK_FAILED(true)}/>):source&&status==='ready'?<img className="player-action-image" src={source} alt={'Portrait ESPN de '+player} onError={()=>{SET_SOURCE(null);SET_STATUS('missing')}}/>:<div className="player-photo-unavailable">{status==='loading'?'PHOTO ESPN EN CHARGEMENT':'PORTRAIT NON DISPONIBLE'}</div>}
   <div className="player-feature-name">{player}</div>
  </div>;
 }
