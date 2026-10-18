@@ -91,7 +91,8 @@ export async function GET(req:Request){
   if(probability===null||!Number.isFinite(probability)||probability<=0||probability>=1)return [];
   return [{market:o.market,name:o.name,point:o.point,book:o.book,decimal:Number(o.decimal.toFixed(2)),probability,signal:Number(o.signal.toFixed(2)),angle:o.angle,status:'experimental_unvalidated'}];
  });
- const playerPicks=[...bestProps.values()].map(p=>({...p,probability:Number(p.probability),status:'experimental_unvalidated'}));
+ const playerPicks=[...bestProps.values()].map(p=>({...p,team_id:String((recentByName.get(p.player.toLowerCase())||[])[0]?.team_id||''),probability:Number(p.probability),expected_value:Number(p.probability)*p.decimal-1,status:'experimental_unvalidated'}));
+ const propsByTeam=Object.fromEntries(teams.map(team=>[team,playerPicks.filter(p=>p.team_id===team&&p.expected_value>0&&Number.isFinite(p.expected_value)).sort((a,b)=>b.expected_value-a.expected_value).slice(0,5)]));
  const ranked=[...gamePicks,...playerPicks].filter(p=>Number.isFinite(p.probability)&&p.probability>0&&p.probability<1&&Number.isFinite(p.decimal)&&p.decimal>1)
   .map(p=>({...p,expected_value:p.probability*p.decimal-1}))
   .sort((a,b)=>b.expected_value-a.expected_value);
@@ -115,6 +116,6 @@ export async function GET(req:Request){
    }catch{}
   }
  }
- return NextResponse.json({game_id:id,stats,model:'historical_market_research_v4',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined},{headers:{'Cache-Control':'no-store'}});
+ return NextResponse.json({game_id:id,stats,model:'historical_market_research_v4',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined,propsByTeam},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
