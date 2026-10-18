@@ -1,0 +1,3 @@
+{"path":"/","status":200,"pass":true}
+{"path":"/api/elo?week=6","status":200,"pass":true,"games":14}
+exit_code=0
