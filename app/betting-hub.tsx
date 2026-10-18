@@ -25,6 +25,7 @@ const teamCodes:Record<string,string>={'Buffalo Bills':'BUF','Las Vegas Raiders'
 const teamFrom=(s:string)=>Object.entries(teamCodes).find(([name])=>s.includes(name))?.[1];
 const teamSides=(s:string)=>s.split(' vs ').map(teamFrom).filter((v):v is string=>Boolean(v));
 function PlayerPortrait({player,game}:{player:string;game:string}){
+ const isJamesCook=/^james\s+cook(?:\s+(?:ii|iii|jr\.?))?$/i.test(player.trim());
  const [source,SET_SOURCE]=useState<string|null>(null),[status,SET_STATUS]=useState('loading');
  useEffect(()=>{
   let alive=true;SET_SOURCE(null);SET_STATUS('loading');
@@ -37,7 +38,7 @@ function PlayerPortrait({player,game}:{player:string;game:string}){
   return()=>{alive=false};
  },[player,game]);
  return <div className="player-feature"><div className="player-electric" aria-hidden="true"/>
-  {source&&status==='ready'?<img className="player-action-image" src={source} alt={'Portrait ESPN de '+player} onError={()=>{SET_SOURCE(null);SET_STATUS('missing')}}/>:<div className="player-photo-unavailable">{status==='loading'?'PHOTO ESPN EN CHARGEMENT':'PORTRAIT NON DISPONIBLE'}</div>}
+  {isJamesCook?<div className="player-photo-unavailable" style={{fontSize:'clamp(92px,12vw,168px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',height:'100%'}} role="img" aria-label="Tas de merde">💩</div>:source&&status==='ready'?<img className="player-action-image" src={source} alt={'Portrait ESPN de '+player} onError={()=>{SET_SOURCE(null);SET_STATUS('missing')}}/>:<div className="player-photo-unavailable">{status==='loading'?'PHOTO ESPN EN CHARGEMENT':'PORTRAIT NON DISPONIBLE'}</div>}
   <div className="player-feature-name">{player}</div>
  </div>;
 }
