@@ -143,7 +143,6 @@ export default function LiveBetTracker({bets}:{bets:Bet[]}){
   }
   SET(d);
  }).catch(()=>{});update();const timer=setInterval(update,45000);return()=>{active=false;clearInterval(timer)}},[]);
- if(!bets.length)return null;
  const matches=feed?.games?bets.filter(b=>b.market==='parlay'&&b.legs?.length||feed.games.some(g=>match(b.game,g))):[];
  const [order,ORDER]=useState<'live'|'upcoming'|'completed'>('live');
  const [marketFilter,MARKET_FILTER]=useState<'all'|'parlay'|'props'|'game'>('all');
@@ -158,6 +157,7 @@ export default function LiveBetTracker({bets}:{bets:Bet[]}){
   const time=(bet:Bet)=>{const first=bet.market==='parlay'&&bet.legs?.length?bet.legs[0].game:bet.game;return Date.parse(feed?.games.find(g=>match(first,g))?.date||'')||0};
   return order==='upcoming'?time(a)-time(b):time(b)-time(a);
  });
+ if(!bets.length)return null;
  return <section className="studio-live"><div className="studio-live-head"><span>⚡ LIVE TRACKER · ESPN</span><h2>LES PARIS DES BOYS EN DIRECT</h2><p>Scores actualisés automatiquement aux 45 secondes. Progression des Props lorsque la statistique du joueur est disponible.</p></div>
  {alerts.length>0&&<div className="studio-live-alerts"><strong>🔔 LES NOUVELLES DU SCORE</strong>{alerts.map((alert,i)=><p key={i}>{alert}</p>)}</div>}
  {!feed?<p>On branche les tableaux de matchs…</p>:feed.status!=='ok'?<p>Les scores en direct sont momentanément indisponibles.</p>:matches.length===0?<p>Aucune de tes mises ouvertes ne correspond aux rencontres de la semaine suivie actuellement.</p>:<><div style={{display:'flex',gap:7,overflowX:'auto',margin:'12px 0',paddingBottom:4}}>{([['live','🔴 En direct'],['upcoming','⏰ À venir'],['completed','🏁 Terminés']] as const).map(([k,label])=><button key={k} onClick={()=>ORDER(k)} style={{whiteSpace:'nowrap',padding:'10px 12px',borderRadius:12,background:order===k?'#236878':'#172e48',color:'#fff',fontWeight:800,border:'1px solid '+(order===k?'#65ebdb':'#345876')}}>{label} ({matches.filter(b=>statusOf(b)===k).length})</button>)}</div><div style={{display:'flex',gap:7,overflowX:'auto',marginBottom:14}}>{([['all','Tous'],['parlay','🔥 Parlays'],['props','🎯 Props'],['game','🏈 Matchs']] as const).map(([k,label])=><button key={k} onClick={()=>MARKET_FILTER(k)} style={{whiteSpace:'nowrap',padding:'7px 11px',borderRadius:20,background:marketFilter===k?'#315c83':'#142940',color:'#fff',border:'1px solid #43627c'}}>{label}</button>)}</div>{visible.length===0?<p>Aucun pari dans ce classement.</p>:<div className="studio-live-grid">{visible.map(b=>b.market==='parlay'&&b.legs?.length?<ParlayTicket key={b.id} b={b} feed={feed}/>:<Ticket key={b.id} b={b} feed={feed}/>)}</div>}</>}
