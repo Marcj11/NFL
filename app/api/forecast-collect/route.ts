@@ -10,27 +10,22 @@ export async function GET(req:Request){
  if(!base||!key)return NextResponse.json({status:'not_configured'},{status:503});
  try{
   const now=new Date(),until=new Date(now.getTime()+8*86400000);
-  const params=new URLSearchParams({select:'game_id,week,home_team_id,away_team_id,kickoff_utc',kickoff_utc:'gte.'+now.toISOString(),order:'kickoff_utc.asc',limit:'24'});
+  const params=new URLSearchParams({select:'game_id,week,home_team_id,away_team_id,kickoff_utc',kickoff_utc:'gte.'+now.toISOString(),order:'kickoff_utc.asc',limit:'100'});
   const res=await fetch(base+'/rest/v1/games?'+params,{headers:{apikey:key,Authorization:'Bearer '+key},cache:'no-store',signal:AbortSignal.timeout(9000)});
   if(!res.ok)return NextResponse.json({status:'schedule_unavailable',http:res.status},{status:502});
-  const list=(await res.json() as Game[]).filter(g=>Date.parse(g.kickoff_utc)<until.getTime()).slice(0,12);
-  const outcomes=[] as Array<{game:string;status:string;audit:string}>;
-  for(let i=0;i<list.length;i+=6){const batch=await Promise.all(list.slice(i,i+6).map(async g=>{
-   try{
-    const p=new URLSearchParams({home:g.home_team_id,away:g.away_team_id,before:g.kickoff_utc});
-    const response=await fetch(url.origin+'/api/expert-game-research?'+p,{cache:'no-store',signal:AbortSignal.timeout(25000)});
-    const data=await response.json();
-    return {game:g.away_team_id+'-'+g.home_team_id,status:String(data.status||'unavailable'),audit:String(data.forecast_audit_status||'not_recorded')};
-   }catch{return {game:g.away_team_id+'-'+g.home_team_id,status:'unavailable',audit:'request_failed'}}
-  }));outcomes.push(...batch)}
-  let independent:{status:string;created?:number;error?:string}={status:'not_started'};
-  try{const response=await fetch(url.origin+'/api/independent-collect',{headers:{authorization:'Bearer '+secret},cache:'no-store',signal:AbortSignal.timeout(25000)});independent=await response.json()}catch(e){independent={status:'unavailable',error:String(e)}}
-  // Archive every upcoming Elo winner/loser, and each matchup TOP5 even when nobody opens the app.
-  const weeks=[...new Set(list.map(g=>{const m=(g as Game&{week?:number}).week;return m}).filter((x):x is number=>typeof x==='number'))];
-  let eloArchive:any[]=[];
+  const list=(await res.json() as Game[]).filter(g=>Date.parse(g.kickoff_utc)<until.getTime());
+  // CRITICAL: archive Elo first, before slow research. No 12-game truncation.
+  const weeks=[...new Set(list.map(g=>g.week))];
+  const eloArchive:Array<{week:number;status:string;games:number}>=[];
   for(const week of weeks){
-   try{const r=await fetch(url.origin+'/api/elo?week='+week,{cache:'no-store',signal:AbortSignal.timeout(25000)});const d=await r.json();eloArchive.push({week,status:d.archive_status||d.error||'unknown',games:d.games?.length??0});}catch{eloArchive.push({week,status:'fetch_failed'});}
+   try{
+    const response=await fetch(url.origin+'/api/elo?week='+week,{cache:'no-store',signal:AbortSignal.timeout(30000)});
+    const data=await response.json();
+    eloArchive.push({week,status:String(data.archive_status||data.error||'unknown'),games:Array.isArray(data.games)?data.games.length:0});
+   }catch{eloArchive.push({week,status:'fetch_failed',games:0});}
   }
+  const outcomes:Array<{game:string;status:string;audit:string}>=[];
+  const independent={status:'skipped_for_archive_priority'};
   const matchArchives:any[]=[];
   for(let i=0;i<list.length;i+=4){
    const chunk=await Promise.all(list.slice(i,i+4).map(async(g:any)=>{
