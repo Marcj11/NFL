@@ -61,7 +61,7 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const mood:Mood=game.state!=='in'?'neutral':isProp?(reached?'good':progress!==null&&progress>=65?'good':progress!==null&&progress<25?'bad':'neutral'):cover!==null?(cover>0?'good':cover<0?'bad':'neutral'):money!==null?(money>0?'good':money<0?'bad':'neutral'):'neutral';
  const barColor=reached?'linear-gradient(90deg,#18e7bd,#83ffe4)':'linear-gradient(90deg,#00c9ff,#38a5ff,#7e6eff)';
  const label=actual?.label==='rush yds'?'verges au sol':actual?.label==='reception yds'?'verges en réception':actual?.label==='pass yds'?'verges à la passe':actual?.label==='receptions'?'réceptions':actual?.label||'statistique';
- return <article className="studio-live-ticket" style={{padding:'22px 19px',borderRadius:22,...moodTheme(mood),overflow:'hidden'}}>
+ return <article className="studio-live-ticket" data-mood={mood} style={{padding:'22px 19px',borderRadius:22,...moodTheme(mood),overflow:'hidden'}}>
   <div style={{fontSize:12,fontWeight:950,letterSpacing:1.1,color:'#ffffff',marginBottom:7}}>{moodLabel(mood)}</div>
   <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status}{game.clock&&game.state==='in'?' · '+game.clock:''}</span></div><div className="studio-live-matchup"><TeamLogo abbr={game.away.abbr} size={37}/><span>{game.away.abbr}</span><b>VS</b><span>{game.home.abbr}</span><TeamLogo abbr={game.home.abbr} size={37}/></div>
   {isProp?<div style={{display:'flex',alignItems:'center',gap:16,margin:'18px 0'}}>
@@ -121,7 +121,7 @@ function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
  const won=states.filter(x=>x.status==='won').length,lost=states.filter(x=>x.status==='lost').length,active=states.filter(x=>x.status==='leading').length;
  const parlayMood:Mood=states.some(x=>x.status==='lost'||x.status==='trailing')?'bad':states.some(x=>x.status==='leading'||x.status==='won')?'good':'neutral';
  const overall=lost?'UNE BRANCHE PERDUE':won===states.length?'TOUTES LES BRANCHES GAGNÉES':active?'DES BRANCHES EN BONNE POSITION':'EN ATTENTE';
- return <article className="studio-live-ticket" style={{padding:22,borderRadius:22,...moodTheme(parlayMood)}}>
+ return <article className="studio-live-ticket" data-mood={parlayMood} style={{padding:22,borderRadius:22,...moodTheme(parlayMood)}}>
   <div style={{color:'#ebb4ff',fontWeight:900,letterSpacing:1}}>💥 {b.selection.startsWith('Heavyball')?'HEAVYBALL PARLAY':'PARLAY'} · {legs.length} BRANCHES</div>
   <div style={{fontSize:12,fontWeight:950,color:'#fff',marginTop:8}}>{moodLabel(parlayMood)}</div>
   <h3 style={{fontSize:22,margin:'12px 0'}}>{overall}</h3>
