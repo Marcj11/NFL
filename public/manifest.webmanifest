@@ -1,0 +1,17 @@
+{
+  "name": "Heavyball Bets",
+  "short_name": "Heavyball Bets",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#071425",
+  "theme_color": "#09182d",
+  "icons": [
+    {
+      "src": "/heavyball-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ]
+}
