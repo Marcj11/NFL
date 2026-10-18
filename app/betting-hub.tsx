@@ -91,7 +91,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  }).catch(()=>{if(active)LOADED(true)});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;fetch('/api/player-props').then(r=>r.json()).then(data=>{if(!active||!Array.isArray(data.offers))return;setOffers(previous=>{const map=new Map(previous.map(o=>[o.id,o]));for(const prop of data.offers){if(prop.market==='props'&&Number.isFinite(Number(prop.odds))&&Number(prop.odds)>1&&typeof prop.id==='string'&&typeof prop.selection==='string'&&typeof prop.game==='string'&&(!prop.kickoff||(Number.isFinite(Date.parse(prop.kickoff))&&Date.parse(prop.kickoff)>Date.now())))map.set(prop.id,prop as Offer)}return [...map.values()]})}).catch(()=>{});return()=>{active=false}},[]);
  const [official,SET_OFFICIAL]=useState<Array<{away_team?:string;home_team?:string;home_probability?:number|null;away_probability?:number|null}>>([]);
- useEffect(()=>{let active=true;fetch('/api/expert-independent',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(active)SET_OFFICIAL(Array.isArray(d.report?.rows)?d.report.rows:[])}).catch(()=>{});return()=>{active=false}},[]);
+ useEffect(()=>{let active=true;fetch('/api/elo?week=6',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(active)SET_OFFICIAL(Array.isArray(d.games)?d.games.map((g:any)=>({home_team:g.home_team_id,away_team:g.away_team_id,home_probability:g.home_win_probability,away_probability:g.away_win_probability})):[])}).catch(()=>{});return()=>{active=false}},[]);
  const [research,SET_RESEARCH]=useState<Record<string,{probability:number;explanation:string}>>({});
  const [researchStatus,SET_RESEARCH_STATUS]=useState('chargement');
  useEffect(()=>{let alive=true;let completed=0;let modeled=0;let failures=0;let total=0;
@@ -180,7 +180,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  };
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
- const probability=(o:Offer)=>officialProbability(o)??(o.market==='props'?researchValue(o)?.probability??null:gameProjection(o));
+ const probability=(o:Offer)=>officialProbability(o);
  const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&p*o.odds>1&&(!!o.kickoff&&Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now())&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)&&(o.market==='props'||!g||(Number.isFinite(g.spread_sd)&&g.spread_sd>0&&Number.isFinite(g.total_sd)&&g.total_sd>0))});
  const edge=(o:Offer)=>probability(o)!*o.odds-1;
  const ordered=[...eligible].sort((a,b)=>edge(b)-edge(a));
@@ -265,7 +265,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  },[category,offers,official,research,gamesResearch]);
  const portfolio=useMemo(()=>{
   if(!ranking.length)return null;
-  const chances=ranking.map(o=>officialProbability(o)??(o.market==='props'?researchValue(o)?.probability??null:gameProjection(o)));
+  const chances=ranking.map(o=>officialProbability(o));
   if(chances.some(p=>p===null||!Number.isFinite(p)))return null;
   let positive=0,loseAll=1;
   for(let mask=0;mask<(1<<ranking.length);mask++){
@@ -309,7 +309,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const titleFor=(o:Offer,rank:number)=>{const names=cardTitles[category]||cardTitles.general;return names[pickVariation(o,rank,names.length)]};
  const reasoning=(o:Offer,rank:number)=>{
   const officialP=officialProbability(o),prop=o.market==='props'?researchValue(o):null,g=gamesResearch[o.game];
-  const p=officialP??(o.market==='props'?prop?.probability??null:gameProjection(o));
+  const p=officialP;
   if(p===null||!Number.isFinite(p))return 'Pas de probabilité calculable pour ce marché. Les boys, on va pas se bullshitter : sans chiffre, pas de verdict.';
   const implied=100/o.odds,edge=100*(p-1/o.odds),ev=100*(p*o.odds-1);
   const fmtP=(x:number)=>x.toFixed(1).replace('.',',');
@@ -382,7 +382,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  <p style={{opacity:.8,margin:'0 0 20px'}}>{selected.game} · {selected.book}</p>
  {(()=>{
  const officialP=officialProbability(selected),prop=selected.market==='props'?researchValue(selected):null,g=gamesResearch[selected.game];
- const p=officialP??(selected.market==='props'?prop?.probability??null:gameProjection(selected));
+ const p=officialP;
  const implied=1/selected.odds,edge=p===null?null:100*(p-implied),ev=p===null?null:100*(p*selected.odds-1);
  const pct=(n:number)=>(100*n).toFixed(1).replace('.',',')+' %';
  const signed=(n:number)=>(n>=0?'+':'')+n.toFixed(1).replace('.',',');
