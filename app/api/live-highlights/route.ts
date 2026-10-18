@@ -25,9 +25,9 @@ export async function GET(){
      const td=/touchdown/i.test(detail),interception=/intercept/i.test(detail);
      const turnover=/fumble.*(recover|lost)|turnover on downs/i.test(detail);
      const sack=/\bsacked\b|\bsack\b/i.test(detail);
-     if(!injury&&!td&&!interception&&!turnover&&!sack)continue;
-     const type=injury?'injury':interception||turnover?'turnover':td?'touchdown':'sack';
-     const title=injury?'Signalement de blessure':type==='turnover'?'Revirement important':td?'Touchdown':'Sack';
+     if(!injury&&!td&&!interception&&!turnover&&!sack&&!bigPlay)continue;
+     const type=injury?'injury':interception||turnover?'turnover':td?'touchdown':sack?'sack':bigCatch?'big_catch':'big_run';
+     const title=injury?'Blessure signalée':interception?'Interception':turnover?'Fumble / revirement':td?'Touchdown':sack?'Sack du QB':bigCatch?'Longue réception · '+yards+' verges':'Longue course · '+yards+' verges';
      items.push({id:id+'-'+key,gameId:id,matchup,time:String(p.clock?.displayValue||e.status?.displayClock||''),type,title,detail:detail.slice(0,260),source:'ESPN · description du jeu',url});
     }
     return items.slice(-18);
