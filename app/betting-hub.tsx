@@ -173,6 +173,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   return null;
  };
  const officialProbability=(o:Offer):number|null=>{
+  if(o.market==='props'){const signal=researchValue(o);return signal&&Number.isFinite(signal.probability)?Math.max(0.01,Math.min(0.99,signal.probability)):null;}
   const sides=teamSides(o.game);
   const row=official.find(g=>sides.length===2&&sides[1]===String(g.home_team)&&sides[0]===String(g.away_team));
   if(!row)return null;
@@ -199,17 +200,12 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
    const over=logistic((g.projected_total-Number(o.line))/17.5);
    return clamp(isOver?over:1-over);
   }
-  if(o.market==='props'){
-   // Player history must be present; Elo alone cannot predict player yards.
-   const signal=researchValue(o);
-   return signal&&Number.isFinite(signal.probability)?clamp(signal.probability):null;
-  }
   return null;
  };
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
  const probability=(o:Offer)=>officialProbability(o);
- const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&p*o.odds>1&&(!!o.kickoff&&Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now())&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)});
+ const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&p*o.odds>(o.market==='props'?1.05:1)&&(!!o.kickoff&&Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now())&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)});
  const edge=(o:Offer)=>probability(o)!*o.odds-1;
  const ordered=[...eligible].sort((a,b)=>edge(b)-edge(a));
  const unique:Offer[]=[],seen=new Set<string>();
