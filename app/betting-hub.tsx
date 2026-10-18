@@ -170,18 +170,43 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   return null;
  };
  const officialProbability=(o:Offer):number|null=>{
-  if(o.market!=='moneyline')return null;
   const sides=teamSides(o.game);
   const row=official.find(g=>sides.length===2&&sides[1]===String(g.home_team)&&sides[0]===String(g.away_team));
   if(!row)return null;
   const selected=teamFrom(o.team);
-  const prob=selected===row.home_team?row.home_probability:selected===row.away_team?row.away_probability:null;
-  return typeof prob==='number'&&Number.isFinite(prob)&&prob>0&&prob<1?prob:null;
+  const homeP=Number(row.home_probability);
+  if(!Number.isFinite(homeP)||homeP<=0||homeP>=1)return null;
+  const clamp=(x:number)=>Math.max(0.001,Math.min(0.999,x));
+  const logistic=(z:number)=>1/(1+Math.exp(-1.702*Math.max(-8,Math.min(8,z))));
+  // Elo is the sole strength/side predictor; score history informs only total/variance.
+  const margin=(Math.log(homeP/(1-homeP))/1.702)*13.5;
+  if(o.market==='moneyline'){
+   const prob=selected===row.home_team?homeP:selected===row.away_team?1-homeP:null;
+   return prob!==null?clamp(prob):null;
+  }
+  if(o.market==='spreads'&&selected&&Number.isFinite(o.line)){
+   const side=selected===row.home_team?margin:selected===row.away_team?-margin:null;
+   return side===null?null:clamp(logistic((side+Number(o.line))/13.5));
+  }
+  if(o.market==='totals'&&Number.isFinite(o.line)){
+   const g=gamesResearch[o.game];
+   if(!g||!Number.isFinite(g.projected_total))return null;
+   const isOver=/^over\b/i.test(o.selection),isUnder=/^under\b/i.test(o.selection);
+   if(isOver===isUnder)return null;
+   const over=logistic((g.projected_total-Number(o.line))/17.5);
+   return clamp(isOver?over:1-over);
+  }
+  if(o.market==='props'){
+   // Player history must be present; Elo alone cannot predict player yards.
+   const signal=researchValue(o);
+   return signal&&Number.isFinite(signal.probability)?clamp(signal.probability):null;
+  }
+  return null;
  };
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
  const probability=(o:Offer)=>officialProbability(o);
- const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&p*o.odds>1&&(!!o.kickoff&&Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now())&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)&&(o.market==='props'||!g||(Number.isFinite(g.spread_sd)&&g.spread_sd>0&&Number.isFinite(g.total_sd)&&g.total_sd>0))});
+ const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&p*o.odds>1&&(!!o.kickoff&&Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now())&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)});
  const edge=(o:Offer)=>probability(o)!*o.odds-1;
  const ordered=[...eligible].sort((a,b)=>edge(b)-edge(a));
  const unique:Offer[]=[],seen=new Set<string>();
@@ -199,7 +224,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
     const p=probability(o);
     if(added.has(o.id)||!p||!Number.isFinite(p)||!(o.odds>=2.5&&o.odds<3)||p*o.odds<=1||!o.kickoff||Date.parse(o.kickoff)<=Date.now())continue;
     const g=gamesResearch[o.game];
-    if(o.market!=='props'&&g&&!(Number.isFinite(g.spread_sd)&&g.spread_sd>0&&Number.isFinite(g.total_sd)&&g.total_sd>0))continue;
+    
     selected.push(o);added.add(o.id);
    }
   }
@@ -371,7 +396,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  {view==='top'?<><p className="muted">Aucune recommandation officielle EXPERT NFL : moteur complet non exécuté. Marchés observés chez les bookmakers. Top 5 regroupé pour maximiser les chances de finir en profit avec cinq mises égales. Heavy Balls conserve le classement des grandes cotes à valeur positive. Tu choisis librement tes paris. Sans validation de la probabilité et de l’avantage, décision : PASSER.</p>
  <div className="market-tabs" role="tablist" aria-label="Catégories de paris">{[['general','🏆 Top 5 général'],['moneyline','🏈 Moneyline'],['spreads','↔ Spreads'],['totals','📈 Totaux'],['props','▥ Props joueurs'],['heavy','🔥 HEAVY BALLS']].map(([k,v])=><button key={k} role="tab" aria-selected={category===k} className={category===k?'selected':''} onClick={()=>CATEGORY(k as typeof category)}>{v}</button>)}</div>
  <div style={{fontSize:13,color:'#d9f4ff',margin:'11px 0',padding:'13px',border:'1px solid #4384b7',borderRadius:11,background:'#0b2844'}}>🎯 {category==='heavy'?'Heavy Balls · meilleures grosses cotes EV+':'Top '+ranking.length+' · meilleure chance de finir positif'}{portfolio&&<> · <strong>{(portfolio.positive*100).toFixed(1)} % de finir positif</strong> · EV groupe {portfolio.profit>=0?'+':''}{portfolio.profit.toFixed(2)} $ · {Math.round(portfolio.loseAll*100)} % de tout perdre</>}<div style={{fontSize:11,opacity:.75}}>Mises calculées à 5 $ par choix · {ranking.length} choix · un joueur distinct par choix dans les Props; une rencontre distincte dans les autres Tops.</div></div>
- {!loaded?<p>Chargement des cotes…</p>:ranking.length===0?<div className="empty">{gameResearchLoading?'Analyses des matchs en cours : les probabilités arrivent progressivement.':'Aucune sélection calculable dans cette catégorie actuellement. Vérifier les données et les probabilités du modèle.'} {category==='props'?' État du simulateur : '+researchStatus+'.':''}</div>:<div className="studio-picks-grid">{ranking.map((o,i)=><article key={o.id} className={'studio-pick-card pick-'+i+(category==='heavy'?' heavy-pick':'')}><span className="pick-rank">#{i+1}</span><span className="pick-market">{category==='heavy'?'HEAVY BALLS':o.market.toUpperCase()}</span><div className={"pick-art"+(o.market==="props"?" player-prop-art":"")}><div className="pick-spotlights" aria-hidden="true"/>{o.market==="props"?<PlayerPortrait player={o.player||"Joueur NFL"} game={o.game}/>:teamFrom(o.team)?<img className="pick-main-team-logo" src={logo(teamFrom(o.team)!)} alt={o.team}/>:<span>🏈</span>}<div className="pick-field-lines" aria-hidden="true"/>{o.market!=='props'&&teamSides(o.game).length===2&&<div className="pick-versus"><img src={logo(teamSides(o.game)[0])} alt=""/><b>VS</b><img src={logo(teamSides(o.game)[1])} alt=""/></div>}</div>{o.market==='props'&&<button className="pick-player-link" type="button" onClick={async()=>{const p=o.player||'';const sides=teamSides(o.game);try{const query=new URLSearchParams({name:p,teams:sides.join(',')});const response=await fetch('/api/players/lookup?'+query);const info=await response.json();if(info.player?.id){window.location.assign('/player/'+info.player.id)}else window.alert('Impossible de trouver la fiche ESPN de '+p+' pour le moment.')}catch{window.alert('Le service ESPN est temporairement indisponible.')}}}>🏈 VOIR LA FICHE DE {o.player?.toUpperCase()||'CE JOUEUR'} <span>↗</span></button>}<p className="pick-game">{o.game}</p><div className="pick-book">{o.book} · cote observée · {officialProbability(o)!==null?'rapport indépendant vérifié':'projection du moteur'}</div><h3>{o.selection}</h3><div className="pick-metrics"><div><small>COTE</small><strong>{fmt(o.odds)}</strong></div><div><small>{officialProbability(o)!==null?'MODÈLE INDÉPENDANT':'ESTIMATION EXP.'}</small><strong>{officialProbability(o)!==null?Math.round(officialProbability(o)!*100)+'%':o.market==='props'&&researchValue(o)!==null?Math.round(researchValue(o)!.probability*100)+'% exp.':gameProjection(o)!==null?Math.round(gameProjection(o)!*100)+'% exp.':'—'}</strong></div></div><p style={{fontSize:13,color:'#dcecff',lineHeight:1.55,margin:'12px 0 8px',padding:'12px',background:'rgba(10,25,47,.72)',border:'1px solid rgba(120,180,245,.3)',borderRadius:10}}><strong style={{color:'#7de6fc'}}>{titleFor(o,i+1)}</strong><span style={{display:'block',marginTop:6}}>{reasoning(o,i+1)}</span></p><p style={{fontSize:12,color:'#c3d4e6',minHeight:54}}>{category==='heavy'?'PASSER — grande cote avec projection expérimentale seulement; avantage non validé et risque élevé.':officialProbability(o)!==null?'Rapport indépendant vérifié. Comparer les cotes et le contexte avant de choisir.':researchValue(o)?.explanation||gamesResearch[o.game]?.explanation||'Estimation exploratoire; vérifier le contexte et les conditions du bookmaker.'}</p><button className="pick-action" onClick={()=>choose(o)}>Voir ce pari →</button></article>)}</div>}
+ {!loaded?<p>Chargement des cotes…</p>:ranking.length===0?<div className="empty">{gameResearchLoading?'Analyses des matchs en cours : les probabilités arrivent progressivement.':'Aucun pari calculable avec les données Elo et statistiques disponibles. Les marchés sans historique sont exclus.'} {category==='props'?' État du simulateur : '+researchStatus+'.':''}</div>:<div className="studio-picks-grid">{ranking.map((o,i)=><article key={o.id} className={'studio-pick-card pick-'+i+(category==='heavy'?' heavy-pick':'')}><span className="pick-rank">#{i+1}</span><span className="pick-market">{category==='heavy'?'HEAVY BALLS':o.market.toUpperCase()}</span><div className={"pick-art"+(o.market==="props"?" player-prop-art":"")}><div className="pick-spotlights" aria-hidden="true"/>{o.market==="props"?<PlayerPortrait player={o.player||"Joueur NFL"} game={o.game}/>:teamFrom(o.team)?<img className="pick-main-team-logo" src={logo(teamFrom(o.team)!)} alt={o.team}/>:<span>🏈</span>}<div className="pick-field-lines" aria-hidden="true"/>{o.market!=='props'&&teamSides(o.game).length===2&&<div className="pick-versus"><img src={logo(teamSides(o.game)[0])} alt=""/><b>VS</b><img src={logo(teamSides(o.game)[1])} alt=""/></div>}</div>{o.market==='props'&&<button className="pick-player-link" type="button" onClick={async()=>{const p=o.player||'';const sides=teamSides(o.game);try{const query=new URLSearchParams({name:p,teams:sides.join(',')});const response=await fetch('/api/players/lookup?'+query);const info=await response.json();if(info.player?.id){window.location.assign('/player/'+info.player.id)}else window.alert('Impossible de trouver la fiche ESPN de '+p+' pour le moment.')}catch{window.alert('Le service ESPN est temporairement indisponible.')}}}>🏈 VOIR LA FICHE DE {o.player?.toUpperCase()||'CE JOUEUR'} <span>↗</span></button>}<p className="pick-game">{o.game}</p><div className="pick-book">{o.book} · cote observée · {officialProbability(o)!==null?'rapport indépendant vérifié':'projection du moteur'}</div><h3>{o.selection}</h3><div className="pick-metrics"><div><small>COTE</small><strong>{fmt(o.odds)}</strong></div><div><small>{officialProbability(o)!==null?'MODÈLE INDÉPENDANT':'ESTIMATION EXP.'}</small><strong>{officialProbability(o)!==null?Math.round(officialProbability(o)!*100)+'%':o.market==='props'&&researchValue(o)!==null?Math.round(researchValue(o)!.probability*100)+'% exp.':gameProjection(o)!==null?Math.round(gameProjection(o)!*100)+'% exp.':'—'}</strong></div></div><p style={{fontSize:13,color:'#dcecff',lineHeight:1.55,margin:'12px 0 8px',padding:'12px',background:'rgba(10,25,47,.72)',border:'1px solid rgba(120,180,245,.3)',borderRadius:10}}><strong style={{color:'#7de6fc'}}>{titleFor(o,i+1)}</strong><span style={{display:'block',marginTop:6}}>{reasoning(o,i+1)}</span></p><p style={{fontSize:12,color:'#c3d4e6',minHeight:54}}>{category==='heavy'?'PASSER — grande cote avec projection expérimentale seulement; avantage non validé et risque élevé.':officialProbability(o)!==null?'Rapport indépendant vérifié. Comparer les cotes et le contexte avant de choisir.':researchValue(o)?.explanation||gamesResearch[o.game]?.explanation||'Estimation exploratoire; vérifier le contexte et les conditions du bookmaker.'}</p><button className="pick-action" onClick={()=>choose(o)}>Voir ce pari →</button></article>)}</div>}
  {selected&&<div role="presentation" style={{position:'fixed',inset:0,zIndex:99999,background:'rgba(1,7,20,.91)',display:'flex',alignItems:'center',justifyContent:'center',padding:'min(3vw,20px)',backdropFilter:'blur(14px)'}} onClick={()=>SELECT(null)}>
  <div role="dialog" aria-modal="true" aria-label="Analyse détaillée du pari" onClick={e=>e.stopPropagation()} style={{position:'relative',width:'min(940px,100%)',maxHeight:'94dvh',overflowY:'auto',lineHeight:1.65,borderRadius:20,border:'1px solid #4786b6',boxShadow:'0 25px 95px #000',padding:'clamp(18px,4vw,36px)',background:'linear-gradient(155deg,#102744,#071322 72%)',color:'#f2f7ff'}}>
  <div style={{height:5,background:'linear-gradient(90deg,#00d8ff,#3c77ff,#fe5d8f)',position:'sticky',top:0,zIndex:1,borderRadius:8,marginBottom:16}}/>
