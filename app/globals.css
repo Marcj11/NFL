@@ -729,3 +729,10 @@ nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(1
 @media (min-width: 1650px){
  .studio-live-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+
+/* Premium live tracker team-logo banner */
+.studio-live-matchup{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 4px;padding:8px 10px;border:1px solid #416c985a;border-radius:12px;background:linear-gradient(100deg,#0c3157,#16203e 53%,#0d3554);color:#d5efff;font-weight:900;letter-spacing:.8px}
+.studio-live-matchup b{font-size:10px;color:#7de9dd;background:#1e4660;border-radius:7px;padding:4px 6px}
+.studio-live-matchup img{transition:transform .2s ease}
+.studio-live-ticket:hover .studio-live-matchup img{transform:scale(1.08)}
+@media(min-width:1080px){.studio-live-matchup{margin:6px 0 2px;padding:4px 7px;gap:7px}.studio-live-matchup img{width:28px!important;height:28px!important}.studio-live-matchup span{font-size:12px}}
