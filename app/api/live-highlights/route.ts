@@ -25,6 +25,14 @@ export async function GET(){
      const td=/touchdown/i.test(detail),interception=/intercept/i.test(detail);
      const turnover=/fumble.*(recover|lost)|turnover on downs/i.test(detail);
      const sack=/\bsacked\b|\bsack\b/i.test(detail);
+     const yardMatch=detail.match(/(?:for|gain of) (\\d+) yards/i);
+     const yards=Number(p.statYardage??p.yardsGained??p.yards??(yardMatch?yardMatch[1]:NaN));
+     const playKind=String(p.type?.text||p.type?.abbreviation||'').toLowerCase();
+     const pass=/pass|reception|complete/i.test(playKind)||/pass (?:complete|to)|pass from .* to |(?:pass|completion) for /i.test(detail);
+     const run=/rush|run/i.test(playKind)||/\\b(?:up the middle|left end|right end|left tackle|right tackle|rushed|ran for)\\b/i.test(detail);
+     const bigCatch=pass&&yards>=25;
+     const bigRun=run&&!pass&&yards>=20;
+     const bigPlay=bigCatch||bigRun;
      if(!injury&&!td&&!interception&&!turnover&&!sack&&!bigPlay)continue;
      const type=injury?'injury':interception||turnover?'turnover':td?'touchdown':sack?'sack':bigCatch?'big_catch':'big_run';
      const title=injury?'Blessure signalée':interception?'Interception':turnover?'Fumble / revirement':td?'Touchdown':sack?'Sack du QB':bigCatch?'Longue réception · '+yards+' verges':'Longue course · '+yards+' verges';
