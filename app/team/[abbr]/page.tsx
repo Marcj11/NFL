@@ -20,7 +20,7 @@ export default function TeamPage(){
 
  const [analysisRequestedAt,setAnalysisRequestedAt]=useState<string|null>(null);
  const [analysisNonce,setAnalysisNonce]=useState(0);
- const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;signal:number;angle?:string;probability:number;expected_value:number;heavyball?:boolean;status:string}[]}|null>(null);
+ const [analysisError,setAnalysisError]=useState(''); const [data,setData]=useState<Report|null>(null); const [analysis,setAnalysis]=useState<{quality:string;model:string;home_projection:number|null;away_projection:number|null;stats:Record<string,{games:number;points:number;allowed:number;wins:number}>;analysis:{market:string;name:string;player?:string;point?:number;book:string;decimal:number;signal:number;angle?:string;probability:number;expected_value:number;heavyball?:boolean;status:string}[];propsByTeam?:Record<string,Array<{market:string;name:string;player:string;point:number;book:string;decimal:number;probability:number;expected_value:number;angle:string;side:string}>>}|null>(null);
  useEffect(()=>{if(!data?.next?.game_id){setAnalysis(null);return}let active=true;setAnalysisRunning(true);fetch('/api/match-player-props?home='+encodeURIComponent(teams[data.next!.home_team_id]?.[0]||'')+'&away='+encodeURIComponent(teams[data.next!.away_team_id]?.[0]||''),{cache:'no-store'}).catch(()=>null).then(()=>fetch('/api/match-top5?game_id='+encodeURIComponent(data.next!.game_id)+'&requested_at='+analysisNonce,{cache:'no-store'})).then(async r=>{const j=await r.json();if(!r.ok)throw Error(j.error||'Erreur serveur '+r.status);return j}).then(j=>{if(active){setAnalysis(j);setAnalysisError('');setAnalysisRequestedAt(new Date().toISOString());setAnalysisRunning(false)}}).catch(e=>{if(active){setAnalysis(null);setAnalysisError(String(e.message));setAnalysisRunning(false)}});return()=>{active=false}},[data?.next?.game_id,analysisNonce]);
  const [error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{if(!data?.next||!data.opponent)return;let active=true;setLiveLoading(true);
@@ -132,6 +132,23 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
  </>}
  </section>
 
+ {analysis&&data?.next&&<section style={{margin:'26px 0',padding:'22px',borderRadius:22,border:'1px solid #327dba',background:'linear-gradient(135deg,#092641,#071321)'}}>
+ <div style={{fontSize:12,fontWeight:900,color:'#7ff6db',letterSpacing:2}}>🎯 DUEL DES PROPS · TOP 5 PAR ÉQUIPE</div>
+ <h2 style={{color:'#fff',fontSize:'clamp(23px,3vw,34px)',margin:'9px 0'}}>Les meilleurs paris individuels de chaque côté</h2>
+ <p style={{color:'#b6d1e4',fontSize:13}}>Valeur espérée théorique positive, cotes disponibles et tendances historiques. Estimations exploratoires non calibrées : aucune proposition inventée pour atteindre cinq.</p>
+ <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,350px),1fr))',gap:18}}>
+ {[data.next.away_team_id,data.next.home_team_id].map(team=><div key={team} style={{background:'#081d32',border:'1px solid '+(teams[team]?.[1]||'#3f83b9'),borderRadius:19,padding:15}}>
+ <h3 style={{color:'#fff',fontSize:21,margin:'0 0 14px'}}>🏈 {teams[team]?.[0]||team}</h3>
+ {(analysis.propsByTeam?.[team]||[]).length?(analysis.propsByTeam?.[team]||[]).map((pick,i)=><article key={pick.player+pick.market+pick.point+pick.side+i} style={{border:'1px solid #387bad',background:'linear-gradient(135deg,#174161,#0b1b30)',padding:15,borderRadius:15,marginBottom:12}}>
+ <div style={{color:'#88dfff',fontSize:12,fontWeight:900}}>#{i+1} · {pick.player}</div>
+ <div style={{fontSize:22,color:'#fff',fontWeight:950,lineHeight:1.15,margin:'10px 0'}}>{pick.side.toUpperCase()} {pick.point} · {pick.market.replaceAll('player_','').replaceAll('_',' ')}</div>
+ <div style={{display:'flex',justifyContent:'space-between',gap:6,color:'#d6e8f5',fontSize:13}}><span>Cote <b>{pick.decimal.toFixed(2)}</b></span><span>Modèle <b>{(pick.probability*100).toFixed(1)} %</b></span></div>
+ <div style={{color:'#69f5bf',fontSize:17,fontWeight:900,marginTop:10}}>EV théorique +{(pick.expected_value*100).toFixed(1)} %</div>
+ <p style={{fontSize:12,color:'#bbd6ea'}}>{pick.angle}</p>
+ <MatchBetEntry pick={{...pick,status:'experimental_unvalidated',signal:0}} gameId={data.next.game_id} game={(teams[data.next.away_team_id]?.[0]||'Visiteurs')+' vs '+(teams[data.next.home_team_id]?.[0]||'Domicile')} team={team}/>
+ </article>):<p style={{color:'#bcd4e4',fontSize:13}}>Aucun prop de cette équipe avec données historiques, cote et EV positive vérifiables pour l'instant.</p>}
+ </div>)}
+ </div></section>}
  <p style={{color:'#7e99ac',fontSize:12,marginTop:20}}>Rapport automatiquement rédigé à partir de résultats historiques et d’effectifs recensés. Toute information non confirmée est signalée. Actualisé : {new Date(data.updatedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'})}.</p>
  </>}
  </main>
