@@ -105,8 +105,8 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
     </div>
     <div style={{minWidth:0,flex:1}}>
       <div style={{fontSize:12,color:'#81dafa',letterSpacing:1.2,fontWeight:800}}>PROP JOUEUR · {game.away.abbr} vs {game.home.abbr}</div>
-      <h3 style={{fontSize:23,margin:'7px 0',lineHeight:1.1}}>{b.player||b.selection}</h3>
-      <div style={{fontSize:13,color:'#b9d3ee'}}>{b.selection}</div>
+      <div style={{fontSize:14,color:'#b9d3ee',fontWeight:750,marginTop:8}}>{b.player||'Joueur NFL'}</div>
+      <h3 style={{fontSize:'clamp(23px,2.8vw,34px)',fontWeight:950,color:'#fff',margin:'9px 0',lineHeight:1.15,letterSpacing:'-.4px',overflowWrap:'anywhere',textShadow:'0 2px 12px #0007'}}>{b.selection}</h3>
     </div>
    </div>:<div className="studio-live-pick" style={{marginTop:15}}><span>{b.market.toUpperCase()}</span><h3>{b.selection}</h3></div>}
   {scoreRelevant&&<div className="studio-live-score"><strong>{game.away.abbr} <b>{game.away.score}</b></strong><span>VS</span><strong>{game.home.abbr} <b>{game.home.score}</b></strong></div>}
