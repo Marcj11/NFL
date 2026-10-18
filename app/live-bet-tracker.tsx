@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-type Bet={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;player?:string;team:string;status:string};
+type Bet={id:string;game:string;market:string;marketKey?:string;selection:string;line?:number;player?:string;team:string;status:string;stake?:number;chosenOdds?:number};
 type Team={abbr:string;name:string;score:number};
 type Game={id:string;date:string;home:Team;away:Team;status:string;state:string;clock:string;period:number;complete:boolean};
 type Player={name:string;category:string;values:Record<string,string>};
@@ -16,7 +16,9 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
  ['player_pass_yds','passing',['YDS']],['player_pass_tds','passing',['TD']],['player_pass_completions','passing',['C/ATT']],
  ['player_rush_yds','rushing',['YDS']],['player_reception_yds','receiving',['YDS']],['player_receptions','receiving',['REC']]
  ];
- const choice=categories.find(x=>key.includes(x[0]));if(!choice)return null;
+ const aliases:Record<string,string>={player_rushing_yards:'player_rush_yds',player_receiving_yards:'player_reception_yds',player_reception_yards:'player_reception_yds',player_passing_yards:'player_pass_yds'};
+ const normalized=aliases[key]||key;
+ const choice=categories.find(x=>normalized.includes(x[0]));if(!choice)return null;
  const row=players.find(p=>playerKey(p.name)===player&&p.category.toLowerCase().includes(choice[1]));
  if(!row)return null;
  const val=choice[2].map(x=>row.values[x]).find(v=>v!==undefined);if(val===undefined)return null;
@@ -24,25 +26,72 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
  return Number.isFinite(num)?{value:num,label:choice[0].replaceAll('player_','').replaceAll('_',' ')}:null;
 }
 function Ticket({b,feed}:{b:Bet;feed:Feed}){
- const game=feed.games.find(g=>match(b.game,g));if(!game)return null;
- const key=b.marketKey||b.selection,players=feed.players[game.id]||[];
- const actual=measure(b,players),line=Number(b.line),hasLine=Number.isFinite(line)&&line>0;
+ const game=feed.games.find(g=>match(b.game,g));
+ const [portrait,SET_PORTRAIT]=useState<string|null>(null);
+ const isProp=b.market==='props';
+ useEffect(()=>{
+  if(!isProp||!b.player||!game)return;
+  let live=true;
+  const q=new URLSearchParams({player:b.player,away:game.away.abbr,home:game.home.abbr});
+  fetch('/api/player-portrait?'+q).then(r=>r.json()).then(d=>{if(live)SET_PORTRAIT(d.found&&typeof d.url==='string'?d.url:null)}).catch(()=>{});
+  return()=>{live=false};
+ },[b.player,isProp,game?.away.abbr,game?.home.abbr]);
+ if(!game)return null;
+ const actual=measure(b,feed.players[game.id]||[]);
+ const line=Number(b.line);
+ const hasLine=b.line!==undefined&&b.line!==null&&Number.isFinite(line)&&line>=0;
+ const target=hasLine?Math.floor(line)+1:null;
  const total=game.home.score+game.away.score;
- const chosen=tidy(b.team);const pickHome=sideMatch(b.team,game.home),pickAway=sideMatch(b.team,game.away);
+ const over=/\bover\b|\bplus\b|\d+\+/i.test(b.selection);
+ const propGoal=isProp&&over&&target!==null?target:null;
+ const progress=isProp&&actual&&propGoal?Math.max(0,Math.min(100,100*actual.value/propGoal)):b.market==='totals'&&hasLine&&line>0?Math.max(0,Math.min(100,100*total/line)):null;
+ const reached=isProp&&actual&&propGoal!==null&&actual.value>=propGoal;
+ const pickHome=sideMatch(b.team,game.home),pickAway=sideMatch(b.team,game.away);
  const pickedScore=pickHome?game.home.score:pickAway?game.away.score:null;
  const otherScore=pickHome?game.away.score:pickAway?game.home.score:null;
- const mlStatus=b.market==='moneyline'&&pickedScore!==null&&otherScore!==null?(game.complete?(pickedScore>otherScore?'✓ Victoire sur le terrain':pickedScore<otherScore?'✕ Défaite sur le terrain':'Égalité — règles à vérifier'):(game.state==='in'?(pickedScore>otherScore?'🟢 Ton équipe mène':pickedScore<otherScore?'🔴 Ton équipe tire de l’arrière':'🟡 Égalité pour le moment'):'Match à venir')):null;
- const progress=actual&&hasLine?Math.max(0,Math.min(100,100*actual.value/line)):b.market==='totals'&&hasLine?Math.max(0,Math.min(100,100*total/line)):null;
- const over=/\bover\b|\bplus\b/i.test(b.selection);
- const locked=actual&&hasLine&&over&&actual.value>line;
- return <article className="studio-live-ticket">
-  <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status} {game.clock&&game.state==='in'?'· '+game.clock:''}</span></div>
-  <div className="studio-live-score"><strong>{game.away.abbr} <b>{game.away.score}</b></strong><span>VS</span><strong>{game.home.abbr} <b>{game.home.score}</b></strong></div>
-  <div className="studio-live-pick"><span>{b.market.toUpperCase()}</span><h3>{b.selection}</h3>{actual?<p>{actual.value} {actual.label}{hasLine?' · Seuil '+line:''}</p>:b.market==='totals'?<p>{total} points combinés{hasLine?' · Ligne '+line:''}</p>:<p>Score ESPN actualisé · Statistique individuelle non confirmée pour cette sélection</p>}</div>
-  {mlStatus&&<p style={{fontWeight:800,color:'#abf5e3',margin:'8px 0'}}>{mlStatus} · {pickedScore}–{otherScore}</p>}
-  {progress!==null&&<div className="studio-live-progress"><div style={{width:progress+'%'}}/></div>}
-  {locked&&<strong className="studio-live-alert">⚡ TON SEUIL EST DÉPASSÉ ! Vérifie les règles du marché avant de confirmer.</strong>}
-  <small>ESPN · Mise à jour {new Date(feed.updatedAt).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto',hour:'2-digit',minute:'2-digit'})}. Résultat du pari à confirmer manuellement.</small>
+ const diff=pickedScore!==null&&otherScore!==null?pickedScore-otherScore:null;
+ const cover=b.market==='spreads'&&diff!==null&&hasLine?diff+line:null;
+ const money=b.market==='moneyline'&&diff!==null?diff:null;
+ const scoreRelevant=b.market==='spreads'||b.market==='moneyline'||b.market==='totals';
+ const barColor=reached?'linear-gradient(90deg,#18e7bd,#83ffe4)':'linear-gradient(90deg,#00c9ff,#38a5ff,#7e6eff)';
+ const label=actual?.label==='rush yds'?'verges au sol':actual?.label==='reception yds'?'verges en réception':actual?.label==='pass yds'?'verges à la passe':actual?.label==='receptions'?'réceptions':actual?.label||'statistique';
+ return <article className="studio-live-ticket" style={{padding:'22px 19px',borderRadius:22,background:'linear-gradient(155deg,#0d2546,#081429 82%)',border:'1px solid rgba(0,220,255,.65)',boxShadow:'0 0 26px rgba(0,210,255,.12)',overflow:'hidden'}}>
+  <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status}{game.clock&&game.state==='in'?' · '+game.clock:''}</span></div>
+  {isProp?<div style={{display:'flex',alignItems:'center',gap:16,margin:'18px 0'}}>
+    <div style={{width:100,height:122,border:'1px solid #299dc7',borderRadius:14,background:'linear-gradient(155deg,#154568,#08182e)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
+     {portrait?<img src={portrait} alt={'Portrait de '+b.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={()=>SET_PORTRAIT(null)}/>:<span style={{fontSize:40}}>🏈</span>}
+    </div>
+    <div style={{minWidth:0,flex:1}}>
+      <div style={{fontSize:12,color:'#81dafa',letterSpacing:1.2,fontWeight:800}}>PROP JOUEUR · {game.away.abbr} vs {game.home.abbr}</div>
+      <h3 style={{fontSize:23,margin:'7px 0',lineHeight:1.1}}>{b.player||b.selection}</h3>
+      <div style={{fontSize:13,color:'#b9d3ee'}}>{b.selection}</div>
+    </div>
+   </div>:<div className="studio-live-pick" style={{marginTop:15}}><span>{b.market.toUpperCase()}</span><h3>{b.selection}</h3></div>}
+  {scoreRelevant&&<div className="studio-live-score"><strong>{game.away.abbr} <b>{game.away.score}</b></strong><span>VS</span><strong>{game.home.abbr} <b>{game.home.score}</b></strong></div>}
+  {isProp&&<div style={{padding:'16px 0'}}>
+    <div style={{fontSize:13,color:'#8edcff',fontWeight:850,letterSpacing:1}}>{label.toUpperCase()}</div>
+    <div style={{display:'flex',alignItems:'baseline',gap:9,margin:'7px 0 15px'}}>
+     <strong style={{fontSize:44,color:'#42f1c9',lineHeight:1}}>{actual?actual.value:'—'}</strong>
+     <span style={{fontSize:19,color:'#b7cdea'}}> / {propGoal??(hasLine?line:'—')} {label}</span>
+    </div>
+    <div style={{height:17,background:'#223651',borderRadius:999,overflow:'hidden',boxShadow:'inset 0 0 12px #031320'}}>
+      <div style={{height:'100%',width:(progress??0)+'%',borderRadius:999,background:barColor,boxShadow:'0 0 18px #00ddfa',transition:'width 650ms ease'}}/>
+    </div>
+    <div style={{display:'flex',justifyContent:'space-between',marginTop:9,fontSize:13}}>
+      <strong style={{color:reached?'#65ffd4':'#86cbf5'}}>{progress!==null?Math.round(progress)+' % complété':'En attente des statistiques ESPN'}</strong>
+      <span style={{color:'#b7cdea'}}>Objectif : {propGoal??'—'}</span>
+    </div>
+  </div>}
+  {b.market==='totals'&&<div><strong>{total} points combinés</strong>{progress!==null&&<div className="studio-live-progress"><div style={{width:progress+'%'}}/></div>}</div>}
+  {cover!==null&&<p style={{fontWeight:850,color:cover>0?'#65ffd4':cover===0?'#ffe082':'#ff9bad'}}>{cover>0?'✓ Handicap couvert pour le moment':cover===0?'Égalité avec le handicap':'Handicap non couvert actuellement'} · Écart réel {diff!>0?'+':''}{diff} · Ligne {line>0?'+':''}{line}</p>}
+  {money!==null&&<p style={{fontWeight:850,color:money>0?'#65ffd4':money===0?'#ffe082':'#ff9bad'}}>{money>0?'Ton équipe mène':money===0?'Égalité':'Ton équipe tire de l’arrière'}</p>}
+  {reached&&<strong className="studio-live-alert">⚡ OBJECTIF ATTEINT ! Vérifie le règlement officiel du pari.</strong>}
+  <div style={{display:'flex',justifyContent:'space-between',gap:10,marginTop:14,padding:'12px 0',borderTop:'1px solid #264a6c',fontSize:13}}>
+    <span>MISE <strong>{'stake' in b?Number((b as Bet&{stake:number}).stake).toFixed(2):'—'} $</strong></span>
+    <span>COTE <strong>{'chosenOdds' in b?Number((b as Bet&{chosenOdds:number}).chosenOdds).toFixed(2):'—'}</strong></span>
+    <span>RETOUR <strong>{'stake' in b&&'chosenOdds' in b?(Number((b as Bet&{stake:number}).stake)*Number((b as Bet&{chosenOdds:number}).chosenOdds)).toFixed(2)+' $':'—'}</strong></span>
+  </div>
+  <small>ESPN · Mise à jour {new Date(feed.updatedAt).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto',hour:'2-digit',minute:'2-digit'})}. {game.state==='pre'?'Match à venir.':isProp&&!actual?'Statistiques individuelles non encore disponibles.':'Résultat à confirmer selon le bookmaker.'}</small>
  </article>;
 }
 export default function LiveBetTracker({bets}:{bets:Bet[]}){
