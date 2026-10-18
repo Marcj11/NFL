@@ -40,6 +40,7 @@ export default function LiveHighlights(){
  const [updated,setUpdated]=useState('');
  const [state,setState]=useState<'loading'|'ok'|'unavailable'>('loading');
  const [filter,setFilter]=useState('all');
+ const [expanded,setExpanded]=useState(false);
  useEffect(()=>{
   let mounted=true;
   const load=async()=>{try{const response=await fetch('/api/live-highlights',{cache:'no-store'});if(!response.ok)throw Error('ESPN indisponible');const data=await response.json();if(!mounted)return;if(data.status!=='ok')throw Error('ESPN indisponible');setItems(Array.isArray(data.events)?data.events:[]);setUpdated(String(data.updatedAt||''));setState('ok')}catch{if(mounted)setState('unavailable')}};
@@ -47,15 +48,16 @@ export default function LiveHighlights(){
  },[]);
  const games=useMemo(()=>[...new Set(items.map(x=>x.matchup))], [items]);
  const shown=items.filter(x=>filter==='all'||x.matchup===filter).slice(0,18);
- return <section style={{margin:'20px 0 26px',border:'1px solid rgba(93,189,255,.45)',borderRadius:24,background:'radial-gradient(ellipse at 15% 0%,rgba(18,92,145,.38),transparent 55%),linear-gradient(155deg,#101d37,#071323)',boxShadow:'0 18px 65px #0006,inset 0 1px #ffffff1a',padding:'clamp(16px,3vw,27px)',color:'#ecf6ff'}}>
-  <div style={{display:'flex',gap:14,justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap'}}>
+ return <section style={{margin:'14px 0 21px',border:'1px solid rgba(93,189,255,.45)',borderRadius:24,background:'radial-gradient(ellipse at 15% 0%,rgba(18,92,145,.38),transparent 55%),linear-gradient(155deg,#101d37,#071323)',boxShadow:'0 18px 65px #0006,inset 0 1px #ffffff1a',padding:'clamp(16px,3vw,27px)',color:'#ecf6ff'}}>
+  <div style={{display:'flex',gap:14,justifyContent:'space-between',alignItems:'center',flexWrap:'wrap'}}>
    <div><div style={{fontSize:11,letterSpacing:2.5,fontWeight:900,color:'#79d9ff'}}>NFL STUDIO · LE VESTIAIRE LIVE</div><h2 style={{fontSize:'clamp(23px,4vw,33px)',margin:'5px 0',fontWeight:950,letterSpacing:-.9}}>🔥 CE QUI BRASSE <span style={{color:'#74dfff'}}>LIVE</span></h2><p style={{margin:'5px 0',fontSize:13,color:'#bed5e7'}}>Les gros jeux, les blessures et les revirements. Les faits viennent du play-by-play ESPN; la jasette vient de nous.</p></div>
    <span style={{padding:'8px 11px',borderRadius:999,background:'rgba(245,40,80,.12)',border:'1px solid rgba(255,88,117,.55)',fontSize:11,fontWeight:900,letterSpacing:1}}><span style={{color:'#ff657d'}}>●</span> ESPN · MISE À JOUR 60 S</span>
   </div>
-  {games.length>1&&<div style={{display:'flex',gap:8,overflowX:'auto',padding:'15px 0 4px'}}>
+  <button type="button" onClick={()=>setExpanded(v=>!v)} aria-expanded={expanded} style={{padding:'11px 17px',border:'1px solid #79d9ff',borderRadius:12,color:'#041423',background:'linear-gradient(90deg,#8eeeff,#65c0fb)',fontWeight:950,cursor:'pointer'}}>{expanded?'▲ Réduire les nouvelles':'▼ Voir les '+items.length+' faits importants'}</button>
+  {expanded&&games.length>1&&<div style={{display:'flex',gap:8,overflowX:'auto',padding:'15px 0 4px'}}>
    {['all',...games].map(g=><button key={g} type="button" onClick={()=>setFilter(g)} style={{flexShrink:0,border:'1px solid '+(filter===g?'#71dcff':'#45647d'),background:filter===g?'#164567':'#17243a',color:'#f5fbff',borderRadius:999,padding:'9px 13px',fontWeight:800,cursor:'pointer'}}>{g==='all'?'Tous les matchs':g}</button>)}
   </div>}
-  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,310px),1fr))',gap:13,marginTop:18}}>
+  {expanded&&<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,310px),1fr))',gap:13,marginTop:18}}>
    {shown.map(x=>{const t=styles[x.type]||styles.sack;return <article key={x.id} style={{position:'relative',overflow:'hidden',border:'1px solid rgba('+t.rgb+',.55)',borderRadius:19,background:'linear-gradient(145deg,rgba('+t.rgb+',.16),rgba(9,23,42,.94) 57%)',boxShadow:'inset 0 1px #ffffff19,0 8px 24px #0005',padding:17}}>
     <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:'linear-gradient(90deg,'+t.accent+',transparent)'}}/>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:7,fontSize:11,fontWeight:900,letterSpacing:.9}}>
@@ -71,8 +73,8 @@ export default function LiveHighlights(){
     <div style={{fontSize:11,color:'#b6cde0',marginBottom:9}}>🎟️ Impact sur tes paris : à évaluer selon la sélection; aucun verdict automatique inventé.</div>
     <a href={x.url} target="_blank" rel="noopener noreferrer" style={{display:'inline-flex',textDecoration:'none',borderRadius:9,padding:'9px 12px',color:'#071527',background:'#9de9ff',fontSize:12,fontWeight:950}}>VOIR LA SOURCE ESPN ↗</a>
    </article>})}
-  </div>
-  {shown.length===0&&<div style={{padding:'23px 12px',textAlign:'center',color:'#c0d8e9',border:'1px dashed #527593',borderRadius:14,marginTop:15}}>{state==='loading'?'Chargement des événements ESPN…':state==='unavailable'?'ESPN est temporairement indisponible. Les événements précédents restent affichés s’ils sont chargés.':items.length?'Aucun événement pour ce match.':'Aucun gros événement confirmé sur les matchs en cours. Les cartes apparaîtront ici automatiquement.'}</div>}
-  <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8,marginTop:15,fontSize:11,color:'#9ebad0'}}><span>Source factuelle : ESPN play-by-play · Commentaires originaux NFL Studio (pas des citations ESPN)</span><span>{updated?'Actualisé à '+new Date(updated).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto'}):'En attente de données'}</span></div>
+  </div>}
+  {expanded&&shown.length===0&&<div style={{padding:'23px 12px',textAlign:'center',color:'#c0d8e9',border:'1px dashed #527593',borderRadius:14,marginTop:15}}>{state==='loading'?'Chargement des événements ESPN…':state==='unavailable'?'ESPN est temporairement indisponible. Les événements précédents restent affichés s’ils sont chargés.':items.length?'Aucun événement pour ce match.':'Aucun gros événement confirmé sur les matchs en cours. Les cartes apparaîtront ici automatiquement.'}</div>}
+  {expanded&&<div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8,marginTop:15,fontSize:11,color:'#9ebad0'}}><span>Source factuelle : ESPN play-by-play · Commentaires originaux NFL Studio (pas des citations ESPN)</span><span>{updated?'Actualisé à '+new Date(updated).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto'}):'En attente de données'}</span></div>}
  </section>;
 }
