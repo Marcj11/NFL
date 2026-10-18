@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
 type Game={game_id:string;week:number;season:number;kickoff_utc:string;home_team_id:string;away_team_id:string;status:string;game_results:{home_score:number;away_score:number}|{home_score:number;away_score:number}[]|null};
@@ -23,6 +24,21 @@ export async function GET(request:Request){
     const change=24*(actual-home);ratings.set(g.home_team_id,h+change);ratings.set(g.away_team_id,a-change);settled++;
    }
   }
-  return NextResponse.json({engine:'Elo',model_version:'elo-recovery-v1',historical_accuracy_verified:false,betting_recommendations:false,settled_games: settled,games:output},{headers:{'Cache-Control':'no-store'}});
+  // Capture both victory and defeat probabilities BEFORE kickoff; never overwrite snapshots.
+  // The history replay is reproducible from recorded model_version and timestamp.
+  const recordedAt=new Date().toISOString();
+  const snapshots=output.filter(g=>Date.parse(g.kickoff_utc)>Date.now()).flatMap(g=>
+    [{selection:g.home_team_id,probability:g.home_win_probability},{selection:g.away_team_id,probability:g.away_win_probability}].map(side=>{
+      const record={model_version:'elo-recovery-v1',game_id:g.game_id,kickoff_utc:g.kickoff_utc,category:'moneyline',market:'h2h',selection:side.selection,selection_key:g.game_id+'|'+side.selection,estimated_probability:side.probability,recommendation:'non_evalue',scope:'all_games',scope_key:'week:'+week,inputs_asof:recordedAt,reasoning:{algorithm:'Elo ratings replay; initial 1500, K=24, home advantage=55; not independently calibrated'},prediction_context:{opponent:side.selection===g.home_team_id?g.away_team_id:g.home_team_id,recorded_at:recordedAt},data_quality:{historical_accuracy_verified:false,betting_recommendations:false}};
+      return {...record,decision_key:createHash('sha256').update(JSON.stringify(record)).digest('hex')};
+    }));
+  let archive_status='nothing_to_archive';
+  if(snapshots.length){
+   try{
+    const saved=await fetch(base+'/rest/v1/nfl_studio_forecast_decisions_v2?on_conflict=decision_key',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'resolution=ignore-duplicates'},body:JSON.stringify(snapshots),cache:'no-store',signal:AbortSignal.timeout(7000)});
+    archive_status=saved.ok?'saved_or_existing':'http_'+saved.status;
+   }catch{archive_status='connection_failed';}
+  }
+  return NextResponse.json({engine:'Elo',model_version:'elo-recovery-v1',historical_accuracy_verified:false,betting_recommendations:false,settled_games: settled,archive_status,games:output},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'elo_unavailable',detail:String(e),games:[]},{status:502});}
 }
