@@ -41,6 +41,15 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
  const num=stat==='C/ATT'?Number(val.split('/')[0]):Number(val);
  return Number.isFinite(num)?{value:num,label}:null;
 }
+const betGoal=(b:Bet):number|null=>{
+ const label=b.selection||'';
+ const plus=label.match(/(\d+(?:[.,]\d+)?)\s*\+/);
+ if(plus)return Number(plus[1].replace(',','.'));
+ const raw=b.line;
+ if(raw!==undefined&&raw!==null&&Number.isFinite(Number(raw))&&/over|plus/i.test(label))return Math.floor(Number(raw))+1;
+ const fallback=label.match(/(?:over|plus de)\s*(\d+(?:[.,]\d+)?)/i);
+ return fallback?Math.floor(Number(fallback[1].replace(',','.')))+1:null;
+};
 type Mood='good'|'neutral'|'bad';
 const moodTheme=(m:Mood)=>m==='good'?{background:'linear-gradient(145deg,#225f49,#163f37 70%,#112f34)',border:'1px solid #57efa8',boxShadow:'inset 0 0 35px #44ff981e,0 0 16px #4cff9a24'}:m==='bad'?{background:'linear-gradient(145deg,#713444,#4a2938 70%,#302633)',border:'1px solid #ff8596',boxShadow:'inset 0 0 35px #ff648c1a,0 0 16px #ff648c26'}:{background:'linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)',border:'1px solid #ffc477',boxShadow:'inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920'};
 function ticketMood(b:Bet,feed:Feed):Mood{
@@ -61,7 +70,7 @@ function ticketMood(b:Bet,feed:Feed):Mood{
  const actual=measure(b,feed.players[g.id]||[]);
  const line=Number(b.line),hasLine=b.line!==undefined&&b.line!==null&&Number.isFinite(line)&&line>=0;
  if(b.market==='props'){
-  const goal=hasLine&&/\\bover\\b|\\bplus\\b|\\d+\\+/i.test(b.selection)?Math.floor(line)+1:null;
+  const goal=betGoal(b);
   if(!actual||!goal)return 'neutral';
   const progress=100*actual.value/goal;
   return actual.value>=goal||progress>=65?'good':progress<25?'bad':'neutral';
@@ -91,7 +100,7 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const actual=measure(b,feed.players[game.id]||[]);
  const line=Number(b.line);
  const hasLine=b.line!==undefined&&b.line!==null&&Number.isFinite(line)&&line>=0;
- const target=hasLine?Math.floor(line)+1:null;
+ const target=betGoal(b);
  const total=game.home.score+game.away.score;
  const over=/\bover\b|\bplus\b|\d+\+/i.test(b.selection);
  const propGoal=isProp&&over&&target!==null?target:null;
@@ -210,7 +219,7 @@ export default function LiveBetTracker({bets,allBets}:{bets:Bet[];allBets:Bet[]}
  };
  const visible=matches.filter(b=>statusOf(b)===order).filter(b=>marketFilter==='all'||marketFilter==='parlay'&&b.market==='parlay'||marketFilter==='props'&&b.market==='props'||marketFilter==='game'&&b.market!=='props'&&b.market!=='parlay').sort((a,b)=>{
   const time=(bet:Bet)=>{const first=bet.market==='parlay'&&bet.legs?.length?bet.legs[0].game:bet.game;return Date.parse(feed?.games.find(g=>match(first,g))?.date||'')||0};
-  if(order==='live'&&feed){const rank:Record<Mood,number>={good:0,neutral:1,bad:2};const difference=rank[ticketMood(a,feed)]-rank[ticketMood(b,feed)];if(difference!==0)return difference;}
+  if(feed){const rank:Record<Mood,number>={good:0,neutral:1,bad:2};const difference=rank[ticketMood(a,feed)]-rank[ticketMood(b,feed)];if(difference!==0)return difference;}
   return order==='upcoming'?time(a)-time(b):time(b)-time(a);
  });
  if(!bets.length)return <section className="studio-live"><div className="studio-live-grid"><DailyBetsTicket bets={allBets}/></div></section>;
