@@ -741,3 +741,15 @@ nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(1
 .studio-live .studio-live-ticket[data-mood="good"]{background:linear-gradient(145deg,#225f49,#163f37 70%,#112f34)!important;border:1px solid #57efa8!important;box-shadow:inset 0 0 35px #44ff981e,0 0 16px #4cff9a24!important}
 .studio-live .studio-live-ticket[data-mood="neutral"]{background:linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)!important;border:1px solid #ffc477!important;box-shadow:inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920!important}
 .studio-live .studio-live-ticket[data-mood="bad"]{background:linear-gradient(145deg,#713444,#4a2938 70%,#302633)!important;border:1px solid #ff8596!important;box-shadow:inset 0 0 35px #ff648c1a,0 0 16px #ff648c26!important}
+
+/* ESPN live key moments */
+.studio-highlights{margin:14px 0;padding:15px;border:1px solid #4d8ca8;border-radius:14px;background:linear-gradient(120deg,#112d44,#15243b);color:#ecf8ff}
+.studio-highlights-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.studio-highlights-head strong{font-size:16px;color:#9bf7dc}
+.studio-highlights-head span,.studio-highlights>small{font-size:11px;color:#a3c4d7}
+.studio-highlights>p{font-size:12px;color:#bbd7e7;line-height:1.45;margin:8px 0}
+.studio-highlights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:8px;margin:10px 0}
+.studio-highlights-item{display:flex;flex-direction:column;gap:6px;padding:11px;text-decoration:none;color:#ecfaff;border:1px solid #356e8c;border-radius:11px;background:#0a2439}
+.studio-highlights-item strong{font-size:12px;color:#95efdd}
+.studio-highlights-item span{font-size:12px;line-height:1.4}
+.studio-highlights-item small{font-size:10px;color:#a5c3d8}
