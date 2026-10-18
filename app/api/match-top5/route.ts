@@ -98,6 +98,23 @@ export async function GET(req:Request){
  const heavy=ranked.find(p=>p.decimal>=3&&p.expected_value>0);
  const chosen=ranked.filter(p=>!heavy||p!==heavy).slice(0,heavy?4:5);
  const combined=[...chosen,...(heavy?[{...heavy,heavyball:true}]:[])];
+ // Archive the complete matchup top five before kickoff, with odds and selection rationale.
+ if(Date.parse(target.kickoff_utc)>Date.now()&&combined.length){
+  const rows=combined.slice(0,5).flatMap((pick:any,idx:number)=>{
+   const prob=Number(pick.probability),odd=Number(pick.decimal);
+   if(!Number.isFinite(prob)||prob<=0||prob>=1||!Number.isFinite(odd)||odd<=1)return [];
+   const row={model_version:'historical_market_research_v4',game_id:id,kickoff_utc:target.kickoff_utc,category:'match',market:String(pick.market),selection:String(pick.name||pick.player||''),selection_key:id+'|'+String(pick.market)+'|'+String(pick.name||pick.player||'')+'|'+String(pick.point??''),line:pick.point??null,bookmaker:String(pick.book||''),decimal_odds:odd,odds_observed_at:store.fetched_at||null,estimated_probability:prob,implied_probability:1/odd,estimated_ev:prob*odd-1,recommendation:'miser',rank:idx+1,scope:'match_top5',scope_key:id,reasoning:{explanation:pick.angle||null,signal:pick.signal??null,model_validation:'experimental_unvalidated'},prediction_context:{teams,market:pick.market},data_quality:{calibrated:false,source:'historical_market_research_v4'}};
+   return [row];
+  });
+  if(rows.length){
+   try{
+    const {createHash}=await import('node:crypto');
+    const snapshotHour=new Date(Math.floor(Date.now()/3600000)*3600000).toISOString();
+    const payload=rows.map(row=>({...row,inputs_asof:snapshotHour,decision_key:createHash('sha256').update(JSON.stringify({...row,inputs_asof:snapshotHour})).digest('hex')}));
+    await fetch(url+'/rest/v1/nfl_studio_forecast_decisions_v2?on_conflict=decision_key',{method:'POST',headers:{...headers,'Content-Type':'application/json',Prefer:'resolution=ignore-duplicates'},body:JSON.stringify(payload),cache:'no-store',signal:AbortSignal.timeout(7000)});
+   }catch{}
+  }
+ }
  return NextResponse.json({game_id:id,stats,model:'historical_market_research_v4',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
