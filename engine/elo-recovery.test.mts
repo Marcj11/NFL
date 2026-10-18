@@ -1,0 +1,12 @@
+import {strict as assert} from 'node:assert';
+import {eloProbability,replayElo} from './elo-recovery.ts';
+assert(Math.abs(eloProbability(1500,1500,0)-.5)<1e-12);
+assert(eloProbability(1500,1500,55)>.5);
+const inputs=[{id:'a',home:'JAX',away:'HOU',homeScore:24,awayScore:17,date:'2023-09-01T12:00:00Z'},{id:'b',home:'HOU',away:'JAX',homeScore:28,awayScore:17,date:'2023-10-01T12:00:00Z'}];
+const a=replayElo(inputs),b=replayElo([...inputs].reverse());
+assert.deepEqual(a.predictions,b.predictions);
+assert.equal(a.calibrated,false);assert.equal(a.modelC,false);
+assert.equal(a.predictions.length,2);
+assert.throws(()=>replayElo([inputs[0],inputs[0]]));
+assert.throws(()=>eloProbability(Infinity,1500));
+console.log('PASS: 7 assertions, deterministic Elo replay; NOT a validated historical backtest or Model C.');
