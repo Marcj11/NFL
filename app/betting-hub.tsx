@@ -288,6 +288,17 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  for(const o of unique){const key=identity(o);if(games.has(key))continue;games.add(key);fallback.push(o);if(fallback.length===5)break}
  return fallback;
  },[category,offers,official,research,gamesResearch]);
+ // Persist each viewed category TOP 5 before kickoff; retain old snapshots when odds change.
+ useEffect(()=>{
+  if(view!=='top'||!loaded||ranking.length===0)return;
+  const selections=ranking.slice(0,5).flatMap((o,i)=>{
+   const p=officialProbability(o);
+   if(p===null||!o.kickoff||Date.parse(o.kickoff)<=Date.now()||!Number.isFinite(p))return [];
+   return [{game_id:o.game,kickoff_utc:o.kickoff,category,market:o.market,selection:o.selection,selection_key:o.id,line:o.line,bookmaker:o.book,decimal_odds:o.odds,estimated_probability:p,recommendation:'miser' as const,scope:'global_top5' as const,scope_key:category,rank:i+1,reasoning:{rule:'positive EV on Elo anchored estimates',ev:p*o.odds-1},prediction_context:{selection_team:o.team,player:o.player||null,match:o.game},data_quality:{calibrated:false}}];
+  });
+  if(!selections.length)return;
+  fetch('/api/forecast-archive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model_version:'elo-recovery-v1',forecasts:selections}),keepalive:true}).catch(()=>{});
+ },[ranking,category,view,loaded,official,research,gamesResearch]);
  const portfolio=useMemo(()=>{
   if(!ranking.length)return null;
   const chances=ranking.map(o=>officialProbability(o));
