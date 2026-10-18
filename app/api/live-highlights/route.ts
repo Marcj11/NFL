@@ -16,7 +16,7 @@ export async function GET(){
     if(!response.ok)return [];
     const d=await response.json();const items:Item[]=[];
     const matchup=arr(e.competitions?.[0]?.competitors).map(t=>t.team?.abbreviation).filter(Boolean).join(' - ');
-    const plays=[...arr(d.scoringPlays),...arr(d.drives?.current?.plays),...arr(d.drives?.previous).flatMap(x=>arr(x.plays))];
+    const plays=[...arr(d.scoringPlays),...arr(d.drives?.current?.plays),...arr(d.drives?.previous?.plays),...arr(d.drives?.previous).flatMap(x=>arr(x.plays))];
     const ids=new Set<string>();
     for(const p of plays){
      const detail=String(p.text||p.shortText||'').trim();if(!detail)continue;
