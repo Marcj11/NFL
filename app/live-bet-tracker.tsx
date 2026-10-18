@@ -5,6 +5,8 @@ type Team={abbr:string;name:string;score:number};
 type Game={id:string;date:string;home:Team;away:Team;status:string;state:string;clock:string;period:number;complete:boolean};
 type Player={name:string;category:string;values:Record<string,string>};
 type Feed={status:string;games:Game[];players:Record<string,Player[]>;updatedAt:string};
+const logoUrl=(abbr:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+(({LA:'lar',WSH:'wsh'} as Record<string,string>)[abbr]||abbr).toLowerCase()+'.png';
+const TeamLogo=({abbr,size=36}:{abbr:string;size?:number})=><img src={logoUrl(abbr)} alt={'Logo '+abbr} loading="lazy" style={{width:size,height:size,objectFit:'contain',filter:'drop-shadow(0 0 8px #42caff55)',flexShrink:0}}/>;
 const tidy=(s:string)=>s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
 const playerKey=(s:string)=>tidy(s).replace(/\s+/g,'');
 const sideMatch=(raw:string,t:Team)=>{const part=tidy(raw),name=tidy(t.name),short=tidy(t.abbr==='LAR'?'LA':t.abbr==='WSH'?'WAS':t.abbr);return part===name||part===short||part===name.split(' ').slice(-1)[0]};
@@ -56,7 +58,7 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const barColor=reached?'linear-gradient(90deg,#18e7bd,#83ffe4)':'linear-gradient(90deg,#00c9ff,#38a5ff,#7e6eff)';
  const label=actual?.label==='rush yds'?'verges au sol':actual?.label==='reception yds'?'verges en réception':actual?.label==='pass yds'?'verges à la passe':actual?.label==='receptions'?'réceptions':actual?.label||'statistique';
  return <article className="studio-live-ticket" style={{padding:'22px 19px',borderRadius:22,background:'linear-gradient(155deg,#0d2546,#081429 82%)',border:'1px solid rgba(0,220,255,.65)',boxShadow:'0 0 26px rgba(0,210,255,.12)',overflow:'hidden'}}>
-  <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status}{game.clock&&game.state==='in'?' · '+game.clock:''}</span></div>
+  <div className="studio-live-top"><span>{game.state==='in'?'🔴 EN DIRECT':game.complete?'✓ FINAL':'⏳ À VENIR'}</span><span>{game.status}{game.clock&&game.state==='in'?' · '+game.clock:''}</span></div><div className="studio-live-matchup"><TeamLogo abbr={game.away.abbr} size={37}/><span>{game.away.abbr}</span><b>VS</b><span>{game.home.abbr}</span><TeamLogo abbr={game.home.abbr} size={37}/></div>
   {isProp?<div style={{display:'flex',alignItems:'center',gap:16,margin:'18px 0'}}>
     <div style={{width:100,height:122,border:'1px solid #299dc7',borderRadius:14,background:'linear-gradient(155deg,#154568,#08182e)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
      {portrait?<img src={portrait} alt={'Portrait de '+b.player} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={()=>SET_PORTRAIT(null)}/>:<span style={{fontSize:40}}>🏈</span>}
@@ -120,7 +122,7 @@ function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
   <p style={{color:'#c9d4ed',margin:'8px 0 15px'}}>{won} / {legs.length} branches officiellement gagnées · {active} favorable(s) en direct</p>
   {states.map((x,i)=><div key={i} style={{padding:'12px 0',borderTop:'1px solid #3c416b'}}>
    <div style={{display:'flex',justifyContent:'space-between',gap:12}}><strong>{i+1}. {x.leg.selection}</strong><b style={{color:x.status==='won'?'#58ffd1':x.status==='lost'?'#ff829d':x.status==='leading'?'#8bf0df':'#d2baff'}}>{x.status==='won'?'✓ GAGNÉ':x.status==='lost'?'✕ PERDU':x.status==='leading'?'● FAVORABLE':x.status==='trailing'?'● DÉFAVORABLE':'EN ATTENTE'}</b></div>
-   <div style={{fontSize:13,color:'#b6cce5',marginTop:5}}>{x.detail} · cote {x.leg.odds.toFixed(2)}</div>
+   <div style={{display:'flex',alignItems:'center',gap:7,marginTop:5}}>{(()=>{const g=feed.games.find(g=>match(x.leg.game,g));return g?<><TeamLogo abbr={g.away.abbr} size={24}/><TeamLogo abbr={g.home.abbr} size={24}/></>:null})()}<span style={{fontSize:12,color:'#b6cce5'}}>{x.detail} · cote {x.leg.odds.toFixed(2)}</span></div>
   </div>)}
   <p style={{fontWeight:800,color:'#aef9e4'}}>Mise {Number(b.stake||0).toFixed(2)} $ · Cote {Number(b.chosenOdds||0).toFixed(2)} · Retour possible {(Number(b.stake||0)*Number(b.chosenOdds||0)).toFixed(2)} $</p>
   <small>ESPN actualisé {new Date(feed.updatedAt).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto'})} · Suivi indicatif; confirmation finale selon le bookmaker.</small>
