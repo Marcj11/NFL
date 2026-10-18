@@ -14,14 +14,14 @@ export default function HighlightTicket(){
  const [index,INDEX]=useState(0);
  const [state,STATE]=useState('Chargement des faits saillants ESPN…');
  useEffect(()=>{let alive=true;const load=async()=>{try{const res=await fetch('/api/live-highlights',{cache:'no-store'});if(!res.ok)throw Error();const data=await res.json();if(!alive)return;const next=Array.isArray(data.events)?data.events as Event[]:[];SET(next);STATE(next.length?'':'Aucun fait saillant confirmé en direct pour le moment.')}catch{if(alive)STATE('ESPN temporairement indisponible.')}};void load();const id=setInterval(()=>{void load()},60000);return()=>{alive=false;clearInterval(id)}},[]);
- useEffect(()=>{const timer=setInterval(()=>INDEX(v=>v+1),120000);return()=>clearInterval(timer)},[]);
+ useEffect(()=>{const timer=setInterval(()=>INDEX(v=>v+1),30000);return()=>clearInterval(timer)},[]);
  const item=events.length?events[index%events.length]:null;
  const style=look[item?.type||'']||look.sack;
  return <article className="studio-live-ticket" style={{position:'relative',overflow:'hidden',minHeight:340,borderRadius:22,border:'1px solid '+style.color,background:'linear-gradient(140deg,'+style.shade+',#101c36 65%,#0c172a)',boxShadow:'inset 0 0 35px '+style.shade+',0 0 24px #14324b99',padding:'22px 19px',display:'flex',flexDirection:'column',gap:12}}>
   <div style={{position:'absolute',inset:'0 0 auto',height:4,background:'linear-gradient(90deg,'+style.color+',transparent)'}}/>
   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap'}}>
    <strong style={{letterSpacing:1,color:'#f7fbff',fontSize:13}}>🔥 CE QUI BRASSE LIVE</strong>
-   <span style={{fontSize:11,color:style.color,fontWeight:900}}>ESPN · 2 MIN / FAIT</span>
+   <span style={{fontSize:11,color:style.color,fontWeight:900}}>ESPN · 30 SEC / FAIT</span>
   </div>
   {item?<><div style={{fontSize:12,fontWeight:900,color:style.color}}>{style.icon} {item.matchup} {item.time?' · '+item.time:''}</div>
    <h3 style={{fontSize:23,margin:0,lineHeight:1.15,color:'#fff'}}>{item.title}</h3>
