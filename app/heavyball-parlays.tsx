@@ -1,6 +1,6 @@
 'use client';
 import {useMemo} from 'react';
-type Offer={id:string;game:string;market:string;selection:string;odds:number;book:string;kickoff?:string;team:string};
+type Offer={id:string;game:string;market:string;selection:string;odds:number;book:string;kickoff?:string;team:string;prob:number;line?:number;marketKey?:string;player?:string;playerImage?:string;playerTeam?:string};
 type Combo={legs:Offer[];chance:number;odds:number;ev:number};
 export default function HeavyballParlays({offers,probability,onAdd}:{offers:Offer[];probability:(o:Offer)=>number|null;onAdd:(c:Combo,kind:'regular'|'heavyball')=>void}){
  const all=useMemo(()=>{
