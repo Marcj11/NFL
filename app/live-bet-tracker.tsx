@@ -15,20 +15,31 @@ const playerKey=(s:string)=>tidy(s).replace(/\s+/g,'');
 const sideMatch=(raw:string,t:Team)=>{const part=tidy(raw),name=tidy(t.name),short=tidy(t.abbr==='LAR'?'LA':t.abbr==='WSH'?'WAS':t.abbr);return part===name||part===short||part===name.split(' ').slice(-1)[0]};
 const match=(name:string,g:Game)=>{const sides=name.split(/\s+vs\s+/i);return sides.length===2&&sideMatch(sides[0],g.away)&&sideMatch(sides[1],g.home)};
 function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
- const key=(b.marketKey||b.selection||'').toLowerCase();
- const player=playerKey(b.player||'');if(!player)return null;
- const categories:[string,string,string[]][]=[
- ['player_pass_yds','passing',['YDS']],['player_pass_tds','passing',['TD']],['player_pass_completions','passing',['C/ATT']],
- ['player_rush_yds','rushing',['YDS']],['player_reception_yds','receiving',['YDS']],['player_receptions','receiving',['REC']]
- ];
- const aliases:Record<string,string>={player_rushing_yards:'player_rush_yds',player_receiving_yards:'player_reception_yds',player_reception_yards:'player_reception_yds',player_passing_yards:'player_pass_yds'};
- const normalized=aliases[key]||key;
- const choice=categories.find(x=>normalized.includes(x[0]));if(!choice)return null;
- const row=players.find(p=>playerKey(p.name)===player&&p.category.toLowerCase().includes(choice[1]));
+ const selection=(b.selection||'').toLowerCase();
+ const market=(b.marketKey||'').toLowerCase();
+ const name=b.player||((b.selection||'').match(/\\b(james cook|dalton kincaid)\\b/i)?.[0]||'');
+ const player=playerKey(name);
+ if(!player)return null;
+ const requested=market+' '+selection;
+ let kind:'rushing'|'receiving'|'passing'|null=null;
+ let stat='YDS';
+ let label='';
+ if(/rush|rushing|course|sol/.test(requested)){kind='rushing';stat=/touchdown|td|touché/.test(requested)?'TD':'YDS';label=stat==='TD'?'rush tds':'rush yds'}
+ else if(/reception_yds|receiving_yards|receiving yards|verges en réception/.test(requested)){kind='receiving';label='reception yds'}
+ else if(/receptions|réceptions|catch|attrap/.test(requested)){kind='receiving';stat='REC';label='receptions'}
+ else if(/pass_yds|passing_yards|passing yards|verges à la passe/.test(requested)){kind='passing';label='pass yds'}
+ else if(/pass_tds|passing_touchdowns|passes de touché/.test(requested)){kind='passing';stat='TD';label='pass tds'}
+ else if(/pass_completions|passes complétées/.test(requested)){kind='passing';stat='C/ATT';label='pass completions'}
+ else if(/touchdown|touché|\\btd\\b/.test(requested)){
+   const rows=players.filter(p=>playerKey(p.name)===player&&/rushing|receiving/.test(p.category.toLowerCase()));
+   if(rows.length){const sum=rows.reduce((n,p)=>n+(Number(p.values.TD)||0),0);return {value:sum,label:'touchdowns'}}
+ }
+ if(!kind)return null;
+ const row=players.find(p=>playerKey(p.name)===player&&p.category.toLowerCase().includes(kind));
  if(!row)return null;
- const val=choice[2].map(x=>row.values[x]).find(v=>v!==undefined);if(val===undefined)return null;
- const num=choice[0]==='player_pass_completions'?Number(val.split('/')[0]):Number(val);
- return Number.isFinite(num)?{value:num,label:choice[0].replaceAll('player_','').replaceAll('_',' ')}:null;
+ const val=row.values[stat];if(val===undefined)return null;
+ const num=stat==='C/ATT'?Number(val.split('/')[0]):Number(val);
+ return Number.isFinite(num)?{value:num,label}:null;
 }
 type Mood='good'|'neutral'|'bad';
 const moodTheme=(m:Mood)=>m==='good'?{background:'linear-gradient(145deg,#225f49,#163f37 70%,#112f34)',border:'1px solid #57efa8',boxShadow:'inset 0 0 35px #44ff981e,0 0 16px #4cff9a24'}:m==='bad'?{background:'linear-gradient(145deg,#713444,#4a2938 70%,#302633)',border:'1px solid #ff8596',boxShadow:'inset 0 0 35px #ff648c1a,0 0 16px #ff648c26'}:{background:'linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)',border:'1px solid #ffc477',boxShadow:'inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920'};
