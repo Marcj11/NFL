@@ -30,6 +30,38 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
 }
 type Mood='good'|'neutral'|'bad';
 const moodTheme=(m:Mood)=>m==='good'?{background:'linear-gradient(145deg,#225f49,#163f37 70%,#112f34)',border:'1px solid #57efa8',boxShadow:'inset 0 0 35px #44ff981e,0 0 16px #4cff9a24'}:m==='bad'?{background:'linear-gradient(145deg,#713444,#4a2938 70%,#302633)',border:'1px solid #ff8596',boxShadow:'inset 0 0 35px #ff648c1a,0 0 16px #ff648c26'}:{background:'linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)',border:'1px solid #ffc477',boxShadow:'inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920'};
+function ticketMood(b:Bet,feed:Feed):Mood{
+ if(b.market==='parlay'&&b.legs?.length){
+  const states=b.legs.map(leg=>{
+   const g=feed.games.find(g=>match(leg.game,g));if(!g)return 0;
+   const chosen=leg.selection.toLowerCase();
+   const side=chosen.includes(g.home.name.toLowerCase())?g.home:chosen.includes(g.away.name.toLowerCase())?g.away:null;
+   if(!side)return 0;
+   const other=side===g.home?g.away:g.home;
+   const handicap=leg.market==='spreads'?Number(leg.selection.match(/([+-]\\d+(?:\\.\\d+)?)/)?.[1]):0;
+   const margin=side.score-other.score+(Number.isFinite(handicap)?handicap:0);
+   return g.state==='pre'?0:Math.sign(margin);
+  });
+  return states.some(s=>s<0)?'bad':states.some(s=>s>0)?'good':'neutral';
+ }
+ const g=feed.games.find(g=>match(b.game,g));if(!g||g.state!=='in')return 'neutral';
+ const actual=measure(b,feed.players[g.id]||[]);
+ const line=Number(b.line),hasLine=b.line!==undefined&&b.line!==null&&Number.isFinite(line)&&line>=0;
+ if(b.market==='props'){
+  const goal=hasLine&&/\\bover\\b|\\bplus\\b|\\d+\\+/i.test(b.selection)?Math.floor(line)+1:null;
+  if(!actual||!goal)return 'neutral';
+  const progress=100*actual.value/goal;
+  return actual.value>=goal||progress>=65?'good':progress<25?'bad':'neutral';
+ }
+ if(b.market==='moneyline'||b.market==='spreads'){
+  const home=sideMatch(b.team,g.home),away=sideMatch(b.team,g.away);
+  if(!home&&!away)return 'neutral';
+  const margin=home?g.home.score-g.away.score:g.away.score-g.home.score;
+  const adjusted=margin+(b.market==='spreads'&&hasLine?line:0);
+  return adjusted>0?'good':adjusted<0?'bad':'neutral';
+ }
+ return 'neutral';
+}
 const moodLabel=(m:Mood)=>m==='good'?'🟢 FAVORABLE':m==='bad'?'🔴 DÉFAVORABLE':'🟠 À SURVEILLER';
 function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const game=feed.games.find(g=>match(b.game,g));
@@ -165,12 +197,13 @@ export default function LiveBetTracker({bets}:{bets:Bet[]}){
  };
  const visible=matches.filter(b=>statusOf(b)===order).filter(b=>marketFilter==='all'||marketFilter==='parlay'&&b.market==='parlay'||marketFilter==='props'&&b.market==='props'||marketFilter==='game'&&b.market!=='props'&&b.market!=='parlay').sort((a,b)=>{
   const time=(bet:Bet)=>{const first=bet.market==='parlay'&&bet.legs?.length?bet.legs[0].game:bet.game;return Date.parse(feed?.games.find(g=>match(first,g))?.date||'')||0};
+  if(order==='live'&&feed){const rank:Record<Mood,number>={good:0,neutral:1,bad:2};const difference=rank[ticketMood(a,feed)]-rank[ticketMood(b,feed)];if(difference!==0)return difference;}
   return order==='upcoming'?time(a)-time(b):time(b)-time(a);
  });
  if(!bets.length)return null;
  return <section className="studio-live"><div className="studio-live-head"><span>⚡ LIVE TRACKER · ESPN</span><h2>LES PARIS DES BOYS EN DIRECT</h2><p>Scores actualisés automatiquement aux 45 secondes. Progression des Props lorsque la statistique du joueur est disponible.</p></div>
- <LiveHighlights />
+ 
  {alerts.length>0&&<div className="studio-live-alerts"><strong>🔔 LES NOUVELLES DU SCORE</strong>{alerts.map((alert,i)=><p key={i}>{alert}</p>)}</div>}
- {!feed?<p>On branche les tableaux de matchs…</p>:feed.status!=='ok'?<p>Les scores en direct sont momentanément indisponibles.</p>:matches.length===0?<p>Aucune de tes mises ouvertes ne correspond aux rencontres de la semaine suivie actuellement.</p>:<><div style={{display:'flex',gap:7,overflowX:'auto',margin:'12px 0',paddingBottom:4}}>{([['live','🔴 En direct'],['upcoming','⏰ À venir'],['completed','🏁 Terminés']] as const).map(([k,label])=><button key={k} onClick={()=>ORDER(k)} style={{whiteSpace:'nowrap',padding:'10px 12px',borderRadius:12,background:order===k?'#236878':'#172e48',color:'#fff',fontWeight:800,border:'1px solid '+(order===k?'#65ebdb':'#345876')}}>{label} ({matches.filter(b=>statusOf(b)===k).length})</button>)}</div><div style={{display:'flex',gap:7,overflowX:'auto',marginBottom:14}}>{([['all','Tous'],['parlay','🔥 Parlays'],['props','🎯 Props'],['game','🏈 Matchs']] as const).map(([k,label])=><button key={k} onClick={()=>MARKET_FILTER(k)} style={{whiteSpace:'nowrap',padding:'7px 11px',borderRadius:20,background:marketFilter===k?'#315c83':'#142940',color:'#fff',border:'1px solid #43627c'}}>{label}</button>)}</div>{visible.length===0?<p>Aucun pari dans ce classement.</p>:<div className="studio-live-grid">{visible.map(b=>b.market==='parlay'&&b.legs?.length?<ParlayTicket key={b.id} b={b} feed={feed}/>:<Ticket key={b.id} b={b} feed={feed}/>)}</div>}</>}
+ {!feed?<p>On branche les tableaux de matchs…</p>:feed.status!=='ok'?<p>Les scores en direct sont momentanément indisponibles.</p>:matches.length===0?<p>Aucune de tes mises ouvertes ne correspond aux rencontres de la semaine suivie actuellement.</p>:<><div style={{display:'flex',gap:7,overflowX:'auto',margin:'12px 0',paddingBottom:4}}>{([['live','🔴 En direct'],['upcoming','⏰ À venir'],['completed','🏁 Terminés']] as const).map(([k,label])=><button key={k} onClick={()=>ORDER(k)} style={{whiteSpace:'nowrap',padding:'10px 12px',borderRadius:12,background:order===k?'#236878':'#172e48',color:'#fff',fontWeight:800,border:'1px solid '+(order===k?'#65ebdb':'#345876')}}>{label} ({matches.filter(b=>statusOf(b)===k).length})</button>)}</div><div style={{display:'flex',gap:7,overflowX:'auto',marginBottom:14}}>{([['all','Tous'],['parlay','🔥 Parlays'],['props','🎯 Props'],['game','🏈 Matchs']] as const).map(([k,label])=><button key={k} onClick={()=>MARKET_FILTER(k)} style={{whiteSpace:'nowrap',padding:'7px 11px',borderRadius:20,background:marketFilter===k?'#315c83':'#142940',color:'#fff',border:'1px solid #43627c'}}>{label}</button>)}</div><LiveHighlights /><div style={{fontSize:12,color:'#a8dbef',fontWeight:800,margin:'10px 0'}}>🎨 Tri automatique : 🟢 Favorables → 🟠 À surveiller → 🔴 Défavorables · Les états sont indicatifs pendant le match.</div>{visible.length===0?<p>Aucun pari dans ce classement.</p>:<div className="studio-live-grid">{visible.map(b=>b.market==='parlay'&&b.legs?.length?<ParlayTicket key={b.id} b={b} feed={feed}/>:<Ticket key={b.id} b={b} feed={feed}/>)}</div>}</>}
  </section>;
 }
