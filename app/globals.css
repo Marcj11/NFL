@@ -736,3 +736,8 @@ nav a:hover,nav a[aria-current="page"],nav a.active{background:linear-gradient(1
 .studio-live-matchup img{transition:transform .2s ease}
 .studio-live-ticket:hover .studio-live-matchup img{transform:scale(1.08)}
 @media(min-width:1080px){.studio-live-matchup{margin:6px 0 2px;padding:4px 7px;gap:7px}.studio-live-matchup img{width:28px!important;height:28px!important}.studio-live-matchup span{font-size:12px}}
+
+/* Live Tracker mood overrides: must beat earlier global !important dark-blue card theme */
+.studio-live .studio-live-ticket[data-mood="good"]{background:linear-gradient(145deg,#225f49,#163f37 70%,#112f34)!important;border:1px solid #57efa8!important;box-shadow:inset 0 0 35px #44ff981e,0 0 16px #4cff9a24!important}
+.studio-live .studio-live-ticket[data-mood="neutral"]{background:linear-gradient(145deg,#69512f,#453a2c 70%,#302e30)!important;border:1px solid #ffc477!important;box-shadow:inset 0 0 35px #ffd16a19,0 0 16px #ffbe6920!important}
+.studio-live .studio-live-ticket[data-mood="bad"]{background:linear-gradient(145deg,#713444,#4a2938 70%,#302633)!important;border:1px solid #ff8596!important;box-shadow:inset 0 0 35px #ff648c1a,0 0 16px #ff648c26!important}
