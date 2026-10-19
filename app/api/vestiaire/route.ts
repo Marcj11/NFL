@@ -96,10 +96,11 @@ export async function GET(){
  if(!base||!key)return NextResponse.json({stories:[],status:'not_configured'},{status:503});
  const headers={apikey:key,Authorization:'Bearer '+key};
  try{
-  const gamesResponse=await fetch(base+'/rest/v1/games?'+new URLSearchParams({select:'game_id,home_team_id,away_team_id,kickoff_utc',kickoff_utc:'lt.'+new Date().toISOString(),order:'kickoff_utc.desc',limit:'75'}),{headers,cache:'no-store',signal:AbortSignal.timeout(10000)});
+  const now=Date.now(),weekAgo=new Date(now-7*24*60*60*1000).toISOString();
+  const gamesResponse=await fetch(base+'/rest/v1/games?'+new URLSearchParams({select:'game_id,home_team_id,away_team_id,kickoff_utc',kickoff_utc:'lt.'+new Date(now).toISOString(),and:'(kickoff_utc.gte.'+weekAgo+')',order:'kickoff_utc.desc',limit:'75'}),{headers,cache:'no-store',signal:AbortSignal.timeout(10000)});
   if(!gamesResponse.ok)throw Error('games_'+gamesResponse.status);
   const games=await gamesResponse.json() as Game[];
-  if(!games.length)return NextResponse.json({stories:[],status:'no_games'});
+  if(!games.length)return NextResponse.json({stories:[],status:'ok',verified_games:0,updated_at:new Date().toISOString()});
   const ids=games.map(g=>g.game_id).join(',');
   const resultsResponse=await fetch(base+'/rest/v1/game_results?'+new URLSearchParams({select:'game_id,home_score,away_score',game_id:'in.('+ids+')',limit:'75'}),{headers,cache:'no-store',signal:AbortSignal.timeout(10000)});
   if(!resultsResponse.ok)throw Error('results_'+resultsResponse.status);
