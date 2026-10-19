@@ -157,6 +157,11 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
   <small>ESPN · Mise à jour {new Date(feed.updatedAt).toLocaleTimeString('fr-CA',{timeZone:'America/Toronto',hour:'2-digit',minute:'2-digit'})}. {game.state==='pre'?'Match à venir.':isProp&&!actual?'Statistiques individuelles non encore disponibles.':'Résultat à confirmer selon le bookmaker.'}</small>
  </article>;
 }
+function ParlayPropPortrait({player,game}:{player:string;game:Game|undefined}){
+ const [url,setUrl]=useState<string|null>(null);
+ useEffect(()=>{if(!game)return;let active=true;const q=new URLSearchParams({player,away:game.away.abbr,home:game.home.abbr});fetch('/api/player-portrait?'+q,{cache:'no-store'}).then(r=>r.json()).then(d=>{if(active)setUrl(d.found&&typeof d.url==='string'?d.url:null)}).catch(()=>{});return()=>{active=false}},[player,game?.id]);
+ return <div style={{width:66,height:76,flexShrink:0,display:'grid',placeItems:'center',borderRadius:12,overflow:'hidden',background:'#102a48',border:'1px solid #3a9ec7'}}>{/\bjames\s+cook\b/i.test(player)?<span style={{fontSize:51}}>💩</span>:url?<img src={url} alt={'Portrait de '+player} onError={()=>setUrl(null)} style={{height:'100%',width:'100%',objectFit:'cover'}}/>:<span style={{fontSize:31}}>🏈</span>}</div>;
+}
 function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
  const legs=b.legs||[];
  const states=legs.map(leg=>{
@@ -189,8 +194,15 @@ function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
   <h3 style={{fontSize:22,margin:'12px 0'}}>{overall}</h3>
   <div style={{height:14,borderRadius:20,background:'#25334e',overflow:'hidden'}}><div style={{height:'100%',width:(legs.length?100*won/legs.length:0)+'%',background:'linear-gradient(90deg,#8a4fff,#27efc7)',boxShadow:'0 0 16px #a47fff',transition:'width 700ms'}}/></div>
   <p style={{color:'#c9d4ed',margin:'8px 0 15px'}}>{won} / {legs.length} branches officiellement gagnées · {active} favorable(s) en direct</p>
-  {states.map((x,i)=><div key={i} style={{padding:'12px 0',borderTop:'1px solid #3c416b'}}>
+  {states.map((x,i)=><div key={i} style={{padding:14,margin:'10px 0',border:'1px solid '+(x.status==='won'?'#f9d76e':x.status==='lost'?'#f17f9b':'#3b729a'),borderRadius:15,background:x.status==='won'?'linear-gradient(135deg,#604813,#2e291e)':'#10243a'}}>
    <div style={{display:'flex',justifyContent:'space-between',gap:12}}><strong>{i+1}. {x.leg.selection}</strong><b style={{color:x.status==='won'?'#58ffd1':x.status==='lost'?'#ff829d':x.status==='leading'?'#8bf0df':'#d2baff'}}>{x.status==='won'?'✓ GAGNÉ':x.status==='lost'?'✕ PERDU':x.status==='leading'?'● FAVORABLE':x.status==='trailing'?'● DÉFAVORABLE':'EN ATTENTE'}</b></div>
+   {x.leg.market==='props'&&<div style={{display:'flex',alignItems:'center',gap:12,marginTop:10}}>
+    <ParlayPropPortrait player={x.leg.player||x.leg.selection.split(/\d/)[0].trim()} game={feed.games.find(g=>match(x.leg.game,g))}/>
+    <div style={{flex:1,minWidth:0}}>
+     <div style={{fontSize:13,fontWeight:850,color:'#bfe5ff'}}>{x.leg.player||'PROP JOUEUR'}</div>
+     <div style={{fontSize:18,fontWeight:950,color:'#fff',margin:'4px 0'}}>{x.leg.selection}</div>
+     {(()=>{const g=feed.games.find(g=>match(x.leg.game,g));const m=g?measure({id:'',game:x.leg.game,selection:x.leg.selection,market:'props',marketKey:x.leg.marketKey,player:x.leg.player,team:'',line:x.leg.line,status:'open'},feed.players[g.id]||[]):null;const goal=betGoal({id:'',game:x.leg.game,selection:x.leg.selection,market:'props',line:x.leg.line,team:'',status:'open'});const pct=m&&goal?Math.max(0,Math.min(100,100*m.value/goal)):0;return <><div style={{fontSize:16,fontWeight:950,color:x.status==='won'?'#ffe67d':'#8deaff'}}>{m&&goal?m.value+' / '+goal+' · '+Math.round(pct)+' %':'Statistique ESPN en attente'}</div><div style={{height:13,borderRadius:20,background:'#061524',overflow:'hidden',marginTop:7}}><div style={{height:'100%',width:pct+'%',borderRadius:20,background:x.status==='won'?'linear-gradient(90deg,#e9a928,#fff4a5)':'linear-gradient(90deg,#16cfef,#7774ff)',boxShadow:'0 0 10px #48dfff88',transition:'width 800ms'}}/></div></>})()}
+    </div></div>}
    <div style={{display:'flex',alignItems:'center',gap:7,marginTop:5}}>{(()=>{const g=feed.games.find(g=>match(x.leg.game,g));return g?<><TeamLogo abbr={g.away.abbr} size={24}/><TeamLogo abbr={g.home.abbr} size={24}/></>:null})()}<span style={{fontSize:12,color:'#b6cce5'}}>{x.detail}{typeof x.leg.odds==='number'&&x.leg.odds>1?' · cote '+x.leg.odds.toFixed(2):''}</span></div>
   </div>)}
   <p style={{fontWeight:800,color:'#aef9e4'}}>Mise {Number(b.stake||0).toFixed(2)} $ · Cote {Number(b.chosenOdds||0).toFixed(2)} · Retour possible {(Number(b.stake||0)*Number(b.chosenOdds||0)).toFixed(2)} $</p>
