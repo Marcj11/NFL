@@ -1,4 +1,5 @@
 import {NextResponse} from 'next/server';
+import {guardMatchTop5} from '../../../engine/match-top-five-guard';
 export const dynamic='force-dynamic';
 type Game={game_id:string;home_team_id:string;away_team_id:string;kickoff_utc:string};
 type Score={game_id:string;home_score:number;away_score:number};
@@ -96,9 +97,8 @@ export async function GET(req:Request){
  const ranked=[...gamePicks,...playerPicks].filter(p=>Number.isFinite(p.probability)&&p.probability>0&&p.probability<1&&Number.isFinite(p.decimal)&&p.decimal>1)
   .map(p=>({...p,expected_value:p.probability*p.decimal-1}))
   .sort((a,b)=>b.expected_value-a.expected_value);
- const heavy=ranked.find(p=>p.decimal>=3&&p.expected_value>0);
- const chosen=ranked.filter(p=>!heavy||p!==heavy).slice(0,heavy?4:5);
- const combined=[...chosen,...(heavy?[{...heavy,heavyball:true}]:[])];
+ const combined=guardMatchTop5(ranked as any[],teams);
+ const heavy=combined.find(p=>p.heavyball);
  // Archive the complete matchup top five before kickoff, with odds and selection rationale.
  if(Date.parse(target.kickoff_utc)>Date.now()&&combined.length){
   const rows=combined.slice(0,5).flatMap((pick:any,idx:number)=>{
