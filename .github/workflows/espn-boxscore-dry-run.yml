@@ -1,5 +1,11 @@
 name: ESPN NFL boxscore dry-run
 on:
+  push:
+    branches:
+      - feature/nhl-nfl-component-parity
+    paths:
+      - .github/workflows/espn-boxscore-dry-run.yml
+      - scripts/check_espn_boxscores.py
   workflow_dispatch:
     inputs:
       season:
@@ -22,4 +28,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Check ESPN boxscores without database access
-        run: python scripts/check_espn_boxscores.py --season "${{ inputs.season }}" --week "${{ inputs.week }}"
+        env:
+          SEASON: ${{ inputs.season || '2026' }}
+          WEEK: ${{ inputs.week || '6' }}
+        run: python scripts/check_espn_boxscores.py --season "$SEASON" --week "$WEEK"
