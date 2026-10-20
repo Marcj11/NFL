@@ -33,6 +33,19 @@ for offset in range(0,100000,1000):
 else:raise SystemExit("player directory pagination limit reached")
 names=defaultdict(list)
 for x in players:names[x["display_name"].strip().casefold()].append(x["player_id"])
+# Use only verified ESPN athlete IDs mapped to canonical GSIS IDs.
+crosswalk=[]
+for offset in range(0,100000,1000):
+ batch=db.table("nfl_studio_espn_player_crosswalk").select("espn_athlete_id,gsis_id,verified_at").not_.is_("verified_at","null").order("espn_athlete_id").range(offset,offset+999).execute().data
+ crosswalk.extend(batch)
+ if len(batch)<1000:break
+gsis_to_uuid={}
+for offset in range(0,100000,1000):
+ batch=db.table("players").select("player_id,gsis_id").order("player_id").range(offset,offset+999).execute().data
+ gsis_to_uuid.update({x["gsis_id"]:x["player_id"] for x in batch if x.get("gsis_id")})
+ if len(batch)<1000:break
+verified_espn_ids={r["espn_athlete_id"]:gsis_to_uuid[r["gsis_id"]] for r in crosswalk if r["gsis_id"] in gsis_to_uuid}
+if a.commit and not verified_espn_ids:raise SystemExit("No verified ESPN crosswalk: writes blocked")
 rows={};rejected=defaultdict(int);completed=[]
 for event in board.get("events",[]):
  comp=(event.get("competitions") or [{}])[0]
@@ -42,7 +55,7 @@ for event in board.get("events",[]):
  if event.get("status",{}).get("type",{}).get("completed") is not True:
   rejected["unfinished"]+=1;continue
  summary=get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event="+str(event["id"]))
- mapped,issues=map_boxscore(summary,gid,set(sides.values()),names)
+ mapped,issues=map_boxscore(summary,gid,set(sides.values()),names,verified_espn_ids=verified_espn_ids,strict_identity=True)
  for reason,_ in issues:rejected[reason]+=1
  for row in mapped:
   k=(gid,row["player_id"])
