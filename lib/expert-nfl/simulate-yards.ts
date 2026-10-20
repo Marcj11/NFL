@@ -1,6 +1,6 @@
 /** Research-only port of independent EXPERT NFL Player Props simulator.
  * Based on plugin expert-nfl-player-props v1.0.0; not calibrated for betting. */
-export function simulateYards(values:number[],line:number,seed=42,n=5000){
+export function simulateYards(values:number[],line:number,seed=42,n=5000,history?:Array<{date:string;value:number}>,market?:string){
  if(values.length<5||values.length>100||!Number.isFinite(line)||line<0||values.some(v=>!Number.isFinite(v)||v<0))throw Error('invalid_history');
  let state=seed>>>0;
  const uniform=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return Math.max(1e-12,state/4294967296)};
@@ -12,7 +12,15 @@ export function simulateYards(values:number[],line:number,seed=42,n=5000){
   throw Error('sampling_failed');
  };
  const tail=values.slice(-12),weights=tail.map((_,i)=>Math.pow(.85,tail.length-1-i));
- const baseline=tail.reduce((s,v,i)=>s+v*weights[i],0)/weights.reduce((s,x)=>s+x,0);
+ let baseline=tail.reduce((s,v,i)=>s+v*weights[i],0)/weights.reduce((s,x)=>s+x,0);
+ const dated=(history||[]).filter(h=>Number.isFinite(h.value)&&h.value>=0&&Number.isFinite(Date.parse(h.date)));
+ const season=(date:string)=>{const d=new Date(date);return d.getUTCFullYear()-(d.getUTCMonth()<2?1:0)};
+ const currentYear=dated.length?Math.max(...dated.map(h=>season(h.date))):null;
+ const current=dated.filter(h=>season(h.date)===currentYear).sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
+ const previous=dated.filter(h=>currentYear!==null&&season(h.date)===currentYear-1).sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)).slice(0,4);
+ const priorWeight=market==='player_rush_yds'?0.20:0.35;
+ if(current.length>=2&&previous.length===4){const recent=current.slice(-8),w=recent.map((_,i)=>Math.pow(.85,recent.length-1-i));const mean=recent.reduce((s,h,i)=>s+h.value*w[i],0)/w.reduce((s,x)=>s+x,0);baseline=(1-priorWeight)*mean+priorWeight*previous.reduce((s,h)=>s+h.value,0)/4;}
+
  const avg=tail.reduce((s,v)=>s+v,0)/tail.length;
  const variance=tail.reduce((s,v)=>s+(v-avg)**2,0)/Math.max(1,tail.length-1);
  const sd=Math.max(Math.sqrt(baseline)*.8,baseline*.28,4,Math.sqrt(variance));

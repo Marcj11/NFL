@@ -14,7 +14,7 @@ export async function GET(request:Request){
    const offer=item.offer||{},market=String(offer.selection||'').split(' · ').pop();
    if(!item.eligible||!['player_pass_yds','player_rush_yds','player_reception_yds'].includes(String(market)))return {offer,status:'PASSER',explanation:'Historique insuffisant ou marche non pris en charge.'};
    try{
-    const result=simulateYards((item.history||[]).map(h=>Number(h.value)),Number(offer.line));
+    const result=simulateYards((item.history||[]).map(h=>Number(h.value)),Number(offer.line),42,5000,(item.history||[]).filter(h=>typeof h.date==='string'&&Number.isFinite(Number(h.value))).map(h=>({date:h.date!,value:Number(h.value)})),String(market));
     const label=String(offer.selection).toLowerCase();
     const over=/\bover\b/.test(label),under=/\bunder\b/.test(label);
     const probability=over!==under?(over?result.p_over:result.p_under):null;
