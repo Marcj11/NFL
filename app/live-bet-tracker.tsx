@@ -13,7 +13,7 @@ const TeamLogo=({abbr,size=36}:{abbr:string;size?:number})=><img src={logoUrl(ab
 const tidy=(s:string)=>s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
 const playerKey=(s:string)=>tidy(s).replace(/\b(jr|sr|ii|iii|iv|v)\b/g,'').replace(/\s+/g,'');
 const sideMatch=(raw:string,t:Team)=>{const part=tidy(raw),name=tidy(t.name),short=tidy(t.abbr==='LAR'?'LA':t.abbr==='WSH'?'WAS':t.abbr);return part===name||part===short||part===name.split(' ').slice(-1)[0]};
-const match=(name:string,g:Game)=>{const sides=name.split(/\s+vs\s+/i);return sides.length===2&&sideMatch(sides[0],g.away)&&sideMatch(sides[1],g.home)};
+const match=(name:string|undefined,g:Game)=>{if(typeof name!=='string'||!name.trim())return false;const sides=name.split(/\s+vs\s+/i);return sides.length===2&&sideMatch(sides[0],g.away)&&sideMatch(sides[1],g.home)};
 function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
  const selection=(b.selection||'').toLowerCase();
  const market=(b.marketKey||'').toLowerCase();
