@@ -6,6 +6,10 @@ on:
         description: NFL season
         required: true
         default: '2024'
+      include_player_stats:
+        description: 'Refresh canonical player-game statistics'
+        required: true
+        default: 'true'
       commit:
         description: 'true ONLY after source license review, credentials and timezone validation'
         required: true
@@ -28,3 +32,10 @@ jobs:
           python-version: '3.12'
       - run: pip install nflreadpy polars supabase
       - run: python scripts/import_nfl_supabase.py
+      - name: Refresh canonical player statistics
+        if: ${{ inputs.include_player_stats == 'true' && inputs.commit == 'true' }}
+        env:
+          NFL_STATS_SEASON: ${{ inputs.season }}
+          NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+          NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/import_player_stats_compact_v2.py
