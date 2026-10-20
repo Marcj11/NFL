@@ -19,14 +19,19 @@ export function simulateYards(values:number[],line:number,seed=42,n=5000,history
  const current=dated.filter(h=>season(h.date)===currentYear).sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
  const previous=dated.filter(h=>currentYear!==null&&season(h.date)===currentYear-1).sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)).slice(0,4);
  const priorWeight=market==='player_rush_yds'?0.20:0.35;
- if(current.length>=2&&previous.length===4){const recent=current.slice(-8),w=recent.map((_,i)=>Math.pow(.85,recent.length-1-i));const mean=recent.reduce((s,h,i)=>s+h.value*w[i],0)/w.reduce((s,x)=>s+x,0);baseline=(1-priorWeight)*mean+priorWeight*previous.reduce((s,h)=>s+h.value,0)/4;}
+ let weightedVariance:number|null=null;
+ if(current.length>=2&&previous.length===4){const recent=current.slice(-8),w=recent.map((_,i)=>Math.pow(.85,recent.length-1-i));const mean=recent.reduce((s,h,i)=>s+h.value*w[i],0)/w.reduce((s,x)=>s+x,0);baseline=(1-priorWeight)*mean+priorWeight*previous.reduce((s,h)=>s+h.value,0)/4;
+  const currentVar=recent.reduce((s,h,i)=>s+w[i]*(h.value-baseline)**2,0)/w.reduce((s,x)=>s+x,0);
+  const priorVar=previous.reduce((s,h)=>s+(h.value-baseline)**2,0)/4;
+  weightedVariance=(1-priorWeight)*currentVar+priorWeight*priorVar;
+ }
 
  const avg=tail.reduce((s,v)=>s+v,0)/tail.length;
  const variance=tail.reduce((s,v)=>s+(v-avg)**2,0)/Math.max(1,tail.length-1);
- const sd=Math.max(Math.sqrt(baseline)*.8,baseline*.28,4,Math.sqrt(variance));
+ const sd=Math.max(Math.sqrt(baseline)*.8,baseline*.28,4,Math.sqrt(weightedVariance??variance));
  const mu=Math.max(baseline,.00001),shape=Math.max(.1,Math.pow(mu/Math.max(sd,.1),2)),scale=mu/shape;
  let over=0,under=0;const samples:number[]=[];
  for(let i=0;i<n;i++){const v=gamma(shape)*scale;samples.push(v);if(v>line)over++;else if(v<line)under++;}
  samples.sort((a,b)=>a-b);const percentile=(p:number)=>samples[Math.floor((n-1)*p)];
- return {projection:baseline,median:percentile(.5),p10:percentile(.1),p90:percentile(.9),p_over:over/n,p_under:under/n,p_push:1-(over+under)/n,sample_games:tail.length,simulations:n,research_only:true,validated_betting_edge:false,decision:'PASSER' as const,explanation:'Simulation exploratoire fondee sur l historique du joueur. Blessures, statut actif, contexte adverse et calibration hors echantillon non confirmes.'};
+ return {projection:baseline,median:percentile(.5),p10:percentile(.1),p90:percentile(.9),p_over:over/n,p_under:under/n,p_push:1-(over+under)/n,sample_games:tail.length,simulations:n,variance_source:weightedVariance===null?'recent_only':'season_weighted',research_only:true,validated_betting_edge:false,decision:'PASSER' as const,explanation:'Simulation exploratoire fondee sur l historique du joueur. Blessures, statut actif, contexte adverse et calibration hors echantillon non confirmes.'};
 }
