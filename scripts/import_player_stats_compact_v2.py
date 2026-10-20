@@ -3,6 +3,7 @@ import nflreadpy as nfl
 from supabase import create_client
 
 year=int(os.environ.get("NFL_STATS_SEASON","2024"))
+commit=os.environ.get("NFL_IMPORT_COMMIT","false").lower()=="true"
 if year not in (2023,2024,2025,2026):raise SystemExit("Unsupported season")
 assert os.environ["NFL_COMPACT_SUPABASE_URL"].rstrip("/")=="https://jwetwyqlogowznkidnly.supabase.co", "Refusing unexpected project"
 db=create_client(os.environ["NFL_COMPACT_SUPABASE_URL"],os.environ["NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY"])
@@ -36,6 +37,10 @@ if len(compiled)<500:raise RuntimeError("Unexpectedly few player-game records, s
 # Digest of normalized canonical content; NOT SHA256 of original upstream release bytes.
 canonical=[compiled[k] for k in sorted(compiled)]
 digest=hashlib.sha256(json.dumps(canonical,sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest()
+from collections import Counter
+by_week=dict(sorted(Counter(int(r["week"]) for r in rows if r.get("week") is not None).items()))
+print(json.dumps({"season":year,"source_rows":len(rows),"canonical_player_games":len(canonical),"excluded":excluded,"source_rows_by_week":by_week,"dry_run":not commit}),flush=True)
+if not commit:raise SystemExit(0)
 db.table("source_releases").insert({"source_id":registry[0]["id"],"dataset":"player_stats","season":year,"normalized_sha256":digest,"source_sha256":None,"status":"provisional","row_count":len(canonical)}).execute()
 snaps=db.table("source_releases").select("release_id").eq("source_id",registry[0]["id"]).eq("dataset","player_stats").eq("season",year).eq("normalized_sha256",digest).execute().data
 if len(snaps)!=1:raise RuntimeError("Snapshot lookup failed")
