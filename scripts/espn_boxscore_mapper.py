@@ -1,37 +1,48 @@
-"""Pure ESPN NFL boxscore mapping; no I/O or database writes.
-Unrecognized fields are not imported; all output is provisional until verified.
-"""
+"""Pure ESPN NFL boxscore mapper. Does not read or write databases."""
+import math
 TEAM_ALIASES={'LAR':'LA','JAC':'JAX','WSH':'WAS'}
 FIELDS={
- 'passing':{'YDS':'passing_yards','ATT':'passing_attempts','TD':'passing_tds','INT':'passing_interceptions'},
- 'rushing':{'YDS':'rushing_yards','CAR':'carries','TD':'rushing_tds'},
- 'receiving':{'YDS':'receiving_yards','REC':'receptions','TGTS':'targets','TD':'receiving_tds'},
- 'defensive':{'TOT':'def_tackles','SOLO':'def_solo_tackles','AST':'def_assisted_tackles','SACKS':'def_sacks','INT':'def_interceptions'},
- 'kicking':{'FGM':'field_goals_made','FGA':'field_goals_attempted','XPM':'extra_points_made','XPA':'extra_points_attempted'}
-}
-def norm_team(team):return TEAM_ALIASES.get(team,team)
+'passing':{'YDS':'passing_yards','ATT':'passing_attempts','TD':'passing_tds','INT':'passing_interceptions','CMP':'completions'},
+'rushing':{'YDS':'rushing_yards','CAR':'carries','TD':'rushing_tds'},
+'receiving':{'YDS':'receiving_yards','REC':'receptions','TGTS':'targets','TD':'receiving_tds'},
+'defensive':{'TOT':'def_tackles','SOLO':'def_solo_tackles','AST':'def_assisted_tackles','SACKS':'def_sacks','INT':'def_interceptions'},
+'kicking':{'FGM':'field_goals_made','FGA':'field_goals_attempted','XPM':'extra_points_made','XPA':'extra_points_attempted'}}
+PAIRS={'FG':('field_goals_made','field_goals_attempted'),'FGM/FGA':('field_goals_made','field_goals_attempted'),'XP':('extra_points_made','extra_points_attempted'),'XPM/XPA':('extra_points_made','extra_points_attempted'),'C/ATT':('completions','passing_attempts')}
+def norm_team(t):return TEAM_ALIASES.get(t,t)
+def num(v):
+ try:
+  x=float(v)
+  return x if math.isfinite(x) and -1000<x<100000 else None
+ except (ValueError,TypeError):return None
 def map_boxscore(summary,game_id,teams,players_by_name):
  rows={};rejected=[]
  for group in summary.get('boxscore',{}).get('players',[]):
   team=norm_team(group.get('team',{}).get('abbreviation',''))
   if team not in teams:
    rejected.append(('team_mismatch',team));continue
-  for category in group.get('statistics',[]):
-   fields=FIELDS.get(str(category.get('name','')).lower(),{})
+  for section in group.get('statistics',[]):
+   kind=str(section.get('name','')).lower();fields=FIELDS.get(kind,{})
    if not fields:continue
-   for athlete in category.get('athletes',[]):
-    raw=str(athlete.get('athlete',{}).get('displayName',''))
-    matches=players_by_name.get(raw.casefold().strip(),[])
+   for a in section.get('athletes',[]):
+    name=str(a.get('athlete',{}).get('displayName',''))
+    matches=players_by_name.get(name.casefold().strip(),[])
     if len(matches)!=1:
-     rejected.append(('ambiguous_player',raw));continue
-    pid=matches[0];key=(game_id,pid)
-    row=rows.setdefault(key,{'game_id':game_id,'player_id':pid,'team_id':team,'metrics':{}})
-    if row['team_id']!=team:raise ValueError('conflicting player team')
-    for label,val in zip(category.get('labels',[]),athlete.get('stats',[])):
-     metric=fields.get(label)
-     if not metric:continue
-     try:v=float(val)
-     except (TypeError,ValueError):continue
-     if not (-1000<v<100000):continue
-     row['metrics'][metric]=v
- return [r for r in rows.values() if r['metrics']],rejected
+     rejected.append(('ambiguous_player',name));continue
+    metrics={}
+    for label,value in zip(section.get('labels',[]),a.get('stats',[])):
+     key=fields.get(label)
+     if key:
+      value=num(value)
+      if value is not None:metrics[key]=value
+     elif kind in ('kicking','passing') and label in PAIRS and isinstance(value,str) and '/' in value:
+      bits=value.split('/')
+      if len(bits)==2:
+       x,y=(num(v) for v in bits)
+       if x is not None and y is not None and 0<=x<=y:
+        metrics[PAIRS[label][0]]=x;metrics[PAIRS[label][1]]=y
+    if not metrics:continue
+    rowkey=(game_id,matches[0])
+    if rowkey in rows and rows[rowkey]['team_id']!=team:raise ValueError('conflicting player team')
+    row=rows.setdefault(rowkey,{'game_id':game_id,'player_id':matches[0],'team_id':team,'metrics':{}})
+    row['metrics'].update(metrics)
+ return list(rows.values()),rejected
