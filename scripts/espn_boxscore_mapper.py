@@ -14,7 +14,7 @@ def num(v):
   x=float(v)
   return x if math.isfinite(x) and -1000<x<100000 else None
  except (ValueError,TypeError):return None
-def map_boxscore(summary,game_id,teams,players_by_name):
+def map_boxscore(summary,game_id,teams,players_by_name,verified_espn_ids=None,strict_identity=False):
  rows={};rejected=[]
  for group in summary.get('boxscore',{}).get('players',[]):
   team=norm_team(group.get('team',{}).get('abbreviation',''))
@@ -26,6 +26,14 @@ def map_boxscore(summary,game_id,teams,players_by_name):
    for a in section.get('athletes',[]):
     name=str(a.get('athlete',{}).get('displayName',''))
     matches=players_by_name.get(name.casefold().strip(),[])
+    espn_id=str(a.get('athlete',{}).get('id') or '')
+    linked=(verified_espn_ids or {}).get(espn_id) if espn_id else None
+    if strict_identity and not linked:
+     rejected.append(('unverified_espn_id',name));continue
+    if linked:
+     if matches and linked not in matches:
+      rejected.append(('identity_conflict',name));continue
+     matches=[linked]
     if len(matches)!=1:
      rejected.append(('ambiguous_player',name));continue
     metrics={}
