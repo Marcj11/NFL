@@ -44,6 +44,6 @@ for i in range(0,len(canonical),100):
  for b in batch:
   b["release_id"]=snaps[0]["release_id"]
   b["metrics"]=b.pop("stats")
- db.table("player_game_stats").upsert(batch,on_conflict="game_id,player_id").execute()
+ db.table("player_game_stats").upsert(batch,on_conflict="game_id,player_id",ignore_duplicates=True).execute()
  if i%1000==0:print(json.dumps({"season":year,"written_player_games":i+len(batch)}),flush=True)
 print(json.dumps({"season":year,"source_rows":len(rows),"excluded":excluded,"player_games":len(canonical),"metrics":sum(len(x["metrics"]) for x in canonical),"status":"IMPORTED_PROVISIONAL"}),flush=True)
