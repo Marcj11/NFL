@@ -1,0 +1,25 @@
+name: ESPN NFL boxscore dry-run
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: NFL season
+        required: true
+        default: '2026'
+      week:
+        description: NFL week
+        required: true
+        default: '6'
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check ESPN boxscores without database access
+        run: python scripts/check_espn_boxscores.py --season "${{ inputs.season }}" --week "${{ inputs.week }}"
