@@ -25,7 +25,12 @@ def get(endpoint):
 board=get(f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates={a.season}&seasontype=2&week={a.week}&limit=50")
 games=db.table("games").select("game_id,away_team_id,home_team_id").eq("season",a.season).eq("week",a.week).execute().data
 game_map={(g["away_team_id"],g["home_team_id"]):g["game_id"] for g in games}
-players=db.table("players").select("player_id,display_name").limit(10000).execute().data
+players=[]
+for offset in range(0,100000,1000):
+ batch=db.table("players").select("player_id,display_name").order("player_id").range(offset,offset+999).execute().data
+ players.extend(batch)
+ if len(batch)<1000:break
+else:raise SystemExit("player directory pagination limit reached")
 names=defaultdict(list)
 for x in players:names[x["display_name"].strip().casefold()].append(x["player_id"])
 rows={};rejected=defaultdict(int);completed=[]
