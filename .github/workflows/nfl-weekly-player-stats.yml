@@ -47,5 +47,8 @@ jobs:
           NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
           NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
           NFL_GRADE_DRY_RUN: 'false'
-          NFL_GRADE_SEASON: '2026'
-        run: python scripts/grade_weekly_predictions.py
+        run: |
+          month=$(date -u +%m)
+          year=$(date -u +%Y)
+          if [ "$month" -le 2 ]; then year=$((year - 1)); fi
+          NFL_GRADE_SEASON="$year" python scripts/grade_weekly_predictions.py
