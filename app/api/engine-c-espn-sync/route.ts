@@ -5,6 +5,8 @@ export const maxDuration=60;
 type Game={game_id:string;home_team_id:string;away_team_id:string;kickoff_utc:string};
 async function getJson(url:string,timeout=9000){const r=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(timeout)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
 export async function GET(req:Request){
+ const cronSecret=process.env.CRON_SECRET;
+ if(!cronSecret||req.headers.get('authorization')!=='Bearer '+cronSecret)return NextResponse.json({status:'unauthorized'},{status:401});
  const key=process.env.SUPABASE_SERVICE_ROLE_KEY,base=process.env.SUPABASE_URL;
  if(!key||!base)return NextResponse.json({status:'missing_database_config'},{status:503});
  const headers={apikey:key,Authorization:'Bearer '+key};
