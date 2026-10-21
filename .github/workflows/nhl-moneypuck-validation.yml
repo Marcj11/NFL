@@ -1,0 +1,34 @@
+name: NHL MoneyPuck CSV validation
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/nhl-moneypuck-validation
+    paths:
+      - '.github/workflows/nhl-moneypuck-validation.yml'
+      - 'scripts/nhl/validate_moneypuck.py'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nhl-moneypuck-validation.yml'
+      - 'scripts/nhl/validate_moneypuck.py'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download and validate MoneyPuck CSV
+        run: python scripts/nhl/validate_moneypuck.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nhl-moneypuck-schema
+          path: artifacts/nhl-moneypuck/
+          if-no-files-found: warn
