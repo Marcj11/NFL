@@ -14,7 +14,7 @@ export function evaluateEngineC(input:{market:Market;signal?:number;odds:number;
  if(market==='h2h'||market==='spreads'||market==='totals'){
   if(!Number.isFinite(signal))return unavailable('insufficient_pregame_team_data');
   const scale=market==='totals'?17.5:13.5;
-  p=clamp(logistic(1.702*Number(signal)/scale));
+  p=clamp(logistic((market==='h2h'?0.75:1.702)*Number(signal)/scale));
  }else if(['player_pass_yds','player_rush_yds','player_reception_yds'].includes(market)){
   if(!history||history.length<5||history.some(v=>!Number.isFinite(v))||!Number.isFinite(line)||!side)return unavailable('insufficient_verified_player_history');
   const hits=history.filter(v=>side==='over'?v>Number(line):v<Number(line)).length;
