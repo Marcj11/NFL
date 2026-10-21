@@ -1,6 +1,7 @@
 import {NextResponse} from 'next/server';
 import {guardMatchTop5} from '../../../engine/match-top-five-guard';
 import {evaluateEngineC, ENGINE_C_VERSION} from '../../../lib/engine-c/universal-v5';
+import {assessBothTeams} from '../../../lib/engine-c/pregame-team-availability';
 export const dynamic='force-dynamic';
 type Game={game_id:string;home_team_id:string;away_team_id:string;kickoff_utc:string};
 type Score={game_id:string;home_score:number;away_score:number};
@@ -17,6 +18,9 @@ export async function GET(req:Request){
  const target=(await query('games',{game_id:'eq.'+id,limit:'1'}))[0] as Game|undefined;
  if(!target)return NextResponse.json({error:'not_found'},{status:404});
  const teams=[target.home_team_id,target.away_team_id];
+ const availability=assessBothTeams(null,null,{game_id:id,home_team_id:teams[0],away_team_id:teams[1],kickoff_utc:target.kickoff_utc});
+ // Until verified per-player pregame feeds exist, do not issue unverified V5 bets.
+ if(!availability.verified)return NextResponse.json({game_id:id,model:ENGINE_C_VERSION,status:'pending_team_availability',availability,analysis:[],propsByTeam:{},recommendations_available:false},{headers:{'Cache-Control':'no-store'}});
  const [games,cache,playerRows]=await Promise.all([
  query('games',{or:'(home_team_id.in.('+teams.join(',')+'),away_team_id.in.('+teams.join(',')+'))',kickoff_utc:'lt.'+target.kickoff_utc,order:'kickoff_utc.desc',limit:'70'}),
  query('nfl_studio_live_odds_cache',{id:'eq.nfl',limit:'1'}),
