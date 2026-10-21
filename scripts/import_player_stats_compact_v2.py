@@ -41,7 +41,9 @@ from collections import Counter
 by_week=dict(sorted(Counter(int(r["week"]) for r in rows if r.get("week") is not None).items()))
 print(json.dumps({"season":year,"source_rows":len(rows),"canonical_player_games":len(canonical),"excluded":excluded,"source_rows_by_week":by_week,"dry_run":not commit}),flush=True)
 if not commit:raise SystemExit(0)
-db.table("source_releases").insert({"source_id":registry[0]["id"],"dataset":"player_stats","season":year,"normalized_sha256":digest,"source_sha256":None,"status":"provisional","row_count":len(canonical)}).execute()
+existing=db.table("source_releases").select("release_id").eq("source_id",registry[0]["id"]).eq("dataset","player_stats").eq("season",year).eq("normalized_sha256",digest).execute().data
+if not existing:
+ db.table("source_releases").insert({"source_id":registry[0]["id"],"dataset":"player_stats","season":year,"normalized_sha256":digest,"source_sha256":None,"status":"provisional","row_count":len(canonical)}).execute()
 snaps=db.table("source_releases").select("release_id").eq("source_id",registry[0]["id"]).eq("dataset","player_stats").eq("season",year).eq("normalized_sha256",digest).execute().data
 if len(snaps)!=1:raise RuntimeError("Snapshot lookup failed")
 for i in range(0,len(canonical),100):
@@ -49,6 +51,6 @@ for i in range(0,len(canonical),100):
  for b in batch:
   b["release_id"]=snaps[0]["release_id"]
   b["metrics"]=b.pop("stats")
- db.table("player_game_stats").upsert(batch,on_conflict="game_id,player_id",ignore_duplicates=True).execute()
+ db.table("player_game_stats").upsert(batch,on_conflict="game_id,player_id").execute()
  if i%1000==0:print(json.dumps({"season":year,"written_player_games":i+len(batch)}),flush=True)
 print(json.dumps({"season":year,"source_rows":len(rows),"excluded":excluded,"player_games":len(canonical),"metrics":sum(len(x["metrics"]) for x in canonical),"status":"IMPORTED_PROVISIONAL"}),flush=True)
