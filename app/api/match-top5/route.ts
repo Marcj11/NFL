@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {guardMatchTop5} from '../../../engine/match-top-five-guard';
+import {evaluateEngineC, ENGINE_C_VERSION} from '../../../lib/engine-c/universal-v5';
 export const dynamic='force-dynamic';
 type Game={game_id:string;home_team_id:string;away_team_id:string;kickoff_utc:string};
 type Score={game_id:string;home_score:number;away_score:number};
@@ -86,9 +87,7 @@ export async function GET(req:Request){
  const logistic=(z:number)=>1/(1+Math.exp(-1.702*Math.max(-8,Math.min(8,z))));
  const gamePicks=candidates.flatMap(o=>{
   let probability:number|null=null;
-  if(o.market==='h2h'&&projectedDiff!==null)probability=logistic(o.signal/13.5);
-  if(o.market==='spreads'&&projectedDiff!==null&&o.point!==undefined)probability=logistic(o.signal/13.5);
-  if(o.market==='totals'&&projectedTotal!==null&&o.point!==undefined)probability=logistic(o.signal/17.5);
+  if(['h2h','spreads','totals'].includes(o.market))probability=evaluateEngineC({market:o.market as 'h2h'|'spreads'|'totals',signal:o.signal,odds:o.decimal}).probability;
   if(probability===null||!Number.isFinite(probability)||probability<=0||probability>=1)return [];
   return [{market:o.market,name:o.name,point:o.point,book:o.book,decimal:Number(o.decimal.toFixed(2)),probability,signal:Number(o.signal.toFixed(2)),angle:o.angle,status:'experimental_unvalidated'}];
  });
@@ -104,7 +103,7 @@ export async function GET(req:Request){
   const rows=combined.slice(0,5).flatMap((pick:any,idx:number)=>{
    const prob=Number(pick.probability),odd=Number(pick.decimal);
    if(!Number.isFinite(prob)||prob<=0||prob>=1||!Number.isFinite(odd)||odd<=1)return [];
-   const row={model_version:'historical_market_research_v4',game_id:id,kickoff_utc:target.kickoff_utc,category:'match',market:String(pick.market),selection:String(pick.name||pick.player||''),selection_key:id+'|'+String(pick.market)+'|'+String(pick.name||pick.player||'')+'|'+String(pick.point??''),line:pick.point??null,bookmaker:String(pick.book||''),decimal_odds:odd,odds_observed_at:store.fetched_at||null,estimated_probability:prob,implied_probability:1/odd,estimated_ev:prob*odd-1,recommendation:'miser',rank:idx+1,scope:'match_top5',scope_key:id,reasoning:{explanation:pick.angle||null,signal:pick.signal??null,model_validation:'experimental_unvalidated'},prediction_context:{teams,market:pick.market},data_quality:{calibrated:false,source:'historical_market_research_v4'}};
+   const row={model_version:ENGINE_C_VERSION,game_id:id,kickoff_utc:target.kickoff_utc,category:'match',market:String(pick.market),selection:String(pick.name||pick.player||''),selection_key:id+'|'+String(pick.market)+'|'+String(pick.name||pick.player||'')+'|'+String(pick.point??''),line:pick.point??null,bookmaker:String(pick.book||''),decimal_odds:odd,odds_observed_at:store.fetched_at||null,estimated_probability:prob,implied_probability:1/odd,estimated_ev:prob*odd-1,recommendation:'miser',rank:idx+1,scope:'match_top5',scope_key:id,reasoning:{explanation:pick.angle||null,signal:pick.signal??null,model_validation:'experimental_unvalidated'},prediction_context:{teams,market:pick.market},data_quality:{calibrated:false,source:ENGINE_C_VERSION}};
    return [row];
   });
   if(rows.length){
@@ -116,6 +115,6 @@ export async function GET(req:Request){
    }catch{}
   }
  }
- return NextResponse.json({game_id:id,stats,model:'historical_market_research_v4',player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined,propsByTeam},{headers:{'Cache-Control':'no-store'}});
+ return NextResponse.json({game_id:id,stats,model:ENGINE_C_VERSION,player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined,propsByTeam},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
