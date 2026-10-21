@@ -9,7 +9,7 @@ db = create_client(os.environ["NFL_COMPACT_SUPABASE_URL"], os.environ["NFL_COMPA
 assert os.environ["NFL_COMPACT_SUPABASE_URL"].rstrip("/") == "https://jwetwyqlogowznkidnly.supabase.co"
 dry_run = os.environ.get("NFL_GRADE_DRY_RUN", "true").lower() != "false"
 games = {g["game_id"]: g for g in db.table("games").select("game_id,home_team_id,away_team_id").eq("season", int(os.environ.get("NFL_GRADE_SEASON", "2026"))).limit(500).execute().data}
-finals = {g["game_id"]: g for g in db.table("game_results").select("game_id,home_score,away_score,result_status").in_("game_id", list(games)).execute().data if g.get("result_status") == "official_nfl_verified"}
+finals = {g["game_id"]: g for g in db.table("game_results").select("game_id,home_score,away_score,result_status").in_("game_id", list(games)).execute().data if g.get("result_status") in ("official_nfl_verified", "nflverse_scores_verified")}
 team_names = {t["team_id"]: t["display_name"] for t in db.table("teams").select("team_id,display_name").execute().data}
 names = {}
 stats = {}
