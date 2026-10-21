@@ -1,0 +1,27 @@
+name: ESPN injury snapshots to Supabase
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nfl-espn-injury-snapshots
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/nhl-nfl-component-parity
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install supabase
+      - name: Save timestamped pregame ESPN injury snapshots
+        env:
+          NFL_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+          NFL_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/sync_espn_injuries.py
