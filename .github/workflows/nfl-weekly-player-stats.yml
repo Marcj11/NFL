@@ -1,0 +1,34 @@
+name: NFL weekly player statistics refresh
+on:
+  schedule:
+    - cron: '20 13 * * 3'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nfl-weekly-player-stats
+  cancel-in-progress: false
+jobs:
+  import-stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/nhl-nfl-component-parity
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install nflreadpy polars supabase
+      - name: Refresh current NFL season player stats
+        env:
+          NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+          NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+          NFL_IMPORT_COMMIT: 'true'
+        run: |
+          month=$(date -u +%m)
+          year=$(date -u +%Y)
+          if [ "$month" -le 2 ]; then year=$((year - 1)); fi
+          if [ "$month" -gt 2 ] && [ "$month" -lt 9 ]; then echo "Outside NFL season"; exit 0; fi
+          echo "Refreshing NFL season $year"
+          NFL_STATS_SEASON="$year" python scripts/import_player_stats_compact_v2.py
