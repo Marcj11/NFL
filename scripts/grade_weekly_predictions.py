@@ -2,7 +2,7 @@
 
 Never synthesizes odds or player statistics. Only settles verified final games.
 """
-import os, json
+import os, json, datetime
 from supabase import create_client
 
 db = create_client(os.environ["NFL_COMPACT_SUPABASE_URL"], os.environ["NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY"])
@@ -63,6 +63,6 @@ for d in pending if 'pending' in locals() else []:
         results["skipped"] += 1
         continue
     if not dry_run:
-        db.table("nfl_studio_forecast_decisions_v2").update({"result_status":verdict,"actual_outcome":verdict,"actual_value":actual,"graded_at":"now()"}).eq("id",d["id"]).eq("result_status","pending").execute()
+        db.table("nfl_studio_forecast_decisions_v2").update({"result_status":verdict,"actual_outcome":verdict,"actual_value":actual,"graded_at":datetime.datetime.now(datetime.timezone.utc).isoformat()}).eq("id",d["id"]).eq("result_status","pending").execute()
     results[verdict] += 1
 print(json.dumps({"dry_run": dry_run, "pending_examined":len(pending) if 'pending' in locals() else 0, "results":results}))
