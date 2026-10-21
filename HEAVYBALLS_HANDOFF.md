@@ -39,3 +39,10 @@ Evaluer puis **sauvegarder les 20 entrees props verifiables de la semaine 6**, e
 
 ## Pour reprendre depuis une autre conversation
 Demande : « Reprends HEAVYBALLS : lis `HEAVYBALLS_HANDOFF.md` dans `Marcj11/NFL`, verifie les donnees courantes dans Supabase, continue la prochaine action sans refaire les anciens diagnostics. »
+
+## Mise a jour du 20 octobre 2026 : evaluation automatisee
+- Semaine 6 : 20 lignes de paris joueurs reglees dans Supabase, 8 won et 12 lost; 2 Jonnu Smith pending (stat absente). Ces lignes incluent des doublons entre classements.
+- Recuperation des blocages Supabase documentee dans docs/HEAVYBALLS_CONNECTOR_RECOVERY.md : BEGIN; SET LOCAL statement_timeout='8s'; UPDATE cible; COMMIT; puis SELECT de validation.
+- Script scripts/grade_weekly_predictions.py cree sur la branche feature; gere h2h/moneyline et player pass/rush/receiving yards avec scores officiellement verifies. Les marches spreads, totals, props generiques restent a faire.
+- Workflow .github/workflows/nfl-weekly-player-stats.yml modifie sur main, commit 380b7c1 : import des stats suivi de la notation automatique des selections prises en charge.
+- La planification est enregistree et relue, mais la premiere execution automatique reussie n'est PAS encore confirmee. Ne pas compter les paris historiques repetes plusieurs fois comme des paris distincts.
