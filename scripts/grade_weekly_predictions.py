@@ -8,14 +8,15 @@ from supabase import create_client
 db = create_client(os.environ["NFL_COMPACT_SUPABASE_URL"], os.environ["NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY"])
 assert os.environ["NFL_COMPACT_SUPABASE_URL"].rstrip("/") == "https://jwetwyqlogowznkidnly.supabase.co"
 dry_run = os.environ.get("NFL_GRADE_DRY_RUN", "true").lower() != "false"
-games = {g["game_id"]: g for g in db.table("games").select("game_id,home_team_id,away_team_id").eq("season", 2026).limit(500).execute().data}
+games = {g["game_id"]: g for g in db.table("games").select("game_id,home_team_id,away_team_id").eq("season", int(os.environ.get("NFL_GRADE_SEASON", "2026"))).limit(500).execute().data}
 finals = {g["game_id"]: g for g in db.table("game_results").select("game_id,home_score,away_score,result_status").in_("game_id", list(games)).execute().data if g.get("result_status") == "official_nfl_verified"}
+team_names = {t["team_id"]: t["display_name"] for t in db.table("teams").select("team_id,display_name").execute().data}
 names = {}
 stats = {}
 results = {"won": 0, "lost": 0, "push": 0, "skipped": 0}
 page = 0
 while True:
-    batch = db.table("nfl_studio_forecast_decisions_v2").select("id,game_id,market,selection,line,reasoning").eq("result_status", "pending").gte("game_id", "2026_").lt("game_id", "2027_").order("id").range(page * 200, page * 200 + 199).execute().data
+    batch = db.table("nfl_studio_forecast_decisions_v2").select("id,game_id,market,selection,line,reasoning").eq("result_status", "pending").gte("game_id", str(os.environ.get("NFL_GRADE_SEASON", "2026"))+"_").lt("game_id", str(int(os.environ.get("NFL_GRADE_SEASON", "2026"))+1)+"_").order("id").range(page * 200, page * 200 + 199).execute().data
     if not batch:
         break
     # Snapshot pagination: gather all pending before changing rows in this run.
@@ -37,9 +38,27 @@ for d in pending if 'pending' in locals() else []:
     verdict = None
     if market in ("h2h", "moneyline"):
         winner = game["home_team_id"] if final["home_score"] > final["away_score"] else game["away_team_id"] if final["away_score"] > final["home_score"] else None
-        if d["selection"] in (game["home_team_id"], game["away_team_id"]):
-            actual = 1 if d["selection"] == winner else 0 if winner else None
+        picked = next((t for t in (game["home_team_id"], game["away_team_id"]) if d["selection"] in (t,team_names.get(t))), None)
+        if picked:
+            actual = 1 if picked == winner else 0 if winner else None
             verdict = "won" if actual == 1 else "lost" if actual == 0 else "push"
+    elif market == "totals" and d.get("line") is not None:
+        side = str(d.get("selection") or "").strip().lower()
+        total = float(final["home_score"]) + float(final["away_score"])
+        line = float(d["line"])
+        if side.startswith("over") or side.startswith("under"):
+            actual = total
+            verdict = "push" if total == line else "won" if ((total > line) == side.startswith("over")) else "lost"
+    elif market in ("spreads", "spread") and d.get("line") is not None:
+        home, away = game["home_team_id"], game["away_team_id"]
+        selection = str(d.get("selection") or "")
+        picked = next((t for t in (home,away) if selection in (t,team_names.get(t))), None)
+        if picked:
+            margin = float(final["home_score"]) - float(final["away_score"])
+            margin = margin if picked == home else -margin
+            adjusted = margin + float(d["line"])
+            actual = margin
+            verdict = "won" if adjusted > 0 else "lost" if adjusted < 0 else "push"
     elif market in ("player_pass_yds", "player_rush_yds", "player_reception_yds"):
         sel = d.get("selection")
         if sel not in names:
