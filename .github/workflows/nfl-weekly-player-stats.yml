@@ -32,3 +32,9 @@ jobs:
           if [ "$month" -gt 2 ] && [ "$month" -lt 9 ]; then echo "Outside NFL season"; exit 0; fi
           echo "Refreshing NFL season $year"
           NFL_STATS_SEASON="$year" python scripts/import_player_stats_compact_v2.py
+      - name: Grade verified archived NFL predictions
+        env:
+          NFL_COMPACT_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+          NFL_COMPACT_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+          NFL_GRADE_DRY_RUN: 'false'
+        run: python scripts/grade_weekly_predictions.py
