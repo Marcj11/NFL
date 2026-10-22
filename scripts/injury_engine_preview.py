@@ -32,5 +32,6 @@ def main():
    gap=round(float(a)-float(b),3) if a is not None and b is not None else None
    starter_stats=averages(production(db,p['injured_gsis']))
    stats=averages(production(db,p['replacement_gsis']))
-   print('ROLE_UNVERIFIED' if p['position'] in BROAD_ROLES else 'ROLE_GROUP',p['injured_player'],'->',p['replacement_name'],'snap_gap',gap,'starter_stats',starter_stats,'backup_stats',stats)
+   quality='INSUFFICIENT' if not starter_stats or not stats or not starter_stats['sample_sufficient'] or not stats['sample_sufficient'] else 'REVIEW'
+   print('quality',quality,'ROLE_UNVERIFIED' if p['position'] in BROAD_ROLES else 'ROLE_GROUP',p['injured_player'],'->',p['replacement_name'],'snap_gap',gap,'starter_stats',starter_stats,'backup_stats',stats)
 if __name__=='__main__':main()
