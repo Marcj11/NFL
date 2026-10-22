@@ -22,7 +22,7 @@ def main():
  status={i['gsis_id']:i['injury_status'] for i in injuries}
  snaps={u['gsis_id']:u['usage_ratio'] for u in usage}
  sample={u['gsis_id']:u['games_sample'] for u in usage}
- eligible=[p for p in pairs if status.get(p['replacement_gsis']) not in BLOCKED and (sample.get(p['replacement_gsis']) or 0)>=3 and p.get('position') not in BROAD_ROLES]
+ eligible=[p for p in pairs if status.get(p['replacement_gsis']) not in BLOCKED and (sample.get(p['replacement_gsis']) or 0)>=3 ]
  ranked=sorted(eligible,key=lambda p:float(snaps.get(p['replacement_gsis']) or 0),reverse=True)
  groups={}
  for p in ranked:groups.setdefault(p['injured_gsis'],[]).append(p)
@@ -32,5 +32,5 @@ def main():
    gap=round(float(a)-float(b),3) if a is not None and b is not None else None
    starter_stats=averages(production(db,p['injured_gsis']))
    stats=averages(production(db,p['replacement_gsis']))
-   print(p['injured_player'],'->',p['replacement_name'],'snap_gap',gap,'starter_stats',starter_stats,'backup_stats',stats)
+   print('ROLE_UNVERIFIED' if p['position'] in BROAD_ROLES else 'ROLE_GROUP',p['injured_player'],'->',p['replacement_name'],'snap_gap',gap,'starter_stats',starter_stats,'backup_stats',stats)
 if __name__=='__main__':main()
