@@ -1,4 +1,4 @@
-"""Read-only Engine C injury preview."""
+"""Engine C experimental usage gap preview; does not change picks."""
 import os
 from supabase import create_client
 GAME_ID=os.getenv('NFL_GAME_ID','401873010')
@@ -12,9 +12,11 @@ def main():
  snaps={u['gsis_id']:u['usage_ratio'] for u in usage}
  eligible=[p for p in pairs if status.get(p['replacement_gsis']) not in BLOCKED]
  ranked=sorted(eligible,key=lambda p:float(snaps.get(p['replacement_gsis']) or 0),reverse=True)
- print({'eligible':len(eligible),'with_usage':sum(p['replacement_gsis'] in snaps for p in eligible)})
  groups={}
  for p in ranked:groups.setdefault(p['injured_gsis'],[]).append(p)
  for group in groups.values():
-  for p in group[:3]:print(p['injured_player'],'->',p['replacement_name'],snaps.get(p['replacement_gsis']))
+  for p in group[:3]:
+   a,b=snaps.get(p['injured_gsis']),snaps.get(p['replacement_gsis'])
+   gap=round(float(a)-float(b),3) if a is not None and b is not None else None
+   print(p['injured_player'],'->',p['replacement_name'],'snap_gap',gap)
 if __name__=='__main__':main()
