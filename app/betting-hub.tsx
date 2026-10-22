@@ -181,7 +181,13 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const probability=(o:Offer)=>officialProbability(o);
  const eligible=offers.filter(o=>{const p=probability(o);const g=gamesResearch[o.game];return p!==null&&Number.isFinite(p)&&p>0&&p<1&&Number.isFinite(o.odds)&&o.odds>1&&p*o.odds>(o.market==='props'?1.05:1)&&(!!o.kickoff&&Number.isFinite(Date.parse(o.kickoff))&&Date.parse(o.kickoff)>Date.now())&&(!family||o.market===family)&&(category!=='heavy'||o.odds>=3)});
  const edge=(o:Offer)=>probability(o)!*o.odds-1;
- const ordered=[...eligible].sort((a,b)=>edge(b)-edge(a));
+ // Regular recommendations require a genuine model-favoured outcome.
+ // Under-50% longshots belong only in Heavyball, even with an apparent positive EV.
+ const regular=category==='heavy'?eligible:eligible.filter(o=>{
+  const p=probability(o)!;
+  return p>=0.55 && o.odds<=2.50;
+ });
+ const ordered=[...regular].sort((a,b)=>category==='heavy'?edge(b)-edge(a):probability(b)!-probability(a)!||edge(b)-edge(a));
  const unique:Offer[]=[],seen=new Set<string>();
  for(const o of ordered){
   const key=[o.game,o.market,o.marketKey||'',o.selection,o.line??''].join('|');
