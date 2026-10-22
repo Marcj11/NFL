@@ -7,6 +7,9 @@ export async function GET(){
  if(!base||!key||!apiKey)return NextResponse.json({status:'not_configured',refreshed:0});
  const headers={apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json'};
  try{
+  const stamp=await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?id=eq.special_props_refresh&select=fetched_at',{headers,cache:'no-store'});
+  const last=stamp.ok?(await stamp.json())[0]?.fetched_at:null;
+  if(last&&Date.now()-Date.parse(last)<6*3600000)return NextResponse.json({status:'recently_checked',refreshed:0});
   const gamesRes=await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?id=eq.nfl&select=payload',{headers,cache:'no-store'});
   if(!gamesRes.ok)throw Error('games_cache');
   const games=(await gamesRes.json())[0]?.payload||[];
@@ -35,6 +38,7 @@ export async function GET(){
    const save=await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?on_conflict=id',{method:'POST',headers:{...headers,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{id,payload,fetched_at:new Date().toISOString()}]),cache:'no-store'});
    if(save.ok){refreshed++;marketsFound+=props.length}
   }
+  await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?on_conflict=id',{method:'POST',headers:{...headers,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([{id:'special_props_refresh',payload:[],fetched_at:new Date().toISOString(),updated_at:new Date().toISOString()}])});
   return NextResponse.json({status:'ok',refreshed,marketsFound,checked:future.length},{headers:{'Cache-Control':'no-store'}});
  }catch{return NextResponse.json({status:'refresh_unavailable',refreshed:0},{status:502})}
 }
