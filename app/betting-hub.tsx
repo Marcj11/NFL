@@ -148,6 +148,11 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const gameProjection=(o:Offer):number|null=>{
   const g=gamesResearch[o.game];if(!g)return null;
   const sides=teamSides(o.game);if(sides.length!==2)return null;
+  // All markets require the same matchup context before any market-specific calculation.
+  if(o.market==='props'){
+   const signal=researchValue(o);
+   return signal&&Number.isFinite(signal.probability)?Math.max(0.001,Math.min(0.999,signal.probability)):null;
+  }
   const home=sides[1],chosen=teamFrom(o.team);
   const safe=(v:unknown)=>typeof v==='number'&&Number.isFinite(v);
   const cdf=(z:number)=>Math.max(0,Math.min(1,0.5*(1+Math.tanh(z*0.79788456*(1+0.044715*z*z)))));
@@ -170,14 +175,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   }
   return null;
  };
- const officialProbability=(o:Offer):number|null=>{
-  // One ranking gateway. Unavailable model data never falls back to Elo.
-  if(o.market==='props'){
-   const result=researchValue(o);
-   return result&&Number.isFinite(result.probability)?Math.max(0.001,Math.min(0.999,result.probability)):null;
-  }
-  return gameProjection(o);
- };
+ const officialProbability=(o:Offer):number|null=>gameProjection(o);
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
  const probability=(o:Offer)=>officialProbability(o);
