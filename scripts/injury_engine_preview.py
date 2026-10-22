@@ -12,7 +12,7 @@ def production(db, gsis):
 def averages(games):
  if not games:return None
  keys=('receiving_yards','rushing_yards','def_sacks','def_qb_hits','targets','carries')
- return {k:round(sum(float(g['metrics'].get(k) or 0) for g in games)/len(games),2) for k in keys}
+ return {'games_sample':len(games),'sample_sufficient':len(games)>=3,**{k:round(sum(float(g['metrics'].get(k) or 0) for g in games)/len(games),2) for k in keys}}
 
 def main():
  db=create_client(os.environ['NFL_SUPABASE_URL'],os.environ['NFL_SUPABASE_SERVICE_ROLE_KEY'])
