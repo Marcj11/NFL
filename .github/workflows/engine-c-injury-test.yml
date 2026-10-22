@@ -14,3 +14,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m py_compile scripts/injury_engine_preview.py
+      - run: pip install supabase
+      - name: Run read-only Engine C integration
+        env:
+          NFL_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
+          NFL_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/injury_engine_preview.py
