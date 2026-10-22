@@ -28,6 +28,7 @@ def main():
   for p in group[:3]:
    a,b=snaps.get(p['injured_gsis']),snaps.get(p['replacement_gsis'])
    gap=round(float(a)-float(b),3) if a is not None and b is not None else None
+   starter_stats=averages(production(db,p['injured_gsis']))
    stats=averages(production(db,p['replacement_gsis']))
-   print(p['injured_player'],'->',p['replacement_name'],'snap_gap',gap,'backup_stats',stats)
+   print(p['injured_player'],'->',p['replacement_name'],'snap_gap',gap,'starter_stats',starter_stats,'backup_stats',stats)
 if __name__=='__main__':main()
