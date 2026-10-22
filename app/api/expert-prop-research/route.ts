@@ -17,7 +17,13 @@ export async function GET(request:Request){
     const result=simulateYards((item.history||[]).map(h=>Number(h.value)),Number(offer.line),42,5000,(item.history||[]).filter(h=>typeof h.date==='string'&&Number.isFinite(Number(h.value))).map(h=>({date:h.date!,value:Number(h.value)})),String(market));
     const label=String(offer.selection).toLowerCase();
     const over=/\bover\b/.test(label),under=/\bunder\b/.test(label);
-    const probability=over!==under?(over?result.p_over:result.p_under):null;
+    // Defensive and kicking counts are discrete: a continuous yardage gamma model
+    // systematically overstates certainty at 0.5/1.5 lines. Use observed hits
+    // with a conservative Beta(2,2) prior instead of the gamma tail.
+    const discrete=/sacks|tackles|interceptions|qb_hits|pass_defended|fumbles|field_goals|extra_points|kicking_points|pats/.test(String(market));
+    const history=(item.history||[]).filter(h=>Number.isFinite(Number(h.value))&&Number(h.value)>=0);
+    const hits=history.filter(h=>over?Number(h.value)>Number(offer.line):Number(h.value)<Number(offer.line)).length;
+    const probability=over!==under?(discrete?(hits+2)/(history.length+4):(over?result.p_over:result.p_under)):null;
     const odds=Number(offer.odds);
     const ev=probability!==null&&Number.isFinite(odds)&&odds>1?probability*(odds-1)-(1-probability-result.p_push):null;
     return {offer,probability,model:'independent-expert-nfl-props-research',expected_value_experimental:ev,push_probability:result.p_push,implied_probability:odds>1?1/odds:null,projection:result.projection,interval_10_90:[result.p10,result.p90],status:'PASSER',explanation:result.explanation,experimental:true};
