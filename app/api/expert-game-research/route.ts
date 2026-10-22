@@ -103,7 +103,7 @@ export async function GET(req:Request){
  const injuryRiskReview=liveInjuryChecks.map(team=>{
   const report=Array.isArray(team.report)?team.report:[];
   const material=report.filter(p=>/QB|OT|LT|RT|G|C|WR|RB|CB|S|DE|DT|EDGE|LB/i.test(p.position));
-  const confirmedOut=material.filter(p=>/\\bout\\b|inactive|injured reserve/i.test(p.status));
+  const confirmedOut=material.filter(p=>/\bout\b|inactive|injured reserve/i.test(p.status));
   const uncertain=material.filter(p=>/questionable|doubtful|limited|day.to.day/i.test(p.status));
   return {team:team.team,source_status:team.status,key_players_reported:material.length,reported_out:confirmedOut,reported_uncertain:uncertain,adjustment_points:0,verification:'Live ESPN snapshot only; not an official game-day inactive confirmation'};
  });
