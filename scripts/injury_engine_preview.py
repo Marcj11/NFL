@@ -13,5 +13,8 @@ def main():
  eligible=[p for p in pairs if status.get(p['replacement_gsis']) not in BLOCKED]
  ranked=sorted(eligible,key=lambda p:float(snaps.get(p['replacement_gsis']) or 0),reverse=True)
  print({'eligible':len(eligible),'with_usage':sum(p['replacement_gsis'] in snaps for p in eligible)})
- for p in ranked[:5]:print(p['injured_player'],'->',p['replacement_name'],snaps.get(p['replacement_gsis']))
+ groups={}
+ for p in ranked:groups.setdefault(p['injured_gsis'],[]).append(p)
+ for group in groups.values():
+  for p in group[:3]:print(p['injured_player'],'->',p['replacement_name'],snaps.get(p['replacement_gsis']))
 if __name__=='__main__':main()
