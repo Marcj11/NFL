@@ -173,34 +173,12 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   return null;
  };
  const officialProbability=(o:Offer):number|null=>{
-  if(o.market==='props'){const signal=researchValue(o);return signal&&Number.isFinite(signal.probability)?Math.max(0.01,Math.min(0.99,signal.probability)):null;}
-  const sides=teamSides(o.game);
-  const row=official.find(g=>sides.length===2&&sides[1]===String(g.home_team)&&sides[0]===String(g.away_team));
-  if(!row)return null;
-  const selected=teamFrom(o.team);
-  const homeP=Number(row.home_probability);
-  if(!Number.isFinite(homeP)||homeP<=0||homeP>=1)return null;
-  const clamp=(x:number)=>Math.max(0.001,Math.min(0.999,x));
-  const logistic=(z:number)=>1/(1+Math.exp(-1.702*Math.max(-8,Math.min(8,z))));
-  // Elo is the sole strength/side predictor; score history informs only total/variance.
-  const margin=(Math.log(homeP/(1-homeP))/1.702)*13.5;
-  if(o.market==='moneyline'){
-   const prob=selected===row.home_team?homeP:selected===row.away_team?1-homeP:null;
-   return prob!==null?clamp(prob):null;
+  // One ranking gateway. Unavailable model data never falls back to Elo.
+  if(o.market==='props'){
+   const result=researchValue(o);
+   return result&&Number.isFinite(result.probability)?Math.max(0.001,Math.min(0.999,result.probability)):null;
   }
-  if(o.market==='spreads'&&selected&&Number.isFinite(o.line)){
-   const side=selected===row.home_team?margin:selected===row.away_team?-margin:null;
-   return side===null?null:clamp(logistic((side+Number(o.line))/13.5));
-  }
-  if(o.market==='totals'&&Number.isFinite(o.line)){
-   const g=gamesResearch[o.game];
-   if(!g||!Number.isFinite(g.projected_total))return null;
-   const isOver=/^over\b/i.test(o.selection),isUnder=/^under\b/i.test(o.selection);
-   if(isOver===isUnder)return null;
-   const over=logistic((g.projected_total-Number(o.line))/17.5);
-   return clamp(isOver?over:1-over);
-  }
-  return null;
+  return gameProjection(o);
  };
  const ranking=useMemo(()=>{
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
