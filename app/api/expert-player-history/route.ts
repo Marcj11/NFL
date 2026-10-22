@@ -4,8 +4,8 @@ export async function GET(req:Request){
  const url=new URL(req.url),player=url.searchParams.get('player')||'';
  const market=url.searchParams.get('market')||'';
  const before=url.searchParams.get('before')||'';
- const kicker:Record<string,string>={player_field_goals:'fg_made',player_field_goals_made:'fg_made',player_field_goal_attempts:'fg_att',player_extra_points:'pat_made',player_extra_points_made:'pat_made',player_kicking_points:'points'};
- const allowed:Record<string,string>={'player_pass_yds':'passing_yards','player_rush_yds':'rushing_yards','player_reception_yds':'receiving_yards','player_sacks':'def_sacks','player_tackles':'def_tackles_solo','player_interceptions':'def_interceptions','player_qb_hits':'def_qb_hits','player_pass_defended':'def_pass_defended','player_forced_fumbles':'def_fumbles_forced'};
+ const kicker:Record<string,string>={player_field_goals:'fg_made',player_field_goals_made:'fg_made',player_field_goal_attempts:'fg_att',player_extra_points:'pat_made',player_extra_points_made:'pat_made',player_kicking_points:'points',player_pats:'pat_made'};
+ const allowed:Record<string,string>={'player_pass_yds':'passing_yards','player_rush_yds':'rushing_yards','player_reception_yds':'receiving_yards','player_sacks':'def_sacks','player_solo_tackles':'def_tackles_solo','player_tackles_assists':'def_tackles_with_assist','player_defensive_interceptions':'def_interceptions','player_tackles':'def_tackles_solo','player_interceptions':'def_interceptions','player_qb_hits':'def_qb_hits','player_pass_defended':'def_pass_defended','player_forced_fumbles':'def_fumbles_forced'};
  if(!player||player.length>100||!(allowed[market]||kicker[market])||!Number.isFinite(Date.parse(before)))return NextResponse.json({error:'invalid_parameters'},{status:400});
  const base=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!base||!key)return NextResponse.json({error:'not_configured'},{status:503});
