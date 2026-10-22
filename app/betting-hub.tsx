@@ -262,7 +262,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  const fallback:Offer[]=[],games=new Set<string>();
  for(const o of unique){const key=identity(o);if(games.has(key))continue;games.add(key);fallback.push(o);if(fallback.length===5)break}
  return fallback;
- },[category,offers,official,research,gamesResearch]);
+ },[category,offers,research,gamesResearch]);
  // Persist each viewed category TOP 5 before kickoff; retain old snapshots when odds change.
  useEffect(()=>{
   if(view!=='top'||!loaded||ranking.length===0)return;
@@ -273,7 +273,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   });
   if(!selections.length)return;
   fetch('/api/forecast-archive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model_version:'elo-recovery-v1',forecasts:selections}),keepalive:true}).catch(()=>{});
- },[ranking,category,view,loaded,official,research,gamesResearch]);
+ },[ranking,category,view,loaded,research,gamesResearch]);
  const portfolio=useMemo(()=>{
   if(!ranking.length)return null;
   const chances=ranking.map(o=>officialProbability(o));
@@ -291,7 +291,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   }
   const profit=ranking.reduce((sum,o,i)=>sum+5*(chances[i]!*o.odds-1),0);
   return {positive,loseAll,profit};
- },[ranking,official,research,gamesResearch]);
+ },[ranking,research,gamesResearch]);
  const marketCoverage=useMemo(()=>({moneyline:ranking.filter(o=>o.market==='moneyline').length,spreads:ranking.filter(o=>o.market==='spreads').length,totals:ranking.filter(o=>o.market==='totals').length,props:ranking.filter(o=>o.market==='props').length}),[ranking]);
  const pickVariation=(o:Offer,rank:number,n:number)=>{
   // Stable per-offer wording: it does not jump around when the user navigates.
