@@ -1,9 +1,11 @@
 import {NextResponse} from 'next/server';
 export const dynamic='force-dynamic';
-export async function GET(){
+export async function GET(req:Request){
  const base=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!base||!key)return NextResponse.json({status:'not_configured',offers:[]},{status:503});
  const headers={apikey:key,Authorization:'Bearer '+key};
+ // Refresh supplementary props before reading cache, with a 6-hour provider throttle.
+ try{await fetch(new URL('/api/refresh-special-props',req.url),{cache:'no-store',signal:AbortSignal.timeout(18000)});}catch{}
  try{
   const res=await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?select=id,payload,fetched_at&id=like.props_*',{headers,cache:'no-store'});
   if(!res.ok)throw Error('cache_'+res.status);
