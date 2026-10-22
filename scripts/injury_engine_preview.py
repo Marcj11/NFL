@@ -8,6 +8,11 @@ def production(db, gsis):
  if not p:return None
  return db.table('player_game_stats').select('metrics,game_id').eq('player_id',p[0]['player_id']).like('game_id','2026_%').order('game_id',desc=True).limit(4).execute().data or []
 
+def averages(games):
+ if not games:return None
+ keys=('receiving_yards','rushing_yards','def_sacks','def_qb_hits','targets','carries')
+ return {k:round(sum(float(g['metrics'].get(k) or 0) for g in games)/len(games),2) for k in keys}
+
 def main():
  db=create_client(os.environ['NFL_SUPABASE_URL'],os.environ['NFL_SUPABASE_SERVICE_ROLE_KEY'])
  injuries=db.table('engine_c_injury_player_features_v1').select('gsis_id,injury_status').eq('game_id',GAME_ID).execute().data or []
