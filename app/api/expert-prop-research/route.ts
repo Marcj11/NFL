@@ -12,7 +12,7 @@ export async function GET(request:Request){
   const batch=await response.json();
   const evaluations=(Array.isArray(batch.inputs)?batch.inputs as Input[]:[]).map((item)=>{
    const offer=item.offer||{},market=String(offer.selection||'').split(' · ').pop();
-   if(!item.eligible||!['player_pass_yds','player_rush_yds','player_reception_yds','player_sacks','player_tackles','player_interceptions','player_qb_hits','player_pass_defended','player_forced_fumbles','player_field_goals','player_field_goals_made','player_field_goal_attempts','player_extra_points','player_extra_points_made','player_kicking_points'].includes(String(market)))return {offer,status:'PASSER',explanation:'Historique insuffisant ou marche non pris en charge.'};
+   if(!item.eligible||!['player_pass_yds','player_rush_yds','player_reception_yds','player_sacks','player_solo_tackles','player_tackles_assists','player_defensive_interceptions','player_tackles','player_interceptions','player_qb_hits','player_pass_defended','player_forced_fumbles','player_field_goals','player_field_goals_made','player_field_goal_attempts','player_extra_points','player_extra_points_made','player_kicking_points','player_pats'].includes(String(market)))return {offer,status:'PASSER',explanation:'Historique insuffisant ou marche non pris en charge.'};
    try{
     const result=simulateYards((item.history||[]).map(h=>Number(h.value)),Number(offer.line),42,5000,(item.history||[]).filter(h=>typeof h.date==='string'&&Number.isFinite(Number(h.value))).map(h=>({date:h.date!,value:Number(h.value)})),String(market));
     const label=String(offer.selection).toLowerCase();
