@@ -6,7 +6,7 @@ BLOCKED={'Out','Injured Reserve','Suspension','Doubtful'}
 def production(db, gsis):
  p=db.table('players').select('player_id').eq('gsis_id',gsis).limit(1).execute().data or []
  if not p:return None
- return db.table('player_game_stats').select('metrics').eq('player_id',p[0]['player_id']).limit(4).execute().data or []
+ return db.table('player_game_stats').select('metrics,game_id').eq('player_id',p[0]['player_id']).like('game_id','2026_%').order('game_id',desc=True).limit(4).execute().data or []
 
 def main():
  db=create_client(os.environ['NFL_SUPABASE_URL'],os.environ['NFL_SUPABASE_SERVICE_ROLE_KEY'])
