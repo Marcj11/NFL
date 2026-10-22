@@ -16,7 +16,7 @@ export async function GET(){
    const id='props_'+game.id;
    const old=await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?select=fetched_at&id=eq.'+encodeURIComponent(id),{headers,cache:'no-store'});
    const rows=old.ok?await old.json():[];
-   if(rows[0]?.fetched_at&&Date.now()-Date.parse(rows[0].fetched_at)<6*3600000)continue;
+   // An existing base-props cache does not prove special markets were fetched.
    const url='https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events/'+encodeURIComponent(game.id)+'/odds?'+new URLSearchParams({apiKey,regions:'us',markets:MARKETS,oddsFormat:'american'});
    const res=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(15000)});
    if(!res.ok)continue;
