@@ -17,10 +17,11 @@ def main():
  db=create_client(os.environ['NFL_SUPABASE_URL'],os.environ['NFL_SUPABASE_SERVICE_ROLE_KEY'])
  injuries=db.table('engine_c_injury_player_features_v1').select('gsis_id,injury_status').eq('game_id',GAME_ID).execute().data or []
  pairs=db.table('engine_c_injury_replacement_candidates_v1').select('injured_gsis,injured_player,replacement_gsis,replacement_name').eq('game_id',GAME_ID).execute().data or []
- usage=db.table('engine_c_injury_last4_usage_v1').select('gsis_id,usage_ratio').execute().data or []
+ usage=db.table('engine_c_injury_last4_usage_v1').select('gsis_id,usage_ratio,games_sample').execute().data or []
  status={i['gsis_id']:i['injury_status'] for i in injuries}
  snaps={u['gsis_id']:u['usage_ratio'] for u in usage}
- eligible=[p for p in pairs if status.get(p['replacement_gsis']) not in BLOCKED]
+ sample={u['gsis_id']:u['games_sample'] for u in usage}
+ eligible=[p for p in pairs if status.get(p['replacement_gsis']) not in BLOCKED and (sample.get(p['replacement_gsis']) or 0)>=3]
  ranked=sorted(eligible,key=lambda p:float(snaps.get(p['replacement_gsis']) or 0),reverse=True)
  groups={}
  for p in ranked:groups.setdefault(p['injured_gsis'],[]).append(p)
