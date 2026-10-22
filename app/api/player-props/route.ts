@@ -19,7 +19,7 @@ export async function GET(){
    for(const p of row.payload){
     const odds=Number(p?.decimal);
     if(!String(p?.market||'').startsWith('player_')||!p?.player||!(odds>1))continue;
-    offers.push({id:[row.id,p.market,p.player,p.side,p.point].join(':'),game:game.away_team+' vs '+game.home_team,market:'props',selection:p.player+' · '+p.side+' '+p.point+' · '+p.market,book:p.book||'Bookmaker',odds,prob:1/odds,team:'',player:String(p.player),line:Number(p.point),kickoff:game.commence_time,kickoff_utc:game.commence_time,fetchedAt:row.fetched_at});
+    offers.push({id:[row.id,p.market,p.player,p.side,p.point].join(':'),game:game.away_team+' vs '+game.home_team,market:'props',marketKey:String(p.market),selection:p.player+' · '+p.side+' '+p.point+' · '+p.market,book:p.book||'Bookmaker',odds,prob:1/odds,team:'',player:String(p.player),line:Number(p.point),kickoff:game.commence_time,kickoff_utc:game.commence_time,fetchedAt:row.fetched_at});
    }
   }
   return NextResponse.json({status:offers.length?'available':'no_current_props',offers},{headers:{'Cache-Control':'no-store'}});
