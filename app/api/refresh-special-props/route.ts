@@ -13,7 +13,7 @@ export async function GET(){
   const gamesRes=await fetch(base+'/rest/v1/nfl_studio_live_odds_cache?id=eq.nfl&select=payload',{headers,cache:'no-store'});
   if(!gamesRes.ok)throw Error('games_cache');
   const games=(await gamesRes.json())[0]?.payload||[];
-  const future=(Array.isArray(games)?games:[]).filter((x:{id:string;commence_time:string})=>x.id&&Date.parse(x.commence_time)>Date.now()).sort((a:{commence_time:string},b:{commence_time:string})=>Date.parse(a.commence_time)-Date.parse(b.commence_time)).slice(0,8);
+  const future=(Array.isArray(games)?games:[]).filter((x:{id:string;commence_time:string})=>x.id&&Date.parse(x.commence_time)>Date.now()).sort((a:{commence_time:string},b:{commence_time:string})=>Date.parse(a.commence_time)-Date.parse(b.commence_time)).slice(0,2);
   let refreshed=0,marketsFound=0;
   for(const game of future){
    const id='props_'+game.id;
