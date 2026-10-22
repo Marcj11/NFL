@@ -3,6 +3,11 @@ import os
 from supabase import create_client
 GAME_ID=os.getenv('NFL_GAME_ID','401873010')
 BLOCKED={'Out','Injured Reserve','Suspension','Doubtful'}
+def production(db, gsis):
+ p=db.table('players').select('player_id').eq('gsis_id',gsis).limit(1).execute().data or []
+ if not p:return None
+ return db.table('player_game_stats').select('metrics').eq('player_id',p[0]['player_id']).limit(4).execute().data or []
+
 def main():
  db=create_client(os.environ['NFL_SUPABASE_URL'],os.environ['NFL_SUPABASE_SERVICE_ROLE_KEY'])
  injuries=db.table('engine_c_injury_player_features_v1').select('gsis_id,injury_status').eq('game_id',GAME_ID).execute().data or []
