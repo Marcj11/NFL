@@ -93,8 +93,6 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  if(active){setOffers([...best.values()]);LOADED(true)}
  }).catch(()=>{if(active)LOADED(true)});return()=>{active=false}},[]);
  useEffect(()=>{let active=true;fetch('/api/player-props').then(r=>r.json()).then(data=>{if(!active||!Array.isArray(data.offers))return;setOffers(previous=>{const map=new Map(previous.map(o=>[o.id,o]));for(const prop of data.offers){if(prop.market==='props'&&Number.isFinite(Number(prop.odds))&&Number(prop.odds)>1&&typeof prop.id==='string'&&typeof prop.selection==='string'&&typeof prop.game==='string'&&(!prop.kickoff||(Number.isFinite(Date.parse(prop.kickoff))&&Date.parse(prop.kickoff)>Date.now())))map.set(prop.id,prop as Offer)}return [...map.values()]})}).catch(()=>{});return()=>{active=false}},[]);
- const [official,SET_OFFICIAL]=useState<Array<{away_team?:string;home_team?:string;home_probability?:number|null;away_probability?:number|null}>>([]);
- useEffect(()=>{let active=true;fetch('/api/elo?week=6',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(active)SET_OFFICIAL(Array.isArray(d.games)?d.games.map((g:any)=>({home_team:g.home_team_id,away_team:g.away_team_id,home_probability:g.home_win_probability,away_probability:g.away_win_probability})):[])}).catch(()=>{});return()=>{active=false}},[]);
  const [research,SET_RESEARCH]=useState<Record<string,{probability:number;explanation:string}>>({});
  const [researchStatus,SET_RESEARCH_STATUS]=useState('chargement');
  useEffect(()=>{let alive=true;let completed=0;let modeled=0;let failures=0;let total=0;
