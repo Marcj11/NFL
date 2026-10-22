@@ -4,6 +4,8 @@ on:
     branches: [feature/nhl-nfl-component-parity]
     paths: [scripts/import_kicker_weekly.py, .github/workflows/import-kickers.yml]
   workflow_dispatch:
+  schedule:
+    - cron: '30 11 * * *'
 jobs:
   import:
     runs-on: ubuntu-latest
