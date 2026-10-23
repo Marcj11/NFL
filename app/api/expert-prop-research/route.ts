@@ -22,8 +22,8 @@ export async function GET(request:Request){
     // with a conservative Beta(2,2) prior instead of the gamma tail.
     const discrete=/sacks|tackles|interceptions|qb_hits|pass_defended|fumbles|field_goals|extra_points|kicking_points|pats/.test(String(market));
     const history=(item.history||[]).filter(h=>Number.isFinite(Number(h.value))&&Number(h.value)>=0);
-    const hits=history.filter(h=>over?Number(h.value)>Number(offer.line):Number(h.value)<Number(offer.line)).length;
-    const probability=over!==under?(discrete?(hits+2)/(history.length+4):(over?result.p_over:result.p_under)):null;
+    const season=(d:string)=>{const x=new Date(d);return x.getUTCFullYear()-(x.getUTCMonth()<2?1:0)}; const year=season(item.kickoff_utc||new Date().toISOString()); const current=history.filter(h=>h.date&&season(h.date)===year).slice(-8),prior=history.filter(h=>h.date&&season(h.date)===year-1).slice(-4); const hits=(xs:typeof history)=>xs.filter(h=>over?Number(h.value)>Number(offer.line):Number(h.value)<Number(offer.line)).length; const smooth=(xs:typeof history)=>(hits(xs)+2)/(xs.length+4); const weighted=current.length&&prior.length?.7*smooth(current)+.3*smooth(prior):smooth(current.length?current:history);
+    const probability=over!==under?(discrete?weighted:(over?result.p_over:result.p_under)):null;
     const odds=Number(offer.odds);
     const ev=probability!==null&&Number.isFinite(odds)&&odds>1?probability*(odds-1)-(1-probability-result.p_push):null;
     return {offer,probability,model:'independent-expert-nfl-props-research',expected_value_experimental:ev,push_probability:result.p_push,implied_probability:odds>1?1/odds:null,projection:result.projection,interval_10_90:[result.p10,result.p90],status:'PASSER',explanation:result.explanation,experimental:true};
