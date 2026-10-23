@@ -24,7 +24,8 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
  let kind:'rushing'|'receiving'|'passing'|null=null;
  let stat='YDS';
  let label='';
- if(/rush|rushing|course|sol/.test(requested)){kind='rushing';stat=/touchdown|td|touché/.test(requested)?'TD':'YDS';label=stat==='TD'?'rush tds':'rush yds'}
+ if(/reception_yds|receiving_yards|receiving yards|verges en réception/.test(requested)){kind='receiving';label='reception yds'}
+ else if(/rush|rushing|course|sol/.test(requested)){kind='rushing';stat=/touchdown|td|touché/.test(requested)?'TD':'YDS';label=stat==='TD'?'rush tds':'rush yds'}
  else if(/reception_yds|receiving_yards|receiving yards|verges en réception/.test(requested)){kind='receiving';label='reception yds'}
  else if(/receptions|réceptions|catch|attrap/.test(requested)){kind='receiving';stat='REC';label='receptions'}
  else if(/pass_yds|passing_yards|passing yards|verges à la passe/.test(requested)){kind='passing';label='pass yds'}
