@@ -12,6 +12,7 @@ const logoUrl=(abbr:string)=>'https://a.espncdn.com/i/teamlogos/nfl/500/'+(({LA:
 const TeamLogo=({abbr,size=36}:{abbr:string;size?:number})=><img src={logoUrl(abbr)} alt={'Logo '+abbr} loading="lazy" style={{width:size,height:size,objectFit:'contain',filter:'drop-shadow(0 0 8px #42caff55)',flexShrink:0}}/>;
 const tidy=(s:string)=>s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
 const playerKey=(s:string)=>tidy(s).replace(/\b(jr|sr|ii|iii|iv|v)\b/g,'').replace(/\s+/g,'');
+const samePlayer=(a:string,b:string)=>{const x=playerKey(a),y=playerKey(b);return x===y||x==='colsonloveland'&&y==='colstonloveland'||y==='colsonloveland'&&x==='colstonloveland'};
 const sideMatch=(raw:string,t:Team)=>{const part=tidy(raw),name=tidy(t.name),short=tidy(t.abbr==='LAR'?'LA':t.abbr==='WSH'?'WAS':t.abbr);return part===name||part===short||part===name.split(' ').slice(-1)[0]};
 const match=(name:string|undefined,g:Game)=>{if(typeof name!=='string'||!name.trim())return false;const sides=name.split(/\s+vs\s+/i);return sides.length===2&&sideMatch(sides[0],g.away)&&sideMatch(sides[1],g.home)};
 function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
@@ -36,7 +37,7 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
    if(rows.length){const sum=rows.reduce((n,p)=>n+(Number(p.values.TD)||0),0);return {value:sum,label:'touchdowns'}}
  }
  if(!kind)return null;
- const row=players.find(p=>playerKey(p.name)===player&&p.category.toLowerCase().includes(kind));
+ const row=players.find(p=>samePlayer(p.name,name)&&p.category.toLowerCase().includes(kind));
  if(!row)return null;
  const val=row.values[stat];if(val===undefined)return null;
  const num=stat==='C/ATT'?Number(val.split('/')[0]):Number(val);
