@@ -37,7 +37,7 @@ function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
    if(rows.length){const sum=rows.reduce((n,p)=>n+(Number(p.values.TD)||0),0);return {value:sum,label:'touchdowns'}}
  }
  if(!kind)return null;
- const row=players.find(p=>samePlayer(p.name,name)&&p.category.toLowerCase().includes(kind));
+ const row=players.find(p=>(samePlayer(p.name,name)||(player==='colstonloveland'&&playerKey(p.name)==='cloveland'))&&p.category.toLowerCase().includes(kind));
  if(!row)return null;
  const val=row.values[stat];if(val===undefined)return null;
  const num=stat==='C/ATT'?Number(val.split('/')[0]):Number(val);
