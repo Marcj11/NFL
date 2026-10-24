@@ -26,7 +26,7 @@ jobs:
           NFL_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           if [ -z "$NFL_SUPABASE_URL" ] || [ -z "$NFL_SUPABASE_SERVICE_ROLE_KEY" ]; then
-            echo '::warning::Supabase secrets missing; ESPN snapshots skipped.'
-            exit 0
+            echo '::error::Missing Supabase credentials; ESPN injury snapshots have NOT been refreshed.'
+            exit 1
           fi
           python scripts/sync_espn_injuries.py
