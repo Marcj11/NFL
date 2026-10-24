@@ -1,15 +1,21 @@
 """Prospective ESPN full-team injury snapshots. Run in GitHub Actions with service-role secrets."""
-import os, json, datetime, urllib.request
+import os, json, datetime, urllib.request, time
 from supabase import create_client
 BASE="https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/"
 def get(url):
     req=urllib.request.Request(url,headers={"User-Agent":"NFLStudio/1.0"})
-    with urllib.request.urlopen(req,timeout=15) as response: return json.load(response)
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req,timeout=15) as response: return json.load(response)
+        except Exception:
+            if attempt==2: raise
+            time.sleep(2*(attempt+1))
 def run():
     db=create_client(os.environ["NFL_SUPABASE_URL"],os.environ["NFL_SUPABASE_SERVICE_ROLE_KEY"])
     now=datetime.datetime.now(datetime.timezone.utc)
     end=(now+datetime.timedelta(days=10)).isoformat()
     games=db.table("games").select("game_id,kickoff_utc,home_team_id,away_team_id").gte("kickoff_utc",now.isoformat()).lte("kickoff_utc",end).order("kickoff_utc").limit(30).execute().data or []
+    if not games: raise RuntimeError("No upcoming NFL games available in Supabase; cannot verify injury sync")
     # ESPN team ids via public ESPN team index, not abbreviation guesses.
     try:
         index=get(BASE+"?limit=50")
