@@ -22,6 +22,11 @@ jobs:
       - run: pip install supabase
       - name: Save timestamped pregame ESPN injury snapshots
         env:
-          NFL_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL }}
-          NFL_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY }}
-        run: python scripts/sync_espn_injuries.py
+          NFL_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL || secrets.SUPABASE_URL }}
+          NFL_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.NFL_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$NFL_SUPABASE_URL" ] || [ -z "$NFL_SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo '::warning::Supabase secrets missing; ESPN snapshots skipped.'
+            exit 0
+          fi
+          python scripts/sync_espn_injuries.py
