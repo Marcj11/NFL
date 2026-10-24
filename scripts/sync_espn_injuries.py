@@ -37,7 +37,8 @@ def run():
         league=get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries")
         for group in league.get("injuries",[]):
             team=group.get("team") or {}
-            abbr=str(team.get("abbreviation","")).upper()
+            espn_id=str(group.get("id") or team.get("id") or "")
+            abbr=next((code for code,eid in mapping.items() if eid==espn_id),"") or str(team.get("abbreviation","")).upper()
             if abbr and isinstance(group.get("injuries"),list):
                 league_injuries[abbr]=group["injuries"]
     except Exception as exc:
