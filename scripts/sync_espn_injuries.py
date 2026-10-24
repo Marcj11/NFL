@@ -31,7 +31,9 @@ def run():
         if not tid: tid=aliases.get(t,t).lower()
         try:
             payload=get(BASE+tid+"/injuries")
-            injuries=payload.get("injuries",[])
+            if not isinstance(payload,dict) or not isinstance(payload.get("injuries"),list):
+                raise ValueError("ESPN injury response missing injuries list")
+            injuries=payload["injuries"]
             players=[{"espn_id":str((i.get("athlete") or {}).get("id","")),"name":(i.get("athlete") or {}).get("displayName",i.get("displayName","")),"status":str(i.get("status",i.get("type","unknown"))),"position":((i.get("athlete") or {}).get("position") or {}).get("abbreviation","")} for i in injuries]
             fetched[t]={"endpoint_status":"fetched","players":players,"roster":[]}
         except Exception as exc:
@@ -44,8 +46,8 @@ def run():
             rows.append({"game_id":game["game_id"],"team_id":team,"kickoff_utc":game["kickoff_utc"],"observed_at":nowstr,"source":"ESPN live team injuries","endpoint_status":data["endpoint_status"],"players":data["players"],"roster":[],"source_quality":"live_snapshot_not_official_inactives" if data["endpoint_status"]=="fetched" else "unavailable"})
     if rows:
         print("Prepared",len(rows),"injury snapshots; ESPN responses",sum(v["endpoint_status"]=="fetched" for v in fetched.values()))
-        if not any(v["endpoint_status"]=="fetched" for v in fetched.values()):
-            raise RuntimeError("ESPN supplied no usable injury responses; refusing to save empty snapshots")
+        if not all(v["endpoint_status"]=="fetched" for v in fetched.values()):
+            raise RuntimeError("Some ESPN team injury feeds unavailable; refusing incomplete snapshots")
         db.table("engine_c_espn_injury_snapshots").insert(rows).execute()
     print(json.dumps({"games":len(games),"snapshots_saved":len(rows),"teams":{k:{"status":v["endpoint_status"],"injuries":len(v["players"])} for k,v in fetched.items()}}))
 if __name__=="__main__":run()
