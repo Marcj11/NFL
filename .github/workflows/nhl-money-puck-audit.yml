@@ -1,0 +1,33 @@
+name: NHL MoneyPuck source audit
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/live-model-preview-ui
+    paths:
+      - '.github/workflows/nhl-money-puck-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe historical CSV through GitHub runner
+        shell: python
+        run: |
+          import csv, io, json, urllib.request, urllib.error
+          url="https://moneypuck.com/moneypuck/playerData/seasonSummary/2024/regular/skaters.csv"
+          req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 (compatible; NHLResearchAudit/1.0)","Range":"bytes=0-32767"})
+          try:
+              with urllib.request.urlopen(req,timeout=20) as response:
+                  snippet=response.read(32768).decode("utf-8-sig",errors="replace")
+                  http_status=response.status
+              lines=snippet.splitlines()
+              rows=list(csv.reader(io.StringIO("\n".join(lines[:8]))))
+              columns=rows[0] if rows else []
+              print(json.dumps({"source":"MoneyPuck","season":"2024","dataset":"skaters","status":"sample_read","http_status":http_status,"column_count":len(columns),"columns":columns,"sample_row_count":len(rows)-1,"sample_first_row":rows[1][:8] if len(rows)>1 else [],"database_writes":0},ensure_ascii=False))
+              if len(columns)<10: raise RuntimeError("Too few columns for credible schema")
+          except Exception as e:
+              print(json.dumps({"status":"source_unavailable","error":str(e),"database_writes":0}))
+              raise

@@ -24,6 +24,7 @@ jobs:
           CODE=$?
           set -e
           echo "exit_code=$CODE" >> diagnostics/engine-test-output.txt
+          exit "$CODE"
       - name: Commit test report
         if: always()
         run: |

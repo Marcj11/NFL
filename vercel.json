@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/odds",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/forecast-collect",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/forecast-audit",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}
