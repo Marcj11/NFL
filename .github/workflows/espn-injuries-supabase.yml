@@ -33,4 +33,4 @@ jobs:
             echo '::error::Missing Supabase credentials; ESPN injury snapshots have NOT been refreshed.'
             exit 1
           fi
-          python scripts/sync_espn_injuries.py
+          python -u scripts/sync_espn_injuries.py
