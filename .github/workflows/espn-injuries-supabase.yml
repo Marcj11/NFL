@@ -3,6 +3,10 @@ on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/espn-injuries-supabase.yml'
 permissions:
   contents: read
 concurrency:
