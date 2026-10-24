@@ -28,13 +28,14 @@ def run():
     fetched={}
     for t in teams:
         tid=mapping.get(aliases.get(t,t), "")
-        if not tid: fetched[t]={"endpoint_status":"unmapped_team","players":[],"roster":[]};continue
+        if not tid: tid=aliases.get(t,t).lower()
         try:
             payload=get(BASE+tid+"/injuries")
             injuries=payload.get("injuries",[])
             players=[{"espn_id":str((i.get("athlete") or {}).get("id","")),"name":(i.get("athlete") or {}).get("displayName",i.get("displayName","")),"status":str(i.get("status",i.get("type","unknown"))),"position":((i.get("athlete") or {}).get("position") or {}).get("abbreviation","")} for i in injuries]
             fetched[t]={"endpoint_status":"fetched","players":players,"roster":[]}
         except Exception as exc:
+            print("ESPN injury fetch failed for",t,"using",tid,repr(exc))
             fetched[t]={"endpoint_status":"espn_error","players":[],"roster":[]}
     rows=[]
     for game in games:
