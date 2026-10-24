@@ -1,0 +1,26 @@
+name: ESPN depth chart connection test
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/espn-depthchart-stage
+    paths:
+      - scripts/espn-lineup-stage.mjs
+      - .github/workflows/espn-lineup-smoke.yml
+permissions:
+  contents: read
+jobs:
+  espn-dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: ESPN KC projected depth chart, NO Supabase writes
+        env:
+          ESPN_TEAM: '12'
+          TEAM_ID: KC
+          GAME_ID: 2026_06_KC_BUF
+        run: node scripts/espn-lineup-stage.mjs
