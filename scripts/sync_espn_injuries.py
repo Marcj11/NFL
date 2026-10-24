@@ -50,15 +50,18 @@ def run():
         except Exception as exc:
             print("ESPN injury fetch failed for",t,"using",tid,repr(exc))
             fetched[t]={"endpoint_status":"espn_error","players":[],"roster":[]}
+    good={t for t,d in fetched.items() if d["endpoint_status"]=="fetched"}
+    bad=sorted(set(teams)-good)
+    if bad: print("::warning::ESPN unavailable for: "+",".join(bad))
+    if teams and not good: raise RuntimeError("No usable ESPN injury reports")
     rows=[]
     for game in games:
         for team in (game["home_team_id"],game["away_team_id"]):
+            if team not in good: continue
             data=fetched[team]
             rows.append({"game_id":game["game_id"],"team_id":team,"kickoff_utc":game["kickoff_utc"],"observed_at":nowstr,"source":"ESPN live team injuries","endpoint_status":data["endpoint_status"],"players":data["players"],"roster":[],"source_quality":"live_snapshot_not_official_inactives" if data["endpoint_status"]=="fetched" else "unavailable"})
     if rows:
         print("Prepared",len(rows),"injury snapshots; ESPN responses",sum(v["endpoint_status"]=="fetched" for v in fetched.values()))
-        if not all(v["endpoint_status"]=="fetched" for v in fetched.values()):
-            raise RuntimeError("Some ESPN team injury feeds unavailable; refusing incomplete snapshots")
         db.table("engine_c_espn_injury_snapshots").insert(rows).execute()
     print(json.dumps({"games":len(games),"snapshots_saved":len(rows),"teams":{k:{"status":v["endpoint_status"],"injuries":len(v["players"])} for k,v in fetched.items()}}))
 if __name__=="__main__":run()
