@@ -11,7 +11,11 @@ def run():
     end=(now+datetime.timedelta(days=10)).isoformat()
     games=db.table("games").select("game_id,kickoff_utc,home_team_id,away_team_id").gte("kickoff_utc",now.isoformat()).lte("kickoff_utc",end).order("kickoff_utc").limit(30).execute().data or []
     # ESPN team ids via public ESPN team index, not abbreviation guesses.
-    index=get(BASE+"?limit=50")
+    try:
+        index=get(BASE+"?limit=50")
+    except Exception as exc:
+        print("ESPN team index failed:",repr(exc))
+        index={}
     mapping={}
     for item in index.get("sports",[]):
         for league in item.get("leagues",[]):
@@ -37,6 +41,10 @@ def run():
         for team in (game["home_team_id"],game["away_team_id"]):
             data=fetched[team]
             rows.append({"game_id":game["game_id"],"team_id":team,"kickoff_utc":game["kickoff_utc"],"observed_at":nowstr,"source":"ESPN live team injuries","endpoint_status":data["endpoint_status"],"players":data["players"],"roster":[],"source_quality":"live_snapshot_not_official_inactives" if data["endpoint_status"]=="fetched" else "unavailable"})
-    if rows:db.table("engine_c_espn_injury_snapshots").insert(rows).execute()
+    if rows:
+        print("Prepared",len(rows),"injury snapshots; ESPN responses",sum(v["endpoint_status"]=="fetched" for v in fetched.values()))
+        if not any(v["endpoint_status"]=="fetched" for v in fetched.values()):
+            raise RuntimeError("ESPN supplied no usable injury responses; refusing to save empty snapshots")
+        db.table("engine_c_espn_injury_snapshots").insert(rows).execute()
     print(json.dumps({"games":len(games),"snapshots_saved":len(rows),"teams":{k:{"status":v["endpoint_status"],"injuries":len(v["players"])} for k,v in fetched.items()}}))
 if __name__=="__main__":run()
