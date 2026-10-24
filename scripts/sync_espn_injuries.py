@@ -25,12 +25,23 @@ def run():
     aliases={"LA":"LAR","WSH":"WAS","JAC":"JAX"}
     nowstr=now.isoformat()
     teams=sorted(set(t for g in games for t in (g["home_team_id"],g["away_team_id"])))
+    # Prefer league-wide ESPN injury feed; team endpoints are fallbacks.
+    league_injuries={}
+    try:
+        league=get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries")
+        for group in league.get("injuries",[]):
+            team=group.get("team") or {}
+            abbr=str(team.get("abbreviation","")).upper()
+            if abbr and isinstance(group.get("injuries"),list):
+                league_injuries[abbr]=group["injuries"]
+    except Exception as exc:
+        print("ESPN league injury endpoint:",repr(exc))
     fetched={}
     for t in teams:
         tid=mapping.get(aliases.get(t,t), "")
         if not tid: tid=aliases.get(t,t).lower()
         try:
-            payload=get(BASE+tid+"/injuries")
+            payload={"injuries":league_injuries[aliases.get(t,t)]} if aliases.get(t,t) in league_injuries else get(BASE+tid+"/injuries")
             if not isinstance(payload,dict) or not isinstance(payload.get("injuries"),list):
                 raise ValueError("ESPN injury response missing injuries list")
             injuries=payload["injuries"]
