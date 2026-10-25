@@ -98,7 +98,7 @@ return <div style={{padding:'15px 19px',background:'#122c40',borderRadius:14,mar
  <div style={{color:'#e2ecf7'}}>Cote <b>{pick.decimal.toFixed(2)}</b> · Prob. <b>{pick.probability===null?'Non évaluée':(pick.probability*100).toFixed(1)+' %'}</b></div>
  <div style={{color:pick.expected_value!==null&&pick.expected_value>0?'#65f2b3':'#ffd18b',fontSize:18,fontWeight:900}}>EV théorique {pick.expected_value===null?'Non évaluée':(pick.expected_value>0?'+':'')+(pick.expected_value*100).toFixed(1)+' %'} · {pick.expected_value!==null&&pick.expected_value>0?'Valeur positive (expérimentale)':'Non recommandé'}</div>
  <p style={{fontSize:12,color:'#bfd7ea'}}>{pick.angle}</p>
- <MatchBetEntry pick={{...pick,probability:pick.probability??0}} gameId={data?.next?.game_id||''} game={(teams[data?.next?.away_team_id||'']?.[0]||'Visiteurs')+' vs '+(teams[data?.next?.home_team_id||'']?.[0]||'Domicile')} team={team}/>
+ <MatchBetEntry pick={pick} gameId={data?.next?.game_id||''} game={(teams[data?.next?.away_team_id||'']?.[0]||'Visiteurs')+' vs '+(teams[data?.next?.home_team_id||'']?.[0]||'Domicile')} team={team}/>
  </article>)}
  </div>)}
  </div>
