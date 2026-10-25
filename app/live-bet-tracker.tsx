@@ -18,7 +18,7 @@ const match=(name:string|undefined,g:Game)=>{if(typeof name!=='string'||!name.tr
 function measure(b:Bet,players:Player[]):{value:number;label:string}|null{
  const selection=(b.selection||'').toLowerCase();
  const market=(b.marketKey||'').toLowerCase();
- const name=b.player||((b.selection||'').match(/\\b(james cook|dalton kincaid)\\b/i)?.[0]||'');
+ const name=b.player||((b.selection||'').match(/^(.+?)\s+(?:(?:under|over)\s+)?\d+(?:[.,]\d+)?\s*\+?\s+(?:passing|rushing|receiving|receptions|catches)\b/i)?.[1]||'');
  const player=playerKey(name);
  if(!player)return null;
  const requested=market+' '+selection;
