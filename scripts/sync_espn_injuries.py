@@ -19,7 +19,7 @@ def run():
     if not games: raise RuntimeError("No upcoming NFL games available in Supabase; cannot verify injury sync")
     # ESPN team ids via public ESPN team index, not abbreviation guesses.
     try:
-        index=get(BASE+"?limit=50")
+        index=get(BASE)
     except Exception as exc:
         print("ESPN team index failed:",repr(exc))
         index={}
@@ -36,14 +36,22 @@ def run():
     league_injuries={}
     try:
         league=get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries")
-        for group in league.get("injuries",[]):
+        groups=league.get("injuries",[])
+        print("ESPN injury feed groups:",len(groups),"index mappings:",len(mapping),flush=True)
+        for group in groups:
+            if not isinstance(group,dict): continue
             team=group.get("team") or {}
-            espn_id=str(group.get("id") or team.get("id") or "")
-            abbr=next((code for code,eid in mapping.items() if eid==espn_id),"") or str(team.get("abbreviation","")).upper()
+            team=team if isinstance(team,dict) else {}
+            espn_id=str(team.get("id") or group.get("id") or "")
+            abbr=str(team.get("abbreviation") or "").upper()
+            if not abbr: abbr=next((code for code,eid in mapping.items() if eid==espn_id),"")
             if abbr and isinstance(group.get("injuries"),list):
                 league_injuries[abbr]=group["injuries"]
+        print("ESPN mapped injury teams:",sorted(league_injuries),flush=True)
+        if groups and not league_injuries:
+            print("Unmapped ESPN group keys:",list(groups[0]) if isinstance(groups[0],dict) else str(type(groups[0])),flush=True)
     except Exception as exc:
-        print("ESPN league injury endpoint:",repr(exc))
+        print("ESPN league injury endpoint:",repr(exc),flush=True)
     def fetch_team(t):
         tid=mapping.get(aliases.get(t,t), "")
         if not tid: tid=aliases.get(t,t).lower()
