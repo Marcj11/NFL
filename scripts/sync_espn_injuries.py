@@ -1,5 +1,5 @@
 """Prospective ESPN full-team injury snapshots. Run in GitHub Actions with service-role secrets."""
-import os, json, datetime, urllib.request, time
+import os, json, datetime, urllib.request, time, re
 from concurrent.futures import ThreadPoolExecutor
 from supabase import create_client
 BASE="https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/"
@@ -61,7 +61,16 @@ def run():
             if not isinstance(payload,dict) or not isinstance(payload.get("injuries"),list):
                 raise ValueError("ESPN injury response missing injuries list")
             injuries=payload["injuries"]
-            players=[{"espn_id":str((i.get("athlete") or {}).get("id","")),"name":(i.get("athlete") or {}).get("displayName",i.get("displayName","")),"status":str(i.get("status",i.get("type","unknown"))),"position":((i.get("athlete") or {}).get("position") or {}).get("abbreviation","")} for i in injuries]
+            def normalize(i):
+                athlete=i.get("athlete") or {}
+                athlete=athlete if isinstance(athlete,dict) else {}
+                links=athlete.get("links") or i.get("links") or []
+                href=next((x.get("href","") for x in links if isinstance(x,dict) and re.search(r"/id/\d+",x.get("href",""))),"")
+                found=re.search(r"/id/(\d+)",href)
+                athlete_id=str(athlete.get("id") or (found.group(1) if found else ""))
+                return {"espn_id":athlete_id,"name":athlete.get("displayName") or i.get("displayName",""),"status":str(i.get("status",i.get("type","unknown"))),"position":(athlete.get("position") or {}).get("abbreviation","") if isinstance(athlete.get("position"),dict) else "","athlete":athlete,"raw_espn":i}
+            players=[normalize(i) for i in injuries if isinstance(i,dict)]
+            print("ESPN team",t,"players",len(players),"identified",sum(bool(p["espn_id"]) for p in players),"sample_keys",list(injuries[0]) if injuries and isinstance(injuries[0],dict) else [],flush=True)
             return t,{"endpoint_status":"fetched","players":players,"roster":[]}
         except Exception as exc:
             print("ESPN injury fetch failed for",t,"using",tid,repr(exc),flush=True)
