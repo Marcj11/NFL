@@ -18,9 +18,12 @@ export async function GET(req:Request){
  const target=(await query('games',{game_id:'eq.'+id,limit:'1'}))[0] as Game|undefined;
  if(!target)return NextResponse.json({error:'not_found'},{status:404});
  const teams=[target.home_team_id,target.away_team_id];
+ // These ESPN records identify injuries, not verified official pre-kickoff inactives.
+ const injuryRows=await query('engine_c_espn_injury_ready_v1',{game_id:'eq.'+id,limit:'500'}).catch(()=>[]);
+ const injuryCoverage={source:'espn_injury_crosswalk',matched_players:injuryRows.length,teams_with_players:[...new Set(injuryRows.map((p:any)=>String(p.team_id)))],official_inactives_verified:false};
  const availability=assessBothTeams(null,null,{game_id:id,home_team_id:teams[0],away_team_id:teams[1],kickoff_utc:target.kickoff_utc});
  // Until verified per-player pregame feeds exist, do not issue unverified V5 bets.
- if(!availability.verified)return NextResponse.json({game_id:id,model:ENGINE_C_VERSION,status:'pending_team_availability',availability,analysis:[],propsByTeam:{},recommendations_available:false},{headers:{'Cache-Control':'no-store'}});
+ if(!availability.verified)return NextResponse.json({game_id:id,model:ENGINE_C_VERSION,status:'pending_team_availability',availability,injuryCoverage,analysis:[],propsByTeam:{},recommendations_available:false},{headers:{'Cache-Control':'no-store'}});
  const [games,cache,playerRows]=await Promise.all([
  query('games',{or:'(home_team_id.in.('+teams.join(',')+'),away_team_id.in.('+teams.join(',')+'))',kickoff_utc:'lt.'+target.kickoff_utc,order:'kickoff_utc.desc',limit:'70'}),
  query('nfl_studio_live_odds_cache',{id:'eq.nfl',limit:'1'}),
