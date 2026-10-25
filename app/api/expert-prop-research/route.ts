@@ -11,6 +11,9 @@ export async function GET(request:Request){
   const response=await fetch(origin+'/api/expert-prop-batch?limit=30&offset='+offset,{cache:'no-store',signal:AbortSignal.timeout(55000)});
   if(!response.ok)return NextResponse.json({status:'batch_unavailable',evaluations:[]},{status:502});
   const batch=await response.json();
+  // ESPN injuries: only snapshots observed before this request and before each kickoff.
+  const sb=process.env.SUPABASE_URL,sk=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const injuryRows:Array<{player_name:string;injury_status:string;observed_at:string;kickoff_utc:string}> = sb&&sk?await fetch(sb+'/rest/v1/engine_c_espn_injury_ready_v1?select=player_name,injury_status,observed_at,kickoff_utc&kickoff_utc=gt.'+encodeURIComponent(new Date().toISOString())+'&order=observed_at.desc&limit=1000',{headers:{apikey:sk,Authorization:'Bearer '+sk},cache:'no-store',signal:AbortSignal.timeout(5000)}).then(async r=>r.ok?await r.json():[]).catch(()=>[]):[];
   const evaluations=(Array.isArray(batch.inputs)?batch.inputs as Input[]:[]).map((item)=>{
    const offer=item.offer||{},market=String(offer.selection||'').split(' · ').pop();
    if(!item.eligible||!['player_pass_yds','player_rush_yds','player_reception_yds','player_sacks','player_solo_tackles','player_tackles_assists','player_defensive_interceptions','player_tackles','player_interceptions','player_qb_hits','player_pass_defended','player_forced_fumbles','player_field_goals','player_field_goals_made','player_field_goal_attempts','player_extra_points','player_extra_points_made','player_kicking_points','player_pats'].includes(String(market)))return {offer,status:'PASSER',explanation:'Historique insuffisant ou marche non pris en charge.'};
@@ -27,10 +30,14 @@ export async function GET(request:Request){
     // Never infer an actionable probability from a prior-only sample.
     const sampleSize=discrete?(current.length+prior.length):history.length;
     const probability=over!==under&&sampleSize>=6?(discrete?weighted:(over?result.p_over:result.p_under)):null;
-    const engineProbability=probability===null?null:engineCProbability(probability,classify(String(market)));
+    const player=String(offer.player||'').toLowerCase();
+    const matching=injuryRows.find(r=>r.player_name?.toLowerCase()===player&&Date.parse(r.observed_at)<Date.parse(item.kickoff_utc||''));
+    const severity=matching?({out:1,'injured reserve':1,doubtful:.75,questionable:.35,active:0} as Record<string,number>)[matching.injury_status?.toLowerCase()]??0:0;
+    const direction=over?-1:under?1:0;
+    const engineProbability=probability===null?null:engineCProbability(probability,classify(String(market)),direction*severity);
     const odds=Number(offer.odds);
     const ev=probability!==null&&Number.isFinite(odds)&&odds>1?Number(engineProbability)*(odds-1)-(1-Number(engineProbability)-(discrete?0:result.p_push)):null;
-    return {offer,probability:engineProbability,sample_size:sampleSize,model:ENGINE_C_VERSION,expected_value_experimental:ev,push_probability:discrete?0:result.p_push,implied_probability:odds>1?1/odds:null,projection:result.projection,interval_10_90:[result.p10,result.p90],status:'PASSER',explanation:result.explanation,experimental:true};
+    return {offer,probability:engineProbability,sample_size:sampleSize,injury_context:matching?{source:'ESPN',status:matching.injury_status,observed_at:matching.observed_at}:null,model:ENGINE_C_VERSION,expected_value_experimental:ev,push_probability:discrete?0:result.p_push,implied_probability:odds>1?1/odds:null,projection:result.projection,interval_10_90:[result.p10,result.p90],status:'PASSER',explanation:result.explanation,experimental:true};
    }catch{return {offer,status:'PASSER',explanation:'Simulation impossible avec les observations actuellement disponibles.'}}
   });
   return NextResponse.json({status:'research_only',validated:false,bookmaker_recommendations:false,evaluations,total:batch.total||0,offset,nextOffset:batch.nextOffset??null},{headers:{'Cache-Control':'no-store'}});
