@@ -1,3 +1,4 @@
+import {engineCProbability,classify,ENGINE_C_VERSION} from '../../../lib/engine-c/live-markets';
 import {NextResponse} from 'next/server';
 import {simulateYards} from '../../../lib/expert-nfl/simulate-yards';
 export const dynamic='force-dynamic';
@@ -26,9 +27,10 @@ export async function GET(request:Request){
     // Never infer an actionable probability from a prior-only sample.
     const sampleSize=discrete?(current.length+prior.length):history.length;
     const probability=over!==under&&sampleSize>=6?(discrete?weighted:(over?result.p_over:result.p_under)):null;
+    const engineProbability=probability===null?null:engineCProbability(probability,classify(String(market)));
     const odds=Number(offer.odds);
-    const ev=probability!==null&&Number.isFinite(odds)&&odds>1?probability*(odds-1)-(1-probability-(discrete?0:result.p_push)):null;
-    return {offer,probability,sample_size:sampleSize,model:'independent-expert-nfl-props-research',expected_value_experimental:ev,push_probability:discrete?0:result.p_push,implied_probability:odds>1?1/odds:null,projection:result.projection,interval_10_90:[result.p10,result.p90],status:'PASSER',explanation:result.explanation,experimental:true};
+    const ev=probability!==null&&Number.isFinite(odds)&&odds>1?Number(engineProbability)*(odds-1)-(1-Number(engineProbability)-(discrete?0:result.p_push)):null;
+    return {offer,probability:engineProbability,sample_size:sampleSize,model:ENGINE_C_VERSION,expected_value_experimental:ev,push_probability:discrete?0:result.p_push,implied_probability:odds>1?1/odds:null,projection:result.projection,interval_10_90:[result.p10,result.p90],status:'PASSER',explanation:result.explanation,experimental:true};
    }catch{return {offer,status:'PASSER',explanation:'Simulation impossible avec les observations actuellement disponibles.'}}
   });
   return NextResponse.json({status:'research_only',validated:false,bookmaker_recommendations:false,evaluations,total:batch.total||0,offset,nextOffset:batch.nextOffset??null},{headers:{'Cache-Control':'no-store'}});
