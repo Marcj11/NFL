@@ -1,5 +1,74 @@
 export const preparedBets = [
   {
+    "id": "miseojeu-20261025-O-0381357-0000045",
+    "game": "Kansas City Chiefs vs Seattle Seahawks",
+    "selection": "Over 40.5 total points",
+    "market": "totals",
+    "book": "Mise-o-jeu+",
+    "odds": 1.69,
+    "chosenOdds": 1.69,
+    "stake": 4.25,
+    "status": "open",
+    "placedAt": "2026-10-25T23:19:00Z",
+    "team": "NFL",
+    "sport": "NFL",
+    "prob": 0,
+    "line": 40.5
+  },
+  {
+    "id": "miseojeu-20261025-O-0381357-0000044",
+    "game": "Kansas City Chiefs vs Seattle Seahawks",
+    "selection": "SGC Predictions (5) · Chiefs vs Seahawks",
+    "market": "parlay",
+    "book": "Mise-o-jeu+",
+    "odds": 2.5,
+    "chosenOdds": 2.5,
+    "stake": 5,
+    "status": "open",
+    "placedAt": "2026-10-25T23:18:00Z",
+    "team": "NFL",
+    "sport": "NFL",
+    "prob": 0,
+    "legs": [
+      {
+        "game": "Kansas City Chiefs vs Seattle Seahawks",
+        "selection": "Kenneth Walker III 60+ rushing yards",
+        "market": "props",
+        "odds": 0,
+        "probability": 0
+      },
+      {
+        "game": "Kansas City Chiefs vs Seattle Seahawks",
+        "selection": "Sam Darnold 175+ passing yards",
+        "market": "props",
+        "odds": 0,
+        "probability": 0
+      },
+      {
+        "game": "Kansas City Chiefs vs Seattle Seahawks",
+        "selection": "Patrick Mahomes 175+ passing yards",
+        "market": "props",
+        "odds": 0,
+        "probability": 0
+      },
+      {
+        "game": "Kansas City Chiefs vs Seattle Seahawks",
+        "selection": "Jaxon Smith-Njigba 70+ receiving yards",
+        "market": "props",
+        "odds": 0,
+        "probability": 0
+      },
+      {
+        "game": "Kansas City Chiefs vs Seattle Seahawks",
+        "selection": "Cooper Kupp 1+ receptions",
+        "market": "props",
+        "odds": 0,
+        "probability": 0
+      }
+    ]
+  }
+,
+  {
     "id": "miseojeu-20261025-O-0381357-0000043",
     "game": "Los Angeles Rams vs Las Vegas Raiders",
     "selection": "SGC Predictions (6) · Los Angeles Rams vs Las Vegas Raiders",
