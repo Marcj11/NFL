@@ -20,7 +20,19 @@ export async function GET(req:Request){
  const teams=[target.home_team_id,target.away_team_id];
  // These ESPN records identify injuries, not verified official pre-kickoff inactives.
  const injuryRows=await query('engine_c_espn_injury_ready_v1',{game_id:'eq.'+id,limit:'500'}).catch(()=>[]);
- const injuryCoverage={source:'espn_injury_crosswalk',matched_players:injuryRows.length,teams_with_players:[...new Set(injuryRows.map((p:any)=>String(p.team_id)))],official_inactives_verified:false};
+ const injurySummary=Object.fromEntries(teams.map(team=>{
+  const rows=injuryRows.filter((p:any)=>p.team_id===team);
+  const counts={out:0,doubtful:0,questionable:0,other:0};
+  for(const p of rows){
+   const status=String(p.injury_status||'').trim().toLowerCase();
+   if(status==='out'||status==='injured reserve')counts.out++;
+   else if(status==='doubtful')counts.doubtful++;
+   else if(status==='questionable')counts.questionable++;
+   else counts.other++;
+  }
+  return [team,{matched_players:rows.length,...counts}];
+ }));
+ const injuryCoverage={source:'espn_injury_crosswalk',matched_players:injuryRows.length,teams_with_players:[...new Set(injuryRows.map((p:any)=>String(p.team_id)))],by_team:injurySummary,official_inactives_verified:false,affects_probability:false};
  const availability=assessBothTeams(null,null,{game_id:id,home_team_id:teams[0],away_team_id:teams[1],kickoff_utc:target.kickoff_utc});
  // Until verified per-player pregame feeds exist, do not issue unverified V5 bets.
  if(!availability.verified)return NextResponse.json({game_id:id,model:ENGINE_C_VERSION,status:'pending_team_availability',availability,injuryCoverage,analysis:[],propsByTeam:{},recommendations_available:false},{headers:{'Cache-Control':'no-store'}});
