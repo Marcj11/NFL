@@ -68,7 +68,7 @@ def run():
                 href=next((x.get("href","") for x in links if isinstance(x,dict) and re.search(r"/id/\d+",x.get("href",""))),"")
                 found=re.search(r"/id/(\d+)",href)
                 athlete_id=str(athlete.get("id") or (found.group(1) if found else ""))
-                return {"espn_id":athlete_id,"name":athlete.get("displayName") or i.get("displayName",""),"status":str(i.get("status",i.get("type","unknown"))),"position":(athlete.get("position") or {}).get("abbreviation","") if isinstance(athlete.get("position"),dict) else "","athlete":athlete,"raw_espn":i}
+                return {"espn_id":athlete_id,"name":athlete.get("displayName") or i.get("displayName",""),"status":str(i.get("status",i.get("type","unknown"))),"position":(athlete.get("position") or {}).get("abbreviation","") if isinstance(athlete.get("position"),dict) else ""}
             players=[normalize(i) for i in injuries if isinstance(i,dict)]
             print("ESPN team",t,"players",len(players),"identified",sum(bool(p["espn_id"]) for p in players),"sample_keys",list(injuries[0]) if injuries and isinstance(injuries[0],dict) else [],flush=True)
             return t,{"endpoint_status":"fetched","players":players,"roster":[]}
@@ -92,6 +92,8 @@ def run():
     if not rows: raise RuntimeError("ESPN returned no usable team snapshots; refusing a false-success run")
     if rows:
         print("Prepared",len(rows),"injury snapshots; ESPN responses",sum(v["endpoint_status"]=="fetched" for v in fetched.values()))
-        db.table("engine_c_espn_injury_snapshots").insert(rows).execute()
+        for start in range(0,len(rows),8):
+            db.table("engine_c_espn_injury_snapshots").insert(rows[start:start+8]).execute()
+            print("ESPN batches saved:",min(start+8,len(rows)),"/",len(rows),flush=True)
     print(json.dumps({"games":len(games),"snapshots_saved":len(rows),"teams":{k:{"status":v["endpoint_status"],"injuries":len(v["players"])} for k,v in fetched.items()}}))
 if __name__=="__main__":run()
