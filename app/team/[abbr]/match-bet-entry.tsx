@@ -1,7 +1,7 @@
 'use client';
 import {useState} from 'react';
 
-export type MatchPick={market:string;name:string;player?:string;point?:number;book:string;decimal:number;probability:number};
+export type MatchPick={market:string;name:string;player?:string;point?:number;book:string;decimal:number;probability:number|null};
 export default function MatchBetEntry({pick,gameId,game,team}:{pick:MatchPick;gameId:string;game:string;team:string}){
  const [open,setOpen]=useState(false),[price,setPrice]=useState(String(pick.decimal)),[stake,setStake]=useState('5'),[error,setError]=useState('');
  const record=()=>{
