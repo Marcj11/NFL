@@ -102,11 +102,12 @@ function Ticket({b,feed}:{b:Bet;feed:Feed}){
  const actual=measure(b,feed.players[game.id]||[]);
  const line=Number(b.line);
  const hasLine=b.line!==undefined&&b.line!==null&&Number.isFinite(line)&&line>=0;
+ const totalsLine=hasLine?line:Number(b.selection.match(/(\d+(?:[.,]\d+)?)/)?.[1]?.replace(',','.')||0);
  const target=betGoal(b);
  const total=game.home.score+game.away.score;
  const over=/\bover\b|\bplus\b|\d+\+/i.test(b.selection);
  const propGoal=isProp&&over&&target!==null?target:null;
- const progress=isProp&&actual&&propGoal?Math.max(0,Math.min(100,100*actual.value/propGoal)):b.market==='totals'&&hasLine&&line>0?Math.max(0,Math.min(100,100*total/line)):null;
+ const progress=isProp&&actual&&propGoal?Math.max(0,Math.min(100,100*actual.value/propGoal)):b.market==='totals'&&totalsLine>0?Math.max(0,Math.min(100,100*total/totalsLine)):null;
  const reached=isProp&&actual&&propGoal!==null&&actual.value>=propGoal;
  const pickHome=sideMatch(b.team,game.home),pickAway=sideMatch(b.team,game.away);
  const pickedScore=pickHome?game.home.score:pickAway?game.away.score:null;
