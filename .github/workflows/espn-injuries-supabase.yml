@@ -24,6 +24,11 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install supabase
+      - name: Verify checked-out injury script
+        run: |
+          git rev-parse --short HEAD
+          test -f scripts/sync_espn_injuries.py
+          python -m py_compile scripts/sync_espn_injuries.py
       - name: Save timestamped pregame ESPN injury snapshots
         env:
           NFL_SUPABASE_URL: ${{ secrets.NFL_SUPABASE_URL || secrets.SUPABASE_URL }}
