@@ -49,6 +49,8 @@ const betGoal=(b:Bet):number|null=>{
  if(plus)return Number(plus[1].replace(',','.'));
  const raw=b.line;
  if(raw!==undefined&&raw!==null&&Number.isFinite(Number(raw))&&/over|plus/i.test(label))return Math.floor(Number(raw))+1;
+ const under=label.match(/(?:under|moins de)\s*(\d+(?:[.,]\d+)?)/i);
+ if(under)return Number(under[1].replace(',','.'));
  const fallback=label.match(/(?:over|plus de)\s*(\d+(?:[.,]\d+)?)/i);
  return fallback?Math.floor(Number(fallback[1].replace(',','.')))+1:null;
 };
@@ -183,8 +185,9 @@ function ParlayTicket({b,feed}:{b:Bet;feed:Feed}){
    const value=measure({id:'',game:leg.game,selection:leg.selection,market:'props',marketKey:leg.marketKey,player:leg.player,team:'',line:leg.line,status:'open'},feed.players[game.id]||[]);
    const goal=betGoal({id:'',game:leg.game,selection:leg.selection,market:'props',line:leg.line,team:'',status:'open'});
    if(!value||!goal)return {leg,status:'unknown' as const,detail:'Statistique individuelle indisponible'};
-   const met=value.value>=goal;
-   return {leg,status:met?'won' as const:game.complete?'lost' as const:game.state==='in'?'trailing' as const:'pending' as const,detail:value.value+' / '+goal+' · '+value.label};
+   const under=/\bunder\b|\bmoins\b/i.test(leg.selection);
+   const met=under?value.value<goal:value.value>=goal;
+   return {leg,status:game.complete?(met?'won' as const:'lost' as const):under?(met?'leading' as const:'trailing' as const):met?'won' as const:game.state==='in'?'trailing' as const:'pending' as const,detail:value.value+' / '+goal+' · '+value.label};
   }
   const chosen=leg.selection.toLowerCase();
   const homeSelected=chosen.includes(game.home.name.toLowerCase());
