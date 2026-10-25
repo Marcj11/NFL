@@ -58,7 +58,16 @@ function ticketMood(b:Bet,feed:Feed):Mood{
  if(b.market==='parlay'&&b.legs?.length){
   const states=b.legs.map(leg=>{
    const g=feed.games.find(g=>match(leg.game,g));if(!g)return 0;
-   const chosen=leg.selection.toLowerCase();
+   if(leg.market==='totals'){
+   const points=game.home.score+game.away.score;
+   const m=leg.selection.match(/(\d+(?:[.,]\d+)?)/);
+   if(!m)return {leg,status:'unknown' as const,detail:'Seuil de points absent'};
+   const line=Number(m[1].replace(',','.'));
+   const isUnder=/\bunder\b|\bmoins\b/i.test(leg.selection);
+   const favorable=isUnder?points<line:points>line;
+   return {leg,status:game.complete?(favorable?'won' as const:'lost' as const):!isUnder&&favorable?'won' as const:isUnder&&!favorable?'lost' as const:game.state==='in'?'leading' as const:'pending' as const,detail:points+' / '+line+' points'};
+  }
+  const chosen=leg.selection.toLowerCase();
    const side=chosen.includes(g.home.name.toLowerCase())?g.home:chosen.includes(g.away.name.toLowerCase())?g.away:null;
    if(!side)return 0;
    const other=side===g.home?g.away:g.home;
