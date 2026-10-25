@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install 'supabase>=2.30,<3' # ESPN numeric team mapping refresh
-      # Refresh LA injury mapping validation
+      # Validate ESPN player identity retention
       - name: Verify checked-out injury script
         run: |
           git rev-parse --short HEAD
