@@ -196,19 +196,33 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   seen.add(key);unique.push(o);
  }
  if(category==='heavy'){
-  // First take high-risk positive-EV odds 3.00+. Fill with odds 2.50+ if needed.
-  const selected=[...unique];
-  if(selected.length<5){
-   const added=new Set(selected.map(o=>o.id));
-   for(const o of offers){
-    const p=probability(o);
-    if(added.has(o.id)||!p||!Number.isFinite(p)||!(o.odds>=2.5&&o.odds<3)||p*o.odds<=1||!o.kickoff||Date.parse(o.kickoff)<=Date.now())continue;
-    const g=gamesResearch[o.game];
-    
-    selected.push(o);added.add(o.id);
-   }
+  // Diversify only among real positive-EV offers: no manufactured bets or probabilities.
+  const pool=[...offers].filter(o=>{
+   const p=probability(o);
+   return p!==null&&Number.isFinite(p)&&p>0&&p<1&&o.odds>=2.5&&
+    p*o.odds>1&&Boolean(o.kickoff)&&Date.parse(o.kickoff!)>Date.now();
+  }).sort((a,b)=>edge(b)-edge(a));
+  const familyOf=(o:Offer)=>{
+   if(o.market!=='props')return o.market;
+   return propGroup(o);
+  };
+  const chosen:Offer[]=[],used=new Set<string>(),marketCounts=new Map<string,number>();
+  // First pass: top candidate from distinct market families.
+  for(const candidate of pool){
+   const family=familyOf(candidate);
+   if(marketCounts.has(family))continue;
+   chosen.push(candidate);used.add(candidate.id);marketCounts.set(family,1);
+   if(chosen.length===5)break;
   }
-  return selected.sort((a,b)=>edge(b)-edge(a)).slice(0,5);
+  // Fill remaining seats by value while limiting any family to two picks.
+  for(const candidate of pool){
+   if(chosen.length>=5)break;
+   const family=familyOf(candidate);
+   if(used.has(candidate.id)||(marketCounts.get(family)||0)>=2)continue;
+   if(chosen.some(o=>o.game===candidate.game&&o.selection===candidate.selection))continue;
+   chosen.push(candidate);used.add(candidate.id);marketCounts.set(family,(marketCounts.get(family)||0)+1);
+  }
+  return chosen.sort((a,b)=>edge(b)-edge(a));
  }
  // Evaluate portfolios of five $5 straight bets: P(total payout > $25).
  // Limit to one choice per game to prevent treating correlated markets as independent.
