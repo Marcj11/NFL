@@ -186,7 +186,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
  // Under-50% longshots belong only in Heavyball, even with an apparent positive EV.
  const regular=category==='heavy'?eligible:eligible.filter(o=>{
   const p=probability(o)!;
-  return p>=0.55 && o.odds<=2.50;
+  return p>=(o.market==='props'?0.50:0.55) && o.odds<=2.50;
  });
  const ordered=[...regular].sort((a,b)=>category==='heavy'?edge(b)-edge(a):probability(b)!-probability(a)!||edge(b)-edge(a));
  const unique:Offer[]=[],seen=new Set<string>();
