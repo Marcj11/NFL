@@ -175,7 +175,7 @@ export default function BettingHub({view}:{view:'top'|'live'|'history'}){
   }
   return null;
  };
- const officialProbability=(o:Offer):number|null=>gameProjection(o);
+ const officialProbability=(o:Offer):number|null=>o.market==='props'?(researchValue(o)?.probability??null):gameProjection(o);
  const ranking=useMemo(()=>{
  const propGroup=(o:Offer)=>{const key=(o.marketKey||o.selection.split(' · ').pop()||'').toLowerCase();return /sacks|tackles|interceptions|qb_hits|pass_defended|forced_fumbles/.test(key)?'defense':/field_goal|extra_point|kicking_points|kicker/.test(key)?'kickers':'props';};
  const family=category==='spreads'?'spreads':category==='totals'?'totals':category==='props'?'props':category==='moneyline'?'moneyline':null;
