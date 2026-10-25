@@ -1,0 +1,26 @@
+name: Verify ESPN production API
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-espn-production.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify ESPN diagnostic endpoint
+        run: |
+          python - <<'PY'
+          import json,urllib.request
+          u='https://nfl-studio.vercel.app/api/engine-c-coverage'
+          req=urllib.request.Request(u,headers={'Accept':'application/json'})
+          with urllib.request.urlopen(req,timeout=25) as r:
+              data=json.load(r)
+              print('HTTP',r.status,'status',data.get('status'),'snapshots',data.get('snapshots'),'matched',data.get('matched'))
+              assert r.status==200 and data.get('status')=='ok'
+              assert isinstance(data.get('matched'),int) and data['matched']>0
+              assert data.get('predictions_use_injuries_verified') is False
+          PY
