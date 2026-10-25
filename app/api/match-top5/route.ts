@@ -1,7 +1,7 @@
 import {NextResponse} from 'next/server';
 import {guardMatchTop5} from '../../../engine/match-top-five-guard';
 import {evaluateEngineC, ENGINE_C_VERSION} from '../../../lib/engine-c/universal-v5';
-import {assessBothTeams} from '../../../lib/engine-c/pregame-team-availability';
+import {provisionalInjuryEffects} from '../../../lib/engine-c/injury-scenario-provisional';
 export const dynamic='force-dynamic';
 type Game={game_id:string;home_team_id:string;away_team_id:string;kickoff_utc:string};
 type Score={game_id:string;home_score:number;away_score:number};
@@ -33,9 +33,6 @@ export async function GET(req:Request){
   return [team,{matched_players:rows.length,...counts}];
  }));
  const injuryCoverage={source:'espn_injury_crosswalk',matched_players:injuryRows.length,teams_with_players:[...new Set(injuryRows.map((p:any)=>String(p.team_id)))],by_team:injurySummary,official_inactives_verified:false,affects_probability:false};
- const availability=assessBothTeams(null,null,{game_id:id,home_team_id:teams[0],away_team_id:teams[1],kickoff_utc:target.kickoff_utc});
- // Until verified per-player pregame feeds exist, do not issue unverified V5 bets.
- if(!availability.verified)return NextResponse.json({game_id:id,model:ENGINE_C_VERSION,status:'pending_team_availability',availability,injuryCoverage,analysis:[],propsByTeam:{},recommendations_available:false},{headers:{'Cache-Control':'no-store'}});
  const [games,cache,playerRows]=await Promise.all([
  query('games',{or:'(home_team_id.in.('+teams.join(',')+'),away_team_id.in.('+teams.join(',')+'))',kickoff_utc:'lt.'+target.kickoff_utc,order:'kickoff_utc.desc',limit:'70'}),
  query('nfl_studio_live_odds_cache',{id:'eq.nfl',limit:'1'}),
@@ -87,6 +84,11 @@ export async function GET(req:Request){
  const qb=best('QB','prior_passing_yards'),rb=best('RB','prior_rushing_yards'),wr=best('WR','prior_receiving_yards'),te=best('TE','prior_receiving_yards');
  return {team,qb:qb?{name:qb.display_name,passing:Number(qb.prior_passing_yards),sample:qb.history_games}:null,rb:rb?{name:rb.display_name,rushing:Number(rb.prior_rushing_yards),sample:rb.history_games}:null,receivers:[wr,te].filter(Boolean).map(p=>({name:p.display_name,receiving:Number(p.prior_receiving_yards),targets:Number(p.prior_targets),sample:p.history_games}))};
  });
+ const asof=injuryRows.reduce((latest:string,p:any)=>Date.parse(String(p.observed_at))>Date.parse(latest)?String(p.observed_at):latest,'1970-01-01T00:00:00Z');
+ const eligible=injuryRows.filter((p:any)=>teams.includes(String(p.team_id))&&Date.parse(String(p.observed_at))<Date.parse(target.kickoff_utc));
+ const injuryScenario=provisionalInjuryEffects({game_id:id,kickoff_utc:target.kickoff_utc,observed_at:asof,players:eligible.map((p:any)=>({team:p.team_id===target.home_team_id?'home' as const:'away' as const,position:String(p.position||'WR'),status:String(p.injury_status||'active'),snapShare:0.5,productionShare:0.5,replacementQuality:0.5}))});
+ const injuryDelta=injuryScenario.status==='provisional_uncalibrated'?injuryScenario.effects:null;
+ const injuryModel={status:injuryScenario.status,matched:eligible.length,calibrated:false};
  const home=stats[target.home_team_id],away=stats[target.away_team_id];
  const ready=home.games>=4&&away.games>=4&&home.points!==null&&away.points!==null&&home.allowed!==null&&away.allowed!==null;
  const projectedHome=ready&&home.points!==null&&away.allowed!==null?(home.points+away.allowed)/2:null;
@@ -106,7 +108,7 @@ export async function GET(req:Request){
  const logistic=(z:number)=>1/(1+Math.exp(-1.702*Math.max(-8,Math.min(8,z))));
  const gamePicks=candidates.flatMap(o=>{
   let probability:number|null=null;
-  if(['h2h','spreads','totals'].includes(o.market))probability=evaluateEngineC({market:o.market as 'h2h'|'spreads'|'totals',signal:o.signal,odds:o.decimal}).probability;
+  if(['h2h','spreads','totals'].includes(o.market))probability=evaluateEngineC({market:o.market as 'h2h'|'spreads'|'totals',signal:o.signal,odds:o.decimal,provisionalInjuryDelta:injuryDelta?Math.max(-4,Math.min(4,injuryDelta[o.market as 'h2h'|'spreads'|'totals'])):0}).probability;
   if(probability===null||!Number.isFinite(probability)||probability<=0||probability>=1)return [];
   return [{market:o.market,name:o.name,point:o.point,book:o.book,decimal:Number(o.decimal.toFixed(2)),probability,signal:Number(o.signal.toFixed(2)),angle:o.angle,status:'experimental_unvalidated'}];
  });
@@ -134,6 +136,6 @@ export async function GET(req:Request){
    }catch{}
   }
  }
- return NextResponse.json({game_id:id,stats,model:ENGINE_C_VERSION,player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined,propsByTeam},{headers:{'Cache-Control':'no-store'}});
+ return NextResponse.json({game_id:id,stats,model:ENGINE_C_VERSION,player_insights:playerInsights,quality:ready?'research_only':'insufficient_sample',home_projection:projectedHome,away_projection:projectedAway,spread_projected_margin:projectedDiff,model_validation:'historical_benchmarks_only_not_live_calibrated',odds_fetched_at:store.fetched_at,heavyball_available:Boolean(heavy),analysis:combined,propsByTeam,injuryModel},{headers:{'Cache-Control':'no-store'}});
  }catch(e){return NextResponse.json({error:'analysis_unavailable',detail:e instanceof Error?e.message.slice(0,100):'unknown'},{status:503})}
 }
