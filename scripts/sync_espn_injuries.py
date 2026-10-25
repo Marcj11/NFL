@@ -33,6 +33,7 @@ def run():
     nowstr=now.isoformat()
     teams=sorted(set(t for g in games for t in (g["home_team_id"],g["away_team_id"])))
     # Prefer league-wide ESPN injury feed; team endpoints are fallbacks.
+    espn_ids={"1":"ATL","2":"BUF","3":"CHI","4":"CIN","5":"CLE","6":"DAL","7":"DEN","8":"DET","9":"GB","10":"TEN","11":"IND","12":"KC","13":"LV","14":"LA","15":"MIA","16":"MIN","17":"NE","18":"NO","19":"NYG","20":"NYJ","21":"PHI","22":"ARI","23":"PIT","24":"LAC","25":"SF","26":"SEA","27":"TB","28":"WAS","29":"CAR","30":"JAX","33":"BAL","34":"HOU"}
     league_injuries={}
     try:
         league=get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries")
@@ -44,7 +45,7 @@ def run():
             team=team if isinstance(team,dict) else {}
             espn_id=str(team.get("id") or group.get("id") or "")
             abbr=str(team.get("abbreviation") or "").upper()
-            if not abbr: abbr=next((code for code,eid in mapping.items() if eid==espn_id),"")
+            if not abbr: abbr=espn_ids.get(espn_id,"") or next((code for code,eid in mapping.items() if eid==espn_id),"")
             if abbr and isinstance(group.get("injuries"),list):
                 league_injuries[abbr]=group["injuries"]
         print("ESPN mapped injury teams:",sorted(league_injuries),flush=True)
