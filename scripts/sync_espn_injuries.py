@@ -57,7 +57,7 @@ def run():
         tid=mapping.get(aliases.get(t,t), "")
         if not tid: tid=aliases.get(t,t).lower()
         try:
-            payload={"injuries":league_injuries[aliases.get(t,t)]} if aliases.get(t,t) in league_injuries else get(BASE+tid+"/injuries")
+            payload={"injuries":league_injuries[t]} if t in league_injuries else ({"injuries":league_injuries[aliases[t]]} if aliases.get(t) in league_injuries else get(BASE+tid+"/injuries"))
             if not isinstance(payload,dict) or not isinstance(payload.get("injuries"),list):
                 raise ValueError("ESPN injury response missing injuries list")
             injuries=payload["injuries"]
