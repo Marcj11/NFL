@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install supabase
+      - run: pip install 'supabase>=2.30,<3'
       - name: Verify checked-out injury script
         run: |
           git rev-parse --short HEAD
