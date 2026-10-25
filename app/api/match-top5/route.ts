@@ -112,7 +112,7 @@ export async function GET(req:Request){
   if(probability===null||!Number.isFinite(probability)||probability<=0||probability>=1)return [];
   return [{market:o.market,name:o.name,point:o.point,book:o.book,decimal:Number(o.decimal.toFixed(2)),probability,signal:Number(o.signal.toFixed(2)),angle:o.angle,status:'experimental_unvalidated'}];
  });
- const playerPicks=[...bestProps.values()].map(p=>({...p,team_id:String((recentByName.get(p.player.toLowerCase())||[])[0]?.team_id||(propRows.find((x:any)=>x.player===p.player)?.team_id)||''),probability:p.probability===null?null:Number(p.probability),expected_value:p.probability===null?null:Number(p.probability)*p.decimal-1,status:p.probability===null?'unscored_market':'experimental_unvalidated'}));
+ const playerPicks=[...bestProps.values()].map(p=>({...p,team_id:String((recentByName.get(p.player.toLowerCase())||[])[0]?.team_id||(playerRows as any[]).find(x=>String(x.display_name||'').trim().toLowerCase()===p.player.trim().toLowerCase())?.team_id||''),probability:p.probability===null?null:Number(p.probability),expected_value:p.probability===null?null:Number(p.probability)*p.decimal-1,status:p.probability===null?'unscored_market':'experimental_unvalidated'}));
  const propsByTeam=Object.fromEntries(teams.map(team=>[team,playerPicks.filter(p=>p.team_id===team&&Number.isFinite(p.decimal)&&p.decimal>1).sort((a,b)=>(b.expected_value??-999)-(a.expected_value??-999)||a.decimal-b.decimal).slice(0,5)]));
  const ranked=[...gamePicks,...playerPicks].filter(p=>p.probability!==null&&Number.isFinite(p.probability)&&p.probability>0&&p.probability<1&&Number.isFinite(p.decimal)&&p.decimal>1)
   .map(p=>({...p,expected_value:p.probability*p.decimal-1}))
