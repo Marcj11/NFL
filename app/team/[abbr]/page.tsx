@@ -86,7 +86,25 @@ return <div style={{padding:'15px 19px',background:'#122c40',borderRadius:14,mar
 </div>}
 <p style={{fontSize:13,color:'#bbcad6'}}>Modèle de forme historique, non calibré pour les paris. Lineups et cotes non validés.</p></div></>:<p style={{textAlign:'center'}}>Prochain match non disponible.</p>}
  </section>
- <section style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,flexWrap:'wrap',border:'1px solid #2766a4',background:'linear-gradient(95deg,#071b32,#123454)',padding:'17px 20px',borderRadius:18,marginTop:27}}>
+ {analysis&&data?.next&&<section style={{margin:'24px 0 32px',padding:22,borderRadius:22,border:'1px solid #327dba',background:'linear-gradient(145deg,#091c32,#07121d)'}}>
+ <h2 style={{color:'#fff',fontSize:27}}>🏈 TOP 5 DE CHAQUE ÉQUIPE · HEAVYBALLS BET</h2>
+ <p style={{color:'#b6d1e4',fontSize:13}}>Deux Top 5 indépendants, avec les couleurs de chaque équipe. Paris classés par valeur espérée; aucun pari inventé.</p>
+ <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,350px),1fr))',gap:18}}>
+ {(data?.next?[data.next.away_team_id,data.next.home_team_id]:[]).map(team=><div key={team} style={{background:'linear-gradient(145deg,'+(teams[team]?.[1]||'#112b44')+',#0a101b 70%)',border:'2px solid '+(teams[team]?.[2]||'#377fc1'),borderRadius:18,padding:16}}>
+ <div style={{display:'flex',alignItems:'center',gap:12,borderBottom:'2px solid '+(teams[team]?.[2]||'#377fc1'),paddingBottom:13,marginBottom:15}}><img src={teamLogo(team)} alt='' style={{width:68,height:68,objectFit:'contain'}}/><h3 style={{color:'#fff',fontSize:23,textTransform:'uppercase',margin:0}}>TOP 5 · {teams[team]?.[0]||team}</h3></div>
+ {(analysis?.propsByTeam?.[team]||[]).length===0?<p style={{color:'#bdd7e6'}}>Aucun prop EV+ avec historique et cote disponibles.</p>:(analysis?.propsByTeam?.[team]||[]).map((pick,i)=><article key={team+'-'+i} style={{background:'linear-gradient(135deg,'+(teams[team]?.[1]||'#174161')+',#0b111d)',border:'1px solid '+(teams[team]?.[2]||'#387bad'),borderRadius:15,marginBottom:12,padding:16}}>
+ <div style={{display:'flex',alignItems:'center',gap:12}}><div style={{position:'relative',width:90,height:94,flexShrink:0,background:'#0a1220',borderRadius:10,overflow:'hidden'}}>{photos[pick.player]?<img src={photos[pick.player]} alt={pick.player} style={{width:'100%',height:'100%',objectFit:'contain'}}/>:<img src={teamLogo(team)} alt='' style={{width:'100%',height:'100%',objectFit:'contain',opacity:.5}}/>}</div><div><div style={{color:teams[team]?.[2]||'#88dfff',fontSize:16,fontWeight:950}}>#{i+1}</div><div style={{fontSize:17,fontWeight:900,textTransform:'uppercase'}}>{pick.player}</div></div></div>
+ <h3 style={{fontSize:23,color:'#fff',margin:'10px 0'}}>{pick.side.toUpperCase()} {pick.point} · {pick.market.replaceAll('player_','').replaceAll('_',' ')}</h3>
+ <div style={{color:'#e2ecf7'}}>Cote <b>{pick.decimal.toFixed(2)}</b> · Prob. <b>{(pick.probability*100).toFixed(1)} %</b></div>
+ <div style={{color:'#65f2b3',fontSize:18,fontWeight:900}}>EV théorique +{(pick.expected_value*100).toFixed(1)} %</div>
+ <p style={{fontSize:12,color:'#bfd7ea'}}>{pick.angle}</p>
+ <MatchBetEntry pick={pick} gameId={data?.next?.game_id||''} game={(teams[data?.next?.away_team_id||'']?.[0]||'Visiteurs')+' vs '+(teams[data?.next?.home_team_id||'']?.[0]||'Domicile')} team={team}/>
+ </article>)}
+ </div>)}
+ </div>
+ </section>}
+ 
+<section style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,flexWrap:'wrap',border:'1px solid #2766a4',background:'linear-gradient(95deg,#071b32,#123454)',padding:'17px 20px',borderRadius:18,marginTop:27}}>
 <div><strong style={{fontSize:19}}>⚡ ON RELANCE LA MACHINE, LES BOYS</strong><p style={{color:'#bcd2e7',fontSize:13,margin:'6px 0 0'}}>Relance les calculs à partir des résultats, des statistiques de joueurs et des cotes en cache disponibles maintenant. {analysisRequestedAt?'Dernier calcul : '+new Date(analysisRequestedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'}):''}</p></div>
 <button onClick={()=>setAnalysisNonce(v=>v+1)} disabled={analysisRunning||!data.next} style={{cursor:analysisRunning?'wait':'pointer',border:0,borderRadius:12,padding:'13px 23px',fontWeight:900,background:analysisRunning?'#45657e':'linear-gradient(110deg,#2079fe,#1bc3e8)',color:'white',boxShadow:'0 0 24px #2079fe55'}}>{analysisRunning?'Analyse en cours…':'▶ Relancer les chiffres, esti !'}</button>
 </section>
@@ -132,23 +150,6 @@ return <article key={inj.name+idx} style={{display:'flex',gap:14,alignItems:'cen
  </>}
  </section>
 
- {analysis&&data?.next&&<section style={{margin:'26px 0',padding:22,borderRadius:22,border:'1px solid #327dba',background:'#092641'}}>
- <h2 style={{color:'#fff',fontSize:27}}>🎯 Top 5 des props par équipe</h2>
- <p style={{color:'#b6d1e4',fontSize:13}}>Cotes et probabilités expérimentales, non calibrées. Aucun pari n’est inventé si les données sont insuffisantes.</p>
- <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,350px),1fr))',gap:18}}>
- {(data?.next?[data.next.away_team_id,data.next.home_team_id]:[]).map(team=><div key={team} style={{background:'#081d32',border:'1px solid #377fc1',borderRadius:18,padding:16}}>
- <h3 style={{color:'#fff',fontSize:21}}>{teams[team]?.[0]||team}</h3>
- {(analysis?.propsByTeam?.[team]||[]).length===0?<p style={{color:'#bdd7e6'}}>Aucun prop EV+ avec historique et cote disponibles.</p>:(analysis?.propsByTeam?.[team]||[]).map((pick,i)=><article key={team+'-'+i} style={{background:'linear-gradient(135deg,#174161,#0b1b30)',border:'1px solid #387bad',borderRadius:15,marginBottom:12,padding:16}}>
- <div style={{color:'#88dfff',fontSize:12,fontWeight:900}}>#{i+1} · {pick.player}</div>
- <h3 style={{fontSize:23,color:'#fff',margin:'10px 0'}}>{pick.side.toUpperCase()} {pick.point} · {pick.market.replaceAll('player_','').replaceAll('_',' ')}</h3>
- <div style={{color:'#e2ecf7'}}>Cote <b>{pick.decimal.toFixed(2)}</b> · Prob. <b>{(pick.probability*100).toFixed(1)} %</b></div>
- <div style={{color:'#65f2b3',fontSize:18,fontWeight:900}}>EV théorique +{(pick.expected_value*100).toFixed(1)} %</div>
- <p style={{fontSize:12,color:'#bfd7ea'}}>{pick.angle}</p>
- <MatchBetEntry pick={pick} gameId={data?.next?.game_id||''} game={(teams[data?.next?.away_team_id||'']?.[0]||'Visiteurs')+' vs '+(teams[data?.next?.home_team_id||'']?.[0]||'Domicile')} team={team}/>
- </article>)}
- </div>)}
- </div>
- </section>}
  <p style={{color:'#7e99ac',fontSize:12,marginTop:20}}>Rapport automatiquement rédigé à partir de résultats historiques et d’effectifs recensés. Toute information non confirmée est signalée. Actualisé : {new Date(data.updatedAt).toLocaleString('fr-CA',{timeZone:'America/Toronto'})}.</p>
  </>}
  </main>
