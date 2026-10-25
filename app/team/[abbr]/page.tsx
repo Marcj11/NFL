@@ -27,7 +27,7 @@ export default function TeamPage(){
  const names=teams[data.next.home_team_id]?.[0]||'',away=teams[data.next.away_team_id]?.[0]||'';
  Promise.allSettled([fetch('/api/pregame-status?teams='+data.next.home_team_id+','+data.next.away_team_id,{cache:'no-store'}).then(r=>r.json()),fetch('/api/match-player-props?home='+encodeURIComponent(names)+'&away='+encodeURIComponent(away),{cache:'no-store'}).then(r=>r.json())]).then(([a,b])=>{if(!active)return;setPregame(a.status==='fulfilled'?a.value:null);setPropsData(b.status==='fulfilled'?b.value:null);setLiveLoading(false)});return()=>{active=false}},[data?.next?.game_id,analysisNonce]);
 
- useEffect(()=>{let live=true;setLoading(true);fetch('/api/team/'+encodeURIComponent(abbr)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'Erreur');if(live)setData(d)}).catch(e=>{if(live)setError(String(e.message))}).finally(()=>{if(live)setLoading(false)});return()=>{live=false}},[abbr]);
+ useEffect(()=>{let live=true;setLoading(true);fetch('/api/team/'+encodeURIComponent(abbr),{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'Erreur');if(live)setData(d)}).catch(e=>{if(live)setError(String(e.message))}).finally(()=>{if(live)setLoading(false)});return()=>{live=false}},[abbr]);
  if(!info)return <main style={{padding:40}}><Link href="/">Retour aux équipes</Link><h1>Équipe inconnue</h1></main>;
  const [name,primary,secondary]=info,opp=data?.opponent?teams[data.opponent]:null;const p=data?.probability&&data.next?(data.next.home_team_id===abbr?Number(data.probability.home_win_probability):Number(data.probability.away_win_probability)):null;
  return <main style={{maxWidth:1660,margin:'auto',padding:'24px 24px 90px',color:'#eef5fb'}}>
