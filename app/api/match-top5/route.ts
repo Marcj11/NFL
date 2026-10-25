@@ -64,12 +64,12 @@ export async function GET(req:Request){
   const name=String(x.player||''),side=String(x.side||'').toLowerCase(),line=Number(x.point),decimal=Number(x.decimal);
   if(!field||!Number.isFinite(line)||decimal<=1||!['over','under'].includes(side))return [];
   const games=(recentByName.get(name.toLowerCase())||[]).filter(g=>Date.parse(String(g.kickoff_utc))<Date.parse(target.kickoff_utc)).sort((a,b)=>Date.parse(String(b.kickoff_utc))-Date.parse(String(a.kickoff_utc))).slice(0,5);
-  if(games.length<3)return [];
+  if(games.length===0)return [{market,player:name,name,point:line,decimal,book:String(x.book),signal:0,probability:null as number|null,probability_kind:'unavailable',status:'unscored_market',angle:'Cote disponible, mais aucune donnée historique exploitable : probabilité et EV indisponibles. Non recommandé.',side}];
   const values=games.map(g=>Number(g[field])).filter(Number.isFinite);
-  if(values.length<3)return [];
+  if(values.length===0)return [];
   const mean=values.reduce((a,b)=>a+b,0)/values.length;
   const minimum=field==='passing_yards'?150:25;
-  if(mean<minimum)return [];
+  // Keep low-volume players for the requested complete Top 5; mark low-sample picks as exploratory.
   const hits=values.filter(v=>side==='over'?v>line:v<line).length;
   const observed=hits/values.length;
   // Shrink very small samples toward 50%; historical fixed-threshold accuracy is NOT a calibrated market probability.
@@ -112,9 +112,9 @@ export async function GET(req:Request){
   if(probability===null||!Number.isFinite(probability)||probability<=0||probability>=1)return [];
   return [{market:o.market,name:o.name,point:o.point,book:o.book,decimal:Number(o.decimal.toFixed(2)),probability,signal:Number(o.signal.toFixed(2)),angle:o.angle,status:'experimental_unvalidated'}];
  });
- const playerPicks=[...bestProps.values()].map(p=>({...p,team_id:String((recentByName.get(p.player.toLowerCase())||[])[0]?.team_id||''),probability:Number(p.probability),expected_value:Number(p.probability)*p.decimal-1,status:'experimental_unvalidated'}));
- const propsByTeam=Object.fromEntries(teams.map(team=>[team,playerPicks.filter(p=>p.team_id===team&&Number.isFinite(p.expected_value)&&Number.isFinite(p.decimal)&&p.decimal>1).sort((a,b)=>b.expected_value-a.expected_value).slice(0,5)]));
- const ranked=[...gamePicks,...playerPicks].filter(p=>Number.isFinite(p.probability)&&p.probability>0&&p.probability<1&&Number.isFinite(p.decimal)&&p.decimal>1)
+ const playerPicks=[...bestProps.values()].map(p=>({...p,team_id:String((recentByName.get(p.player.toLowerCase())||[])[0]?.team_id||(propRows.find((x:any)=>x.player===p.player)?.team_id)||''),probability:p.probability===null?null:Number(p.probability),expected_value:p.probability===null?null:Number(p.probability)*p.decimal-1,status:p.probability===null?'unscored_market':'experimental_unvalidated'}));
+ const propsByTeam=Object.fromEntries(teams.map(team=>[team,playerPicks.filter(p=>p.team_id===team&&Number.isFinite(p.decimal)&&p.decimal>1).sort((a,b)=>(b.expected_value??-999)-(a.expected_value??-999)||a.decimal-b.decimal).slice(0,5)]));
+ const ranked=[...gamePicks,...playerPicks].filter(p=>p.probability!==null&&Number.isFinite(p.probability)&&p.probability>0&&p.probability<1&&Number.isFinite(p.decimal)&&p.decimal>1)
   .map(p=>({...p,expected_value:p.probability*p.decimal-1}))
   .sort((a,b)=>b.expected_value-a.expected_value);
  const combined=guardMatchTop5(ranked as any[],teams);
